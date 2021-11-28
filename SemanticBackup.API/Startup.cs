@@ -7,6 +7,8 @@ using SemanticBackup.API.Core;
 using SemanticBackup.API.Extensions;
 using SemanticBackup.Core;
 using SemanticBackup.Core.BackgroundJobs;
+using SemanticBackup.Core.BackupServices;
+using SemanticBackup.Core.BackupServices.Implementations;
 using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.LiteDbPersistance;
 
@@ -38,6 +40,9 @@ namespace SemanticBackup.API
             services.AddTransient<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
             services.AddTransient<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
             services.AddTransient<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
+
+            //Engines
+            services.AddTransient<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
 
             //Background Jobs
             services.AddSingleton<IProcessorInitializable, SchedulerBackgroundJob>();
