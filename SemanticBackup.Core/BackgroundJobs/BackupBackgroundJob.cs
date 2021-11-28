@@ -17,6 +17,7 @@ namespace SemanticBackup.Core.BackgroundJobs
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
         private readonly SharedTimeZone _sharedTimeZone;
+        private readonly PersistanceOptions _persistanceOptions;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
@@ -25,7 +26,6 @@ namespace SemanticBackup.Core.BackgroundJobs
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
             SharedTimeZone sharedTimeZone,
             PersistanceOptions persistanceOptions,
-            IBackupSchedulePersistanceService backupSchedulePersistanceService,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
             ISQLServerBackupProviderService sQLServerBackupProviderService
@@ -33,6 +33,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         {
             this._logger = logger;
             this._sharedTimeZone = sharedTimeZone;
+            this._persistanceOptions = persistanceOptions;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
@@ -93,10 +94,15 @@ namespace SemanticBackup.Core.BackgroundJobs
                     try
                     {
                         //Start and Stop Bacup Bots
-                        List<IBackupRobot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).ToList();
-                        if (botsNotStarted != null && botsNotStarted.Count > 0)
-                            foreach (IBackupRobot bot in botsNotStarted)
-                                _ = bot.RunAsync();
+                        int runningThreads = this.BackupsBots.Count(x => x.IsStarted && !x.IsCompleted);
+                        int takeCount = _persistanceOptions.MaximumBackupRunningThreads - runningThreads;
+                        if (takeCount > 0)
+                        {
+                            List<IBackupRobot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
+                            if (botsNotStarted != null && botsNotStarted.Count > 0)
+                                foreach (IBackupRobot bot in botsNotStarted)
+                                    _ = bot.RunAsync();
+                        }
                         //Remove Completed
                         List<IBackupRobot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
                         if (botsCompleted != null && botsCompleted.Count > 0)
