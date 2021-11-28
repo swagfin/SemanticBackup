@@ -49,11 +49,11 @@ namespace SemanticBackup.Core.BackgroundJobs
                     try
                     {
                         DateTime currentTime = _sharedTimeZone.Now;
-                        var dueSchedules = this._backupSchedulePersistanceService.GetAllDueByDate(currentTime);
+                        List<BackupSchedule> dueSchedules = this._backupSchedulePersistanceService.GetAllDueByDate(currentTime);
                         if (dueSchedules == null)
                             return;
                         List<string> scheduleToDelete = new List<string>();
-                        foreach (var schedule in dueSchedules)
+                        foreach (BackupSchedule schedule in dueSchedules)
                         {
                             _logger.LogInformation($"Queueing Scheduled Backup...");
                             BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(schedule.BackupDatabaseInfoId);

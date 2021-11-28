@@ -22,8 +22,9 @@ namespace SemanticBackup.Core.Models
     {
         QUEUED,
         EXECUTING,
-        COMPRESSING,
         COMPLETED,
+        COMPRESSING,
+        READY,
         ERROR
     }
 }

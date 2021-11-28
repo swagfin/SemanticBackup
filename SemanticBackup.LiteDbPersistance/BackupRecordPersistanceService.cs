@@ -22,6 +22,13 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Query().ToList();
             }
         }
+        public List<BackupRecord> GetAllByStatus(string status)
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).ToList();
+            }
+        }
         public bool AddOrUpdate(BackupRecord record)
         {
             using (var db = new LiteDatabase(connString))
@@ -29,7 +36,7 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Upsert(record);
             }
         }
-        public bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, int executionInMilliseconds = 0)
+        public bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0)
         {
             using (var db = new LiteDatabase(connString))
             {
@@ -41,6 +48,7 @@ namespace SemanticBackup.LiteDbPersistance
                     objFound.StatusUpdateDate = updateDate;
                     objFound.ExecutionMessage = message;
                     objFound.ExecutionMilliseconds = $"{executionInMilliseconds:N2}ms";
+                    return collection.Update(objFound);
                 }
                 return false;
             }
@@ -73,5 +81,6 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Update(record);
             }
         }
+
     }
 }
