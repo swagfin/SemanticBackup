@@ -8,11 +8,11 @@ namespace SemanticBackup.LiteDbPersistance
 {
     public class BackupSchedulePersistanceService : IBackupSchedulePersistanceService
     {
-        private readonly string connString;
+        private readonly ConnectionString connString;
 
         public BackupSchedulePersistanceService(LiteDbPersistanceOptions options)
         {
-            this.connString = options.ConnectionString;
+            this.connString = options.ConnectionStringLiteDb;
         }
 
         public List<BackupSchedule> GetAll()
@@ -26,7 +26,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun > dateTime && x.LastRun < dateTime.AddHours(x.EveryHours)).ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun > dateTime && x.LastRun < dateTime.AddHours(x.EveryHours * -1)).ToList();
             }
         }
         public bool AddOrUpdate(BackupSchedule record)

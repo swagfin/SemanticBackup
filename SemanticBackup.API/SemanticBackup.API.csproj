@@ -8,5 +8,9 @@
     <ProjectReference Include="..\SemanticBackup.LiteDbPersistance\SemanticBackup.LiteDbPersistance.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="data\" />
+  </ItemGroup>
+
 
 </Project>

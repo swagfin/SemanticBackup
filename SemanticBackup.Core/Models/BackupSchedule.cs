@@ -9,7 +9,7 @@ namespace SemanticBackup.Core.Models
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
         [Required]
         public string BackupDatabaseInfoId { get; set; }
-        public string Type { get; set; } = BackupScheduleType.FULLBACKUP.ToString();
+        public string ScheduleType { get; set; } = BackupScheduleType.FULLBACKUP.ToString();
         public int EveryHours { get; set; } = 24;
         public DateTime StartDate { get; set; } = DateTime.Now;
         public DateTime NextRun { get { return StartDate.AddHours(EveryHours); } }

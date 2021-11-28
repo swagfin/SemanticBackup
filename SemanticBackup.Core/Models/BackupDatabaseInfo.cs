@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace SemanticBackup.Core.Models
@@ -31,8 +30,7 @@ namespace SemanticBackup.Core.Models
             }
         }
         public DateTime DateRegistered { get; set; } = DateTime.Now;
-        public virtual List<BackupSchedule> BackupSchedules { get; set; } = new List<BackupSchedule>();
-        public virtual List<BackupRecord> BackupRecords { get; set; } = new List<BackupRecord>();
+        public int BackupExpiryAgeInDays { get; set; } = 7; //Default 7 Days
     }
     public enum BackupDatabaseInfoDbType
     {

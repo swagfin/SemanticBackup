@@ -7,11 +7,11 @@ namespace SemanticBackup.LiteDbPersistance
 {
     public class DatabaseInfoPersistanceService : IDatabaseInfoPersistanceService
     {
-        private readonly string connString;
+        private readonly ConnectionString connString;
 
         public DatabaseInfoPersistanceService(LiteDbPersistanceOptions options)
         {
-            this.connString = options.ConnectionString;
+            this.connString = options.ConnectionStringLiteDb;
         }
 
         public List<BackupDatabaseInfo> GetAll()
