@@ -1,6 +1,7 @@
 ﻿using LiteDB;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
+using System;
 using System.Collections.Generic;
 
 namespace SemanticBackup.LiteDbPersistance
@@ -19,6 +20,13 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 return db.GetCollection<BackupSchedule>().Query().ToList();
+            }
+        }
+        public List<BackupSchedule> GetAllDueByDate(DateTime dateTime)
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun > dateTime && x.LastRun < dateTime.AddHours(x.EveryHours)).ToList();
             }
         }
         public bool AddOrUpdate(BackupSchedule record)

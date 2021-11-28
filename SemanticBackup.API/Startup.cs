@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SemanticBackup.API.Core;
 using SemanticBackup.API.Extensions;
-using SemanticBackup.API.Services;
-using SemanticBackup.API.Services.Implementations;
 using SemanticBackup.Core;
+using SemanticBackup.Core.BackgroundJobs;
 using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.LiteDbPersistance;
 
@@ -32,12 +32,16 @@ namespace SemanticBackup.API
             liteDbConfig.ConnectionString = liteDbConfig.ConnectionString.Replace("{{env}}", this.Environment.ContentRootPath);
             //Proceed
             services.AddSingleton(liteDbConfig);
-            services.Configure<PersistanceOptions>(Configuration.GetSection(nameof(PersistanceOptions)));
-            services.AddSingleton<IServerSharedRuntime, ServerSharedRuntime>();
+            services.AddSingleton<PersistanceOptions>(); //Configure Global Instance Reg
+            services.AddSingleton<SharedTimeZone>(); //Configure Global Instance Reg
 
-            services.AddScoped<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
-            services.AddScoped<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
-            services.AddScoped<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
+            services.AddTransient<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
+            services.AddTransient<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
+            services.AddTransient<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
+
+            //Background Jobs
+            services.AddSingleton<IProcessorInitializable, SchedulerBackgroundJob>();
+            //Services
             services.AddControllers();
         }
 
@@ -46,6 +50,8 @@ namespace SemanticBackup.API
         {
             //Ensure Lite Db Works
             app.EnsureLiteDbFolderExists();
+            //Start Background Service
+            app.UseProcessorInitializables();
             //Proceed
             if (env.IsDevelopment())
             {

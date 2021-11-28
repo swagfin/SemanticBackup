@@ -1,21 +1,20 @@
-﻿using Microsoft.Extensions.Options;
-using SemanticBackup.Core;
+﻿using SemanticBackup.Core;
 using System;
 
-namespace SemanticBackup.API.Services.Implementations
+namespace SemanticBackup.API.Core
 {
-    public class ServerSharedRuntime : IServerSharedRuntime
+    public class SharedTimeZone
     {
         private PersistanceOptions Options { get; }
         public TimeZoneInfo CurrentTimeZone { get; }
-        public ServerSharedRuntime(IOptions<PersistanceOptions> persistanceOptions)
+        public SharedTimeZone(PersistanceOptions persistanceOptions)
         {
-            this.Options = persistanceOptions.Value;
+            this.Options = persistanceOptions;
             string timezone = string.IsNullOrWhiteSpace(Options.ServerDefaultTimeZone) ? "E. Africa Standard Time" : Options.ServerDefaultTimeZone;
             this.CurrentTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timezone);
         }
 
-        public DateTime GetServerTime
+        public DateTime Now
         {
             get
             {

@@ -1,4 +1,5 @@
 ﻿using SemanticBackup.Core.Models;
+using System;
 using System.Collections.Generic;
 
 namespace SemanticBackup.Core.PersistanceServices
@@ -10,5 +11,6 @@ namespace SemanticBackup.Core.PersistanceServices
         bool Remove(string id);
         bool AddOrUpdate(BackupSchedule record);
         bool Update(BackupSchedule record);
+        List<BackupSchedule> GetAllDueByDate(DateTime dateTime);
     }
 }

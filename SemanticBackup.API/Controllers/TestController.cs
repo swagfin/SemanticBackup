@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Services;
+using SemanticBackup.API.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
@@ -12,14 +12,14 @@ namespace SemanticBackup.API.Controllers
     public class TestController : ControllerBase
     {
         private readonly ILogger<TestController> _logger;
-        private readonly IServerSharedRuntime _serverSharedRuntime;
+        private readonly SharedTimeZone _serverTimeZone;
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
 
-        public TestController(ILogger<TestController> logger, IServerSharedRuntime serverSharedRuntime, IBackupSchedulePersistanceService backupSchedulePersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
+        public TestController(ILogger<TestController> logger, SharedTimeZone sharedTimeZone, IBackupSchedulePersistanceService backupSchedulePersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
         {
             this._logger = logger;
-            this._serverSharedRuntime = serverSharedRuntime;
+            this._serverTimeZone = sharedTimeZone;
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
@@ -31,7 +31,7 @@ namespace SemanticBackup.API.Controllers
                 //Proceed
                 string _dbkey = "44405576-A24F-496E-BC08-A1C4D8A48F45";
                 string _schedulekey = "3755D701-5B3B-473C-83FC-D5DCEC179079";
-                DateTime currentTime = _serverSharedRuntime.GetServerTime;
+                DateTime currentTime = _serverTimeZone.Now;
                 BackupDatabaseInfo defaultDb = new BackupDatabaseInfo
                 {
                     Id = _dbkey,
