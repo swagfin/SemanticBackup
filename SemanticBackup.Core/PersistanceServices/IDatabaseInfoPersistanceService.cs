@@ -1,7 +1,7 @@
 ﻿using SemanticBackup.Core.Models;
 using System.Collections.Generic;
 
-namespace SemanticBackup.Core.Services
+namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IDatabaseInfoPersistanceService
     {

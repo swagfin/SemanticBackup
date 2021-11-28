@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Services;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.Services;
+using SemanticBackup.Core.PersistanceServices;
 using System;
 
 namespace SemanticBackup.API.Controllers
