@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticBackup.API", "SemanticBackup.API\SemanticBackup.API.csproj", "{B98E330A-7B4C-4BE0-AB64-1582B61A404B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticBackup.Core", "SemanticBackup.Core\SemanticBackup.Core.csproj", "{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticBackup.LiteDbPersistance", "SemanticBackup.LiteDbPersistance\SemanticBackup.LiteDbPersistance.csproj", "{2A551EE9-B8DE-4F30-925E-96925DE31479}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {389DD8B7-B73E-4601-9AA3-49B607C260E9}
+	EndGlobalSection
+EndGlobal
