@@ -67,15 +67,18 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 _logger.LogWarning($"No Database Info matches with Id: {backupRecord.BackupDatabaseInfoId}, Backup Database Record will be Deleted: {backupRecord.Id}");
                                 scheduleToDelete.Add(backupRecord.Id);
                             }
-
-                            //Add Queue
-                            BackupsBots.Add(new SQLBackupRobot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
-                            //Finally Update Status
-                            bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString(), currentTime);
-                            if (updated)
-                                _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
                             else
-                                _logger.LogWarning("Unable to Update Queued Backup Status");
+                            {
+                                //Add Queue
+                                BackupsBots.Add(new SQLBackupRobot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
+                                //Finally Update Status
+                                bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString(), currentTime);
+                                if (updated)
+                                    _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
+                                else
+                                    _logger.LogWarning("Unable to Update Queued Backup Status");
+                            }
+
                         }
                         //Check if Any Delete
                         if (scheduleToDelete.Count > 0)

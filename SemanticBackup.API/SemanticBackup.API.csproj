@@ -5,11 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SemanticBackup.LiteDbPersistance\SemanticBackup.LiteDbPersistance.csproj" />
+    <None Remove="data\database.db" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="data\" />
+    <ProjectReference Include="..\SemanticBackup.LiteDbPersistance\SemanticBackup.LiteDbPersistance.csproj" />
   </ItemGroup>
 
 
