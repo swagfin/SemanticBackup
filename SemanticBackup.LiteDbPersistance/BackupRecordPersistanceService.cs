@@ -32,6 +32,24 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).ToList();
             }
         }
+        public List<BackupRecord> GetAllByRegisteredDateByStatus(DateTime fromDate, string status = "*")
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                if (status == "*")
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.RegisteredDate > fromDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status && x.RegisteredDate > fromDate).ToList();
+            }
+        }
+        public List<BackupRecord> GetAllByStatusUpdateDateByStatus(DateTime fromDate, string status = "*")
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                if (status == "*")
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.StatusUpdateDate > fromDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status && x.StatusUpdateDate > fromDate).ToList();
+            }
+        }
         public List<BackupRecord> GetAllByDatabaseId(string id)
         {
             using (var db = new LiteDatabase(connString))

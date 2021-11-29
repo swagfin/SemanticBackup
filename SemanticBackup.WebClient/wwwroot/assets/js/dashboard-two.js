@@ -4,14 +4,14 @@
     var timeLabel = [];
     var todayData = [];
     var yesterdayData = [];
-    var defaultServiceId = "";
+    var defaultGroupId = "*";
 
     function kFormatter(num, decimalPoints) {
         return num > 999999 ? (num / 1000000).toFixed(decimalPoints + 2) + 'M' : num > 999 ? (num / 1000).toFixed(decimalPoints + 1) + 'K' : Math.round(num);
     }
 
     //Setting up signal R
-    var huburl = baseUrl + "ViewersMinuteHub";
+    var huburl = baseUrl + "DasbhoardStatistics";
     console.log(huburl);
     var connection = new signalR.HubConnectionBuilder().withUrl(huburl)
         .build();
@@ -20,17 +20,17 @@
     connection.on("ReceiveMetrics", function (metric) {
         console.log(metric);
 
-        var calMinute = metric.oneMin;
-        var calThree = metric.threeMin;
-        var calPeriod = metric.hours24;
+        var totalDatabases = metric.totalDatabases;
+        var totalBackupRecords = metric.totalBackupRecords;
+        var totalBackupSchedules = metric.totalBackupSchedules;
         //Format
-        calMinute = kFormatter(calMinute, 2);
-        calThree = kFormatter(calThree, 2);
-        calPeriod = kFormatter(calPeriod, 0);
+        totalDatabases = kFormatter(totalDatabases, 0);
+        totalBackupRecords = kFormatter(totalBackupRecords, 0);
+        totalBackupSchedules = kFormatter(totalBackupSchedules, 0);
 
-        document.getElementById("calMinute").textContent = calMinute;
-        document.getElementById("calThree").textContent = calThree;
-        document.getElementById("calPeriod").textContent = calPeriod;
+        document.getElementById("totalDatabasesLabel").textContent = totalDatabases;
+        document.getElementById("totalBackupRecordsLabel").textContent = totalBackupRecords;
+        document.getElementById("totalBackupSchedulesLabel").textContent = totalBackupSchedules;
         //Proceed
         retrieveRealTimeData(metric.avgMetrics);
         showRealTimeData();
@@ -43,8 +43,8 @@
             isLoading(true);
 
             await connection.start();
-            console.log("starting dashboard hub with id: " + defaultServiceId);
-            connection.invoke("JoinGroup", defaultServiceId).then(function () {
+            console.log("starting dashboard hub with id: " + defaultGroupId);
+            connection.invoke("JoinGroup", defaultGroupId).then(function () {
                 console.log("joined group");
             })
                 .catch(function (err) {
@@ -65,7 +65,7 @@
         isLoading(true);
         //Proceed
         var responseData = [];
-        var testChannel = { serviceId: "9999", serviceName: "TEST Channel" };
+        var testChannel = { serviceId: "*", serviceName: "BACKUP EXECUTIONS" };
         responseData.push(testChannel);
         //Ajax Here
         var collection = '';
@@ -77,7 +77,7 @@
 
         if (responseData[0] != null) {
             //Using Default
-            defaultServiceId = responseData[0].serviceId;
+            defaultGroupId = responseData[0].serviceId;
             $(".analytics_service_selected").html(responseData[0].serviceName);
             //Initiate Connection
             start();
@@ -90,7 +90,7 @@
         var analyticServiceId = $(this).attr('analyticServiceId');
         var analyticServiceName = $(this).html();
         $(".analytics_service_selected").html(analyticServiceName);
-        defaultServiceId = analyticServiceId;
+        defaultGroupId = analyticServiceId;
         connection.stop();
         start();
     });
@@ -117,8 +117,8 @@
 
         for (var i = 0; i < length; i++) {
             var curTime = realTimeArray[i].timeStampCurrent;
-            var today = realTimeArray[i].today;
-            var yesterday = realTimeArray[i].lastWeek;
+            var today = realTimeArray[i].successCount;
+            var yesterday = realTimeArray[i].errorsCount;
             //var yesterday = realTimeArray[i].LastWeek;
 
             timeLabel.push(curTime);
@@ -142,20 +142,21 @@
             data: {
                 labels: timeLabel,
                 datasets: [
+
                     {
-                        label: "Today",
-                        borderColor: "rgba(245, 23, 66, 0.9)",
-                        borderWidth: "1",
-                        backgroundColor: "rgba(245, 23, 66,.5)",
-                        pointHighlightStroke: "rgba(245, 23, 66,.5)",
+                        label: "Executed Jobs",
+                        borderColor: "rgba(0, 0, 0, 0.9)",
+                        borderWidth: "2",
+                        backgroundColor: "rgba(127, 215, 233, .5)",
+                        pointHighlightStroke: "rgba(0, 0, 0, .5)",
                         data: todayData
                     },
                     {
-                        label: "Last Week",
-                        borderColor: "rgba(0, 0, 0, 0.9)",
-                        borderWidth: "1",
-                        backgroundColor: "rgba(0, 0, 0, .5)",
-                        pointHighlightStroke: "rgba(0, 0, 0, .5)",
+                        label: "Failed Jobs",
+                        borderColor: "rgba(245, 23, 66, 0.9)",
+                        borderWidth: "2",
+                        backgroundColor: "rgba(245, 23, 66,.5)",
+                        pointHighlightStroke: "rgba(245, 23, 66,.5)",
                         data: yesterdayData
                     }
                 ]
