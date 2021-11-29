@@ -65,8 +65,13 @@
         isLoading(true);
         //Proceed
         var responseData = [];
-        var testChannel = { serviceId: "*", serviceName: "BACKUP EXECUTIONS" };
+        var testChannel = { serviceId: "*", serviceName: "ALL EXECUTIONS" };
         responseData.push(testChannel);
+        responseData.push({ serviceId: "QUEUED", serviceName: "QUEUED STATUS" });
+        responseData.push({ serviceId: "EXECUTING", serviceName: "EXECUTING STATUS" });
+        responseData.push({ serviceId: "COMPLETED", serviceName: "COMPLETED STATUS" });
+        responseData.push({ serviceId: "COMPRESSING", serviceName: "COMPRESSING STATUS" });
+        responseData.push({ serviceId: "READY", serviceName: "READY STATUS" });
         //Ajax Here
         var collection = '';
         for (var key in responseData) {

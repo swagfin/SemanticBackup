@@ -1,0 +1,44 @@
+﻿@page
+@model SemanticBackup.WebClient.Pages.BackupSchedules.IndexModel
+@{
+    ViewData["Title"] = "Database Backups Schedules | All";
+}
+<div class="container pd-x-0">
+    <div class="ui container">
+
+        <div class="ui header large">Database Backup Schedules</div>
+        <div class="ui divider"></div>
+
+        <table class="ui table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th class="warning" style="font-weight:bold">Name</th>
+                    <th>Schedule Type</th>
+                    <th>Every Hours</th>
+                    <th>Next Run</th>
+                    <th>Last Run</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td class="warning" style="font-weight:bold">TestDb on 127.0.0.1</td>
+                    <td>FULLBACKUP</td>
+                    <td>24HRS</td>
+                    <td>2021-12-01 12:45 PM</td>
+                    <td>2021-11-01 12:45 PM</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td class="warning" style="font-weight:bold">TestDb on 127.0.0.1</td>
+                    <td>FULLBACKUP</td>
+                    <td>24HRS</td>
+                    <td>2021-12-01 12:45 PM</td>
+                    <td>2021-11-01 12:45 PM</td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>

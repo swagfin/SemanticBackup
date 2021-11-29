@@ -1,0 +1,71 @@
+﻿@page
+@model SemanticBackup.WebClient.Pages.DatabaseBackups.IndexModel
+@{
+    ViewData["Title"] = "Database Backups | All";
+}
+@{
+    <script type="text/javascript">
+        var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+    </script>
+}
+<div class="container pd-x-0">
+    <div class="ui container">
+
+        <div class="ui header large">Database Backups</div>
+        <div class="ui divider"></div>
+
+        <table class="ui table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Last Updated</th>
+                    <th>Execution Speed</th>
+                    <th>Backup Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td class="warning" style="font-weight:bold">TestDb on 127.0.0.1</td>
+                    <td>3 Minute Ago</td>
+                    <td>21.00ms</td>
+                    <td>
+                        <span class="ui label basic small"><i class="clock icon"></i>QUEUED</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td class="warning" style="font-weight:bold">clouyd_pos on 127.0.0.1</td>
+                    <td>1 Minute Ago</td>
+                    <td>5.00ms</td>
+                    <td>
+                        <span class="ui label small basic green"><i class="checkmark icon"></i>COMPLETED</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td class="warning" style="font-weight:bold">clouyd_pos on 127.0.0.1</td>
+                    <td>1 Minute Ago</td>
+                    <td>5.00ms</td>
+                    <td>
+                        <span class="ui label small basic blue"><i class="notched circle loading icon"></i> EXECUTING</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts{
+<script src="~/lib/signalr/dist/browser/signalr.js"></script>
+<script type="text/javascript" src="~/assets/js/signalr-subscriber.js"></script>
+<script type="text/javascript">
+    //Try To Create Function
+    _= getListenerAsync(baseUrl + "BackupRecordsNotify", "82DAFA2A-49EE-4E52-B7A4-EFBC727ECDF7", "ReceiveNotification",function (metric)
+    {
+        console.log("Braveeeeooo Received Some Data");
+        console.log(metric);
+    });
+</script>
+}

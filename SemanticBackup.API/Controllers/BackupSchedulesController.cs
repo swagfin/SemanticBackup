@@ -26,11 +26,12 @@ namespace SemanticBackup.API.Controllers
             this._sharedTimeZone = sharedTimeZone;
         }
 
-        private void VerifyDatabaseExistsById(string backupDatabaseInfoId)
+        private BackupDatabaseInfo VerifyDatabaseExistsById(string backupDatabaseInfoId)
         {
-            var device = this._databaseInfoPersistanceService.GetById(backupDatabaseInfoId);
-            if (device == null)
+            var databaseRecord = this._databaseInfoPersistanceService.GetById(backupDatabaseInfoId);
+            if (databaseRecord == null)
                 throw new Exception($"No Such Device with ID: {backupDatabaseInfoId}");
+            return databaseRecord;
         }
 
         [HttpGet]
@@ -86,7 +87,7 @@ namespace SemanticBackup.API.Controllers
                 if (request == null)
                     throw new Exception("Object value can't be NULL");
                 //Verify Database Info Exists
-                VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
+                var record = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
                 DateTime currentTime = _sharedTimeZone.Now;
                 BackupSchedule saveObj = new BackupSchedule
                 {
@@ -94,7 +95,8 @@ namespace SemanticBackup.API.Controllers
                     ScheduleType = request.ScheduleType,
                     EveryHours = request.EveryHours,
                     StartDate = request.StartDate,
-                    CreatedOn = currentTime
+                    CreatedOn = currentTime,
+                    Name = record.Name
                 };
                 bool savedSuccess = _backupSchedulePersistanceService.AddOrUpdate(saveObj);
                 if (!savedSuccess)
@@ -118,7 +120,7 @@ namespace SemanticBackup.API.Controllers
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
                 //Verify Database Info Exists
-                VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
+                var record = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
                 //Proceed
                 var savedObj = _backupSchedulePersistanceService.GetById(id);
                 if (savedObj == null)
@@ -128,6 +130,7 @@ namespace SemanticBackup.API.Controllers
                 savedObj.ScheduleType = request.ScheduleType;
                 savedObj.EveryHours = request.EveryHours;
                 savedObj.StartDate = request.StartDate;
+                savedObj.Name = record.Name;
                 bool updatedSuccess = _backupSchedulePersistanceService.Update(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
