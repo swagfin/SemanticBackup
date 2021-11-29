@@ -223,8 +223,9 @@ namespace SemanticBackup.Core.BackgroundJobs
                     }
                     catch (Exception ex)
                     {
-                        if (attempts >= 5)
+                        if (attempts >= 10)
                         {
+                            Thread.Sleep(2000);
                             throw new Exception($"Maximum Deletion Attempts, Error: {ex.Message}");
                         }
                     }
