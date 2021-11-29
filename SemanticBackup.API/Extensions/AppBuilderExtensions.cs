@@ -8,13 +8,23 @@ namespace SemanticBackup.API.Extensions
 {
     public static class AppBuilderExtensions
     {
-        public static void EnsureLiteDbFolderExists(this IApplicationBuilder builder)
+        public static void EnsureLiteDbDirectoryExists(this IApplicationBuilder builder)
         {
             var liteDbConfig = (LiteDbPersistanceOptions)builder.ApplicationServices.GetService(typeof(LiteDbPersistanceOptions));
             if (liteDbConfig == null)
                 return;
             //Proceed
             string directory = Path.GetDirectoryName(liteDbConfig.ConnectionString);
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+        }
+        public static void EnsureBackupDirectoryExists(this IApplicationBuilder builder)
+        {
+            var persistanceOptions = (PersistanceOptions)builder.ApplicationServices.GetService(typeof(PersistanceOptions));
+            if (persistanceOptions == null)
+                return;
+            //Proceed
+            string directory = Path.GetDirectoryName(persistanceOptions.DefaultBackupDirectory);
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
         }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Core;
-using SemanticBackup.Core.BackupServices;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
+using SemanticBackup.Core.ProviderServices;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

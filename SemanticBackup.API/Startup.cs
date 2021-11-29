@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SemanticBackup.API.Core;
 using SemanticBackup.API.Extensions;
+using SemanticBackup.API.SignalRHubs;
 using SemanticBackup.Core;
 using SemanticBackup.Core.BackgroundJobs;
 using SemanticBackup.Core.PersistanceServices;
@@ -32,9 +33,16 @@ namespace SemanticBackup.API
             Configuration.GetSection(nameof(LiteDbPersistanceOptions)).Bind(liteDbConfig);
             //Replace Variables
             liteDbConfig.ConnectionString = liteDbConfig.ConnectionString.Replace("{{env}}", this.Environment.ContentRootPath);
-            //Proceed
+            //Add
             services.AddSingleton(liteDbConfig);
-            services.AddSingleton<PersistanceOptions>(); //Configure Global Instance Reg
+
+            PersistanceOptions persistanceOptions = new PersistanceOptions();
+            Configuration.GetSection(nameof(PersistanceOptions)).Bind(persistanceOptions);
+            //Replace Variables
+            persistanceOptions.DefaultBackupDirectory = persistanceOptions.DefaultBackupDirectory.Replace("{{env}}", this.Environment.ContentRootPath);
+            services.AddSingleton(persistanceOptions); //Configure Global Instance Reg
+
+            //Shared TimeZone Sync DateTime
             services.AddSingleton<SharedTimeZone>(); //Configure Global Instance Reg
 
             services.AddTransient<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
@@ -48,6 +56,27 @@ namespace SemanticBackup.API
             services.AddSingleton<IProcessorInitializable, SchedulerBackgroundJob>();
             services.AddSingleton<IProcessorInitializable, BackupBackgroundJob>(); //Main Backup Thread Lunching Bots
             services.AddSingleton<IProcessorInitializable, BackupBackgroundZIPJob>(); //Zipper Thread Lunching Bots
+
+            //Notifications
+            services.AddSingleton<BackupRecordHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
+            services.AddSingleton<IBackupRecordStatusChangedNotifier>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
+
+            //Signal R and Cors
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
+
+            services.AddCors(opt =>
+            {
+                opt.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyHeader();
+                    builder.AllowAnyMethod();
+                    builder.SetIsOriginAllowed((x) => true);
+                    builder.AllowCredentials();
+                });
+            });
             //Services
             services.AddControllers();
         }
@@ -56,7 +85,9 @@ namespace SemanticBackup.API
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             //Ensure Lite Db Works
-            app.EnsureLiteDbFolderExists();
+            app.EnsureLiteDbDirectoryExists();
+            app.EnsureBackupDirectoryExists();
+
             //Start Background Service
             app.UseProcessorInitializables();
             //Proceed
@@ -66,13 +97,16 @@ namespace SemanticBackup.API
             }
             // app.UseHttpsRedirection();
 
+            app.UseCors();
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapDefaultControllerRoute();
+                endpoints.MapHub<BackupRecordHubDispatcher>("/BackupRecordsNotify");
             });
         }
     }
