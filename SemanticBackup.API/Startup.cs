@@ -7,9 +7,9 @@ using SemanticBackup.API.Core;
 using SemanticBackup.API.Extensions;
 using SemanticBackup.Core;
 using SemanticBackup.Core.BackgroundJobs;
-using SemanticBackup.Core.BackupServices;
-using SemanticBackup.Core.BackupServices.Implementations;
 using SemanticBackup.Core.PersistanceServices;
+using SemanticBackup.Core.ProviderServices;
+using SemanticBackup.Core.ProviderServices.Implementations;
 using SemanticBackup.LiteDbPersistance;
 
 namespace SemanticBackup.API
