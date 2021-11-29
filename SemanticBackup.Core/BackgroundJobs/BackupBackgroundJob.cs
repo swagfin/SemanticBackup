@@ -43,6 +43,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         {
             _logger.LogInformation("Starting service....");
             SetupBackgroundService();
+            SetupBotsBackgroundService();
             _logger.LogInformation("Service Started");
         }
 
@@ -71,7 +72,10 @@ namespace SemanticBackup.Core.BackgroundJobs
                             else
                             {
                                 //Add Queue
-                                BackupsBots.Add(new SQLBackupRobot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
+                                if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
+                                    BackupsBots.Add(new SQLBackupRobot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
+                                else
+                                    throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
                                 //Finally Update Status
                                 bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString(), currentTime);
                                 if (updated)
@@ -90,30 +94,43 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         _logger.LogError(ex.Message);
                     }
-
-                    try
-                    {
-                        //Start and Stop Bacup Bots
-                        int runningThreads = this.BackupsBots.Count(x => x.IsStarted && !x.IsCompleted);
-                        int takeCount = _persistanceOptions.MaximumBackupRunningThreads - runningThreads;
-                        if (takeCount > 0)
-                        {
-                            List<IBackupRobot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
-                            if (botsNotStarted != null && botsNotStarted.Count > 0)
-                                foreach (IBackupRobot bot in botsNotStarted)
-                                    _ = bot.RunAsync();
-                        }
-                        //Remove Completed
-                        List<IBackupRobot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
-                        if (botsCompleted != null && botsCompleted.Count > 0)
-                            foreach (IBackupRobot bot in botsCompleted)
-                                this.BackupsBots.Remove(bot);
-
-                    }
-                    catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
-
                     //Await
                     await Task.Delay(10000);
+                }
+            });
+            t.Start();
+        }
+
+        private void SetupBotsBackgroundService()
+        {
+            var t = new Thread(async () =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        if (this.BackupsBots != null || this.BackupsBots.Count > 0)
+                        {
+                            //Start and Stop Bacup Bots
+                            int runningThreads = this.BackupsBots.Count(x => x.IsStarted && !x.IsCompleted);
+                            int takeCount = _persistanceOptions.MaximumBackupRunningThreads - runningThreads;
+                            if (takeCount > 0)
+                            {
+                                List<IBackupRobot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
+                                if (botsNotStarted != null && botsNotStarted.Count > 0)
+                                    foreach (IBackupRobot bot in botsNotStarted)
+                                        _ = bot.RunAsync();
+                            }
+                            //Remove Completed
+                            List<IBackupRobot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
+                            if (botsCompleted != null && botsCompleted.Count > 0)
+                                foreach (IBackupRobot bot in botsCompleted)
+                                    this.BackupsBots.Remove(bot);
+                        }
+                    }
+                    catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
+                    //Delay
+                    await Task.Delay(2000);
                 }
             });
             t.Start();
@@ -155,7 +172,7 @@ namespace SemanticBackup.Core.BackgroundJobs
             {
                 _logger.LogInformation($"Creating Backup of Db: {_databaseInfo.DatabaseName}");
                 EnsureFolderExists(_backupRecord.Path);
-                await Task.Delay(new Random().Next(4000));
+                await Task.Delay(new Random().Next(1000));
                 stopwatch.Start();
                 //Execute Service
                 bool backupedUp = _backupProviderService.BackupDatabase(_databaseInfo, _backupRecord);
@@ -164,6 +181,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.COMPLETED.ToString(), "Successfull", stopwatch.ElapsedMilliseconds);
                 else
                     throw new Exception("Creating Backup Failed to Return Success Completion");
+                _logger.LogInformation($"Creating Backup of Db: {_databaseInfo.DatabaseName}...SUCCESS");
             }
             catch (Exception ex)
             {
