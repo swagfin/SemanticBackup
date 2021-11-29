@@ -32,6 +32,14 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).ToList();
             }
         }
+        public List<BackupRecord> GetAllByDatabaseId(string id)
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).ToList();
+            }
+        }
+
         public bool AddOrUpdate(BackupRecord record)
         {
             using (var db = new LiteDatabase(connString))

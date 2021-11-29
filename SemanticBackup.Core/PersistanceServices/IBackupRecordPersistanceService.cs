@@ -13,5 +13,6 @@ namespace SemanticBackup.Core.PersistanceServices
         bool Update(BackupRecord record);
         bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0);
         List<BackupRecord> GetAllByStatus(string status);
+        List<BackupRecord> GetAllByDatabaseId(string id);
     }
 }

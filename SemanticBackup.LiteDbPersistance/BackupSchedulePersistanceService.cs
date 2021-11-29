@@ -29,6 +29,13 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun > dateTime && x.LastRun < dateTime.AddHours(x.EveryHours * -1)).OrderBy(x => x.NextRun).ToList();
             }
         }
+        public List<BackupSchedule> GetAllByDatabaseId(string id)
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id).ToList();
+            }
+        }
         public bool AddOrUpdate(BackupSchedule record)
         {
             using (var db = new LiteDatabase(connString))

@@ -21,11 +21,42 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public List<BackupRecord> Get()
+        public ActionResult<List<BackupRecord>> Get()
         {
             try
             {
                 return _backupRecordPersistanceService.GetAll();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return new List<BackupRecord>();
+            }
+        }
+        [HttpGet("ByDatabaseId/{id}")]
+        public ActionResult<List<BackupRecord>> GetByDatabaseId(string id)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                    return new BadRequestObjectResult("Database Id can't be Null or Empty");
+                return _backupRecordPersistanceService.GetAllByDatabaseId(id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return new List<BackupRecord>();
+            }
+        }
+
+        [HttpGet("ByStatus/{status}")]
+        public ActionResult<List<BackupRecord>> GetByStatus(string status)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(status))
+                    return new BadRequestObjectResult("Status was not Provided");
+                return _backupRecordPersistanceService.GetAllByStatus(status);
             }
             catch (Exception ex)
             {

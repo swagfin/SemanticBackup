@@ -14,6 +14,7 @@ namespace SemanticBackup.Core.Models
         public DateTime StartDate { get; set; } = DateTime.Now;
         public DateTime NextRun { get { return StartDate.AddHours(EveryHours); } }
         public DateTime? LastRun { get; set; } = null;
+        public DateTime CreatedOn { get; set; } = DateTime.Now;
     }
     public enum BackupScheduleType
     {

@@ -12,5 +12,6 @@ namespace SemanticBackup.Core.PersistanceServices
         bool AddOrUpdate(BackupSchedule record);
         bool Update(BackupSchedule record);
         List<BackupSchedule> GetAllDueByDate(DateTime dateTime);
+        List<BackupSchedule> GetAllByDatabaseId(string id);
     }
 }
