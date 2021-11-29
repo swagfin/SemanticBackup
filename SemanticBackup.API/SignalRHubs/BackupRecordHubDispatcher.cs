@@ -54,10 +54,6 @@ namespace SemanticBackup.API.SignalRHubs
             }
             catch { }
         }
-        public void DispatchDeletedStatus(string recordId)
-        {
-            return; //No Notification
-        }
 
         public async Task JoinGroup(object groupObj)
         {

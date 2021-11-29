@@ -10,12 +10,12 @@ namespace SemanticBackup.LiteDbPersistance
     public class BackupRecordPersistanceService : IBackupRecordPersistanceService
     {
         private readonly ConnectionString connString;
-        private readonly IBackupRecordStatusChangedNotifier _backupRecordStatusChangedNotifier;
+        private readonly IEnumerable<IBackupRecordStatusChangedNotifier> _backupRecordStatusChangedNotifiers;
 
-        public BackupRecordPersistanceService(LiteDbPersistanceOptions options, IBackupRecordStatusChangedNotifier backupRecordStatusChangedNotifier)
+        public BackupRecordPersistanceService(LiteDbPersistanceOptions options, IEnumerable<IBackupRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers)
         {
             this.connString = options.ConnectionStringLiteDb;
-            this._backupRecordStatusChangedNotifier = backupRecordStatusChangedNotifier;
+            this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
         }
 
         public List<BackupRecord> GetAll()
@@ -38,10 +38,11 @@ namespace SemanticBackup.LiteDbPersistance
             {
                 bool savedSuccess = db.GetCollection<BackupRecord>().Upsert(record);
                 if (savedSuccess)
-                    this._backupRecordStatusChangedNotifier.DispatchUpdatedStatus(record);
+                    this.DispatchUpdatedStatus(record);
                 return savedSuccess;
             }
         }
+
         public bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0)
         {
             using (var db = new LiteDatabase(connString))
@@ -56,7 +57,7 @@ namespace SemanticBackup.LiteDbPersistance
                     objFound.ExecutionMilliseconds = $"{executionInMilliseconds:N2}ms";
                     bool updatedSuccess = collection.Update(objFound);
                     if (updatedSuccess)
-                        this._backupRecordStatusChangedNotifier.DispatchUpdatedStatus(objFound);
+                        this.DispatchUpdatedStatus(objFound);
                 }
                 return false;
             }
@@ -78,10 +79,7 @@ namespace SemanticBackup.LiteDbPersistance
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
                 {
-                    bool deleted = collection.Delete(new BsonValue(objFound.Id));
-                    if (deleted)
-                        this._backupRecordStatusChangedNotifier.DispatchDeletedStatus(id);
-                    return deleted;
+                    return collection.Delete(new BsonValue(objFound.Id));
                 }
                 return false;
             }
@@ -95,5 +93,15 @@ namespace SemanticBackup.LiteDbPersistance
             }
         }
 
+        private void DispatchUpdatedStatus(BackupRecord record)
+        {
+            if (_backupRecordStatusChangedNotifiers != null)
+                foreach (var notifier in _backupRecordStatusChangedNotifiers)
+                    try
+                    {
+                        notifier.DispatchUpdatedStatus(record);
+                    }
+                    catch { }
+        }
     }
 }
