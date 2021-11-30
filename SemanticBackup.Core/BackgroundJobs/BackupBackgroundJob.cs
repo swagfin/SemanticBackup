@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Core;
+using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.Core.ProviderServices;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +20,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
-        private readonly List<IBackupRobot> BackupsBots;
+        internal readonly List<IBot> BackupsBots;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
             SharedTimeZone sharedTimeZone,
@@ -37,7 +36,7 @@ namespace SemanticBackup.Core.BackgroundJobs
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
-            this.BackupsBots = new List<IBackupRobot>();
+            this.BackupsBots = new List<IBot>();
         }
         public void Initialize()
         {
@@ -73,7 +72,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             {
                                 //Add Queue
                                 if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                    BackupsBots.Add(new SQLBackupRobot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
+                                    BackupsBots.Add(new SQLBackupBot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
                                 else
                                     throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
                                 //Finally Update Status
@@ -81,7 +80,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 if (updated)
                                     _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
                                 else
-                                    _logger.LogWarning("Unable to Update Queued Backup Status");
+                                    _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
                             }
 
                         }
@@ -116,15 +115,15 @@ namespace SemanticBackup.Core.BackgroundJobs
                             int takeCount = _persistanceOptions.MaximumBackupRunningThreads - runningThreads;
                             if (takeCount > 0)
                             {
-                                List<IBackupRobot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
+                                List<IBot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
                                 if (botsNotStarted != null && botsNotStarted.Count > 0)
-                                    foreach (IBackupRobot bot in botsNotStarted)
+                                    foreach (IBot bot in botsNotStarted)
                                         _ = bot.RunAsync();
                             }
                             //Remove Completed
-                            List<IBackupRobot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
+                            List<IBot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
                             if (botsCompleted != null && botsCompleted.Count > 0)
-                                foreach (IBackupRobot bot in botsCompleted)
+                                foreach (IBot bot in botsCompleted)
                                     this.BackupsBots.Remove(bot);
                         }
                     }
@@ -134,85 +133,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                 }
             });
             t.Start();
-        }
-    }
-
-    public interface IBackupRobot
-    {
-        Task RunAsync();
-        bool IsCompleted { get; }
-        bool IsStarted { get; }
-    }
-    public class SQLBackupRobot : IBackupRobot
-    {
-        private readonly BackupDatabaseInfo _databaseInfo;
-        private readonly BackupRecord _backupRecord;
-        private readonly ISQLServerBackupProviderService _backupProviderService;
-        private readonly IBackupRecordPersistanceService _persistanceService;
-        private readonly SharedTimeZone _sharedTimeZone;
-        private readonly ILogger _logger;
-        public bool IsCompleted { get; private set; } = false;
-        public bool IsStarted { get; private set; } = false;
-
-        public SQLBackupRobot(BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, ISQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, SharedTimeZone sharedTimeZone, ILogger logger)
-        {
-            this._databaseInfo = databaseInfo;
-            this._backupRecord = backupRecord;
-            this._backupProviderService = backupProviderService;
-            this._persistanceService = persistanceService;
-            this._sharedTimeZone = sharedTimeZone;
-            this._logger = logger;
-        }
-        public async Task RunAsync()
-        {
-            this.IsStarted = true;
-            this.IsCompleted = false;
-            Stopwatch stopwatch = new Stopwatch();
-            try
-            {
-                _logger.LogInformation($"Creating Backup of Db: {_databaseInfo.DatabaseName}");
-                EnsureFolderExists(_backupRecord.Path);
-                await Task.Delay(new Random().Next(1000));
-                stopwatch.Start();
-                //Execute Service
-                bool backupedUp = _backupProviderService.BackupDatabase(_databaseInfo, _backupRecord);
-                stopwatch.Stop();
-                if (backupedUp)
-                    UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.COMPLETED.ToString(), "Successfull", stopwatch.ElapsedMilliseconds);
-                else
-                    throw new Exception("Creating Backup Failed to Return Success Completion");
-                _logger.LogInformation($"Creating Backup of Db: {_databaseInfo.DatabaseName}...SUCCESS");
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex.Message);
-                stopwatch.Stop();
-                UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), ex.Message, stopwatch.ElapsedMilliseconds);
-            }
-        }
-
-        private void EnsureFolderExists(string path)
-        {
-            string directory = Path.GetDirectoryName(path);
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-        }
-
-        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed)
-        {
-            try
-            {
-                DateTime currentTime = _sharedTimeZone.Now;
-                _persistanceService.UpdateStatusFeed(recordId, status, currentTime, message, elapsed);
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError("Error Updating Feed: " + ex.Message);
-            }
-            finally
-            {
-                IsCompleted = true;
-            }
         }
     }
 }

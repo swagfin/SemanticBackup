@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SemanticBackup.WebClient.Services;
+using SemanticBackup.WebClient.Services.Implementations;
 
 namespace SemanticBackup.WebClient
 {
@@ -19,6 +21,7 @@ namespace SemanticBackup.WebClient
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<WebClientOptions>(Configuration.GetSection("WebClientOptions"));
+            services.AddTransient<IHttpService, HttpService>();
             services.AddRazorPages();
         }
 
