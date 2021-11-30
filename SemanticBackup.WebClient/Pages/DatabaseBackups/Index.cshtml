@@ -87,12 +87,8 @@
 <script type="text/javascript" src="~/assets/js/signalr-subscriber.js"></script>
 <script type="text/javascript" src="~/assets/js/time-ago.js"></script>
 <script type="text/javascript">
-       //Try To Create Function
-    $('.subscribe-status-event').each(function (i, obj){
-      var recordId = $(this).attr('subscribe-status-event-id');
-      console.log("Creating Observer for Record #" + recordId);
-      //Signal R Observer
-      _= getListenerAsync(baseUrl + "BackupRecordsNotify", recordId, "ReceiveNotification",function (metric)
+       //Create Main Obersavable
+       _= getListenerAsync(baseUrl + "BackupRecordsNotify", "*", "ReceiveNotification",function (metric)
        {
           console.log("Received Database Backup Status Update");
           //console.log(metric);
@@ -111,6 +107,5 @@
           $(".last-status-update-for-" + key).html(time_ago(new Date(metric.statusUpdateDate)));
           //console.log("Updated UI Success");
        });
-     });
 </script>
 }
