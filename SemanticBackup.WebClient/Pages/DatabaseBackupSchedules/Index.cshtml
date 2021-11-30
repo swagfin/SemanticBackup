@@ -9,35 +9,42 @@
         <div class="ui header large">Database Backup Schedules</div>
         <div class="ui divider"></div>
 
-        <table class="ui table">
+        <table class="ui selectable table">
             <thead>
                 <tr>
                     <th>#</th>
                     <th class="warning" style="font-weight:bold">Name</th>
                     <th>Schedule Type</th>
                     <th>Every Hours</th>
-                    <th>Next Run</th>
                     <th>Last Run</th>
+                    <th>Next Run</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td class="warning" style="font-weight:bold">TestDb on 127.0.0.1</td>
-                    <td>FULLBACKUP</td>
-                    <td>24HRS</td>
-                    <td>2021-12-01 12:45 PM</td>
-                    <td>2021-11-01 12:45 PM</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td class="warning" style="font-weight:bold">TestDb on 127.0.0.1</td>
-                    <td>FULLBACKUP</td>
-                    <td>24HRS</td>
-                    <td>2021-12-01 12:45 PM</td>
-                    <td>2021-11-01 12:45 PM</td>
-                </tr>
-
+                @{
+                    int count = 0;
+                    if (Model.BackupSchedulesResponse != null && Model.BackupSchedulesResponse.Count > 0)
+                        foreach (var record in Model.BackupSchedulesResponse)
+                        {
+                            count++;
+                            <tr onclick="location.href='/databasebackupschedules/@(record.Id)'">
+                                <td>@string.Format("{0:N0}", count)</td>
+                                <td class="positive" style="font-weight:bold;font-size:14px"> <i class="clock icon"></i> @record.Name</td>
+                                <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
+                                <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
+                                <td>@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.LastRun)</td>
+                                <td>@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.NextRun)</td>
+                            </tr>
+                        }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" style="text-align:center">
+                                <div class="ui message small warning"><div>To Data Available</div></div>
+                            </td>
+                        </tr>
+                    }
+                }
             </tbody>
         </table>
     </div>

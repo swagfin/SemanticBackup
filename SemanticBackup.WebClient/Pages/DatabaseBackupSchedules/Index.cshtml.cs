@@ -1,17 +1,38 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using SemanticBackup.WebClient.Models.Response;
+using SemanticBackup.WebClient.Services;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.BackupSchedules
 {
     public class IndexModel : PageModel
     {
-        public string ApiEndPoint { get; }
-        public IndexModel(IOptions<WebClientOptions> options)
+        private readonly IHttpService _httpService;
+        private readonly ILogger<IndexModel> _logger;
+
+        public List<BackupScheduleResponse> BackupSchedulesResponse { get; set; }
+        public IndexModel(IHttpService httpService, ILogger<IndexModel> logger)
         {
-            ApiEndPoint = options.Value.WebApiUrl;
+            this._httpService = httpService;
+            this._logger = logger;
         }
-        public void OnGet()
+
+        public async Task<IActionResult> OnGetAsync()
         {
+            try
+            {
+                var url = "api/BackupSchedules/";
+                BackupSchedulesResponse = await _httpService.GetAsync<List<BackupScheduleResponse>>(url);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return Page();
         }
     }
 }
