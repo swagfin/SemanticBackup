@@ -54,6 +54,36 @@ namespace SemanticBackup.API.Controllers
             }
         }
 
+        [HttpGet("{id}")]
+        public ActionResult<BackupDatabaseInfoResponse> Get(string id)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                    throw new Exception("Id can't be NULL");
+                var x = _backupDatabasePersistanceService.GetById(id);
+                if (x == null)
+                    return new NotFoundObjectResult($"No Data Found with Key: {id}");
+                return new BackupDatabaseInfoResponse
+                {
+                    BackupExpiryAgeInDays = x.BackupExpiryAgeInDays,
+                    DatabaseName = x.DatabaseName,
+                    DatabaseType = x.DatabaseType,
+                    Description = x.Description,
+                    Id = x.Id,
+                    Port = x.Port,
+                    Server = x.Server,
+                    Username = x.Username,
+                    Password = GetInvisibleText(x.Password),
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return new BadRequestObjectResult(ex.Message);
+            }
+        }
+
         private string GetInvisibleText(string password)
         {
             try
