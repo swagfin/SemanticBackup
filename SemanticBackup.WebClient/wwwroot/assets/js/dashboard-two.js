@@ -150,10 +150,10 @@
 
                     {
                         label: "Executed Jobs",
-                        borderColor: "rgba(0, 0, 0, 0.9)",
+                        borderColor: "rgba(4, 169, 227, 0.9)",
                         borderWidth: "2",
                         backgroundColor: "rgba(127, 215, 233, .5)",
-                        pointHighlightStroke: "rgba(0, 0, 0, .5)",
+                        pointHighlightStroke: "rgba(4, 169, 227, .5)",
                         data: todayData
                     },
                     {
