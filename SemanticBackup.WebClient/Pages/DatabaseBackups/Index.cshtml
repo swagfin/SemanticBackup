@@ -19,8 +19,9 @@
                 <tr>
                     <th>#</th>
                     <th>Name</th>
+                    <th>Backup Date</th>
                     <th>Last Updated</th>
-                    <th>Execution Speed</th>
+                    <th>Avg. Speed</th>
                     <th>Backup Status</th>
                 </tr>
             </thead>
@@ -33,8 +34,9 @@
                             count++;
                             <tr onclick="location.href='/databasebackupschedules/@(record.Id)'">
                                 <td>@string.Format("{0:N0}", count)</td>
-                                <td class="positive" style="font-weight:bold;font-size:14px"> <i class="clock icon"></i> @record.Name</td>
-                                <td class="warning last-status-update-for-@(record.Id)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
+                                <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
+                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
+                                <td class="last-status-update-for-@(record.Id)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
                                 <td class="execution-milliseconds-for-@(record.Id)">@record.ExecutionMilliseconds</td>
 
                                 @{
@@ -44,7 +46,7 @@
                                     }
                                     if (record.BackupStatus == "COMPLETED")
                                     {
-                                        <td subscribe-status-event-id="@(record.Id)" class="subscribe-status-event status-for-@(record.Id)"> <span class="ui label small basic green"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
+                                        <td subscribe-status-event-id="@(record.Id)" class="subscribe-status-event status-for-@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
                                     }
                                     else if (record.BackupStatus == "COMPRESSING")
                                     {
@@ -69,7 +71,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="5" style="text-align:center">
+                            <td colspan="6" style="text-align:center">
                                 <div class="ui message small warning"><div>To Data Available</div></div>
                             </td>
                         </tr>
@@ -99,7 +101,7 @@
           //Update Status
           console.log("Updating UI Key: " + key+ ", Status: "+ status);
           if(status=="EXECUTING"){ $(".status-for-" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>' + status + '</span>'); }
-          else if(status=="COMPLETED"){ $(".status-for-" + key).html('<span class="ui label small basic green"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
+          else if(status=="COMPLETED"){ $(".status-for-" + key).html('<span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
           else if(status=="COMPRESSING"){ $(".status-for-" + key).html('<span class="ui label small basic olive"><i class="notched circle loading icon"></i>' + status + '</span>'); }
           else if(status=="READY"){ $(".status-for-" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>'); }
           else if(status=="ERROR"){ $(".status-for-" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }

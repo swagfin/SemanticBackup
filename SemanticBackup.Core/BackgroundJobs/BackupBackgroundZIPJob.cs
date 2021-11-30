@@ -69,7 +69,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                         _logger.LogError(ex.Message);
                     }
                     //Delay
-                    await Task.Delay(5000);
+                    await Task.Delay(10000);
                 }
             });
             t.Start();

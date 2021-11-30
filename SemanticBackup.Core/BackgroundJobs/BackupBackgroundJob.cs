@@ -94,7 +94,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                         _logger.LogError(ex.Message);
                     }
                     //Await
-                    await Task.Delay(10000);
+                    await Task.Delay(30 * 1000);
                 }
             });
             t.Start();
@@ -129,7 +129,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     }
                     catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
                     //Delay
-                    await Task.Delay(2000);
+                    await Task.Delay(5000);
                 }
             });
             t.Start();
