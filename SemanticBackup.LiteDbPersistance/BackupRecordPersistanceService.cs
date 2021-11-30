@@ -22,14 +22,14 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().ToList();
+                return db.GetCollection<BackupRecord>().Query().OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
         public List<BackupRecord> GetAllByStatus(string status)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
         public List<BackupRecord> GetAllByRegisteredDateByStatus(DateTime fromDate, string status = "*")
@@ -37,8 +37,8 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.RegisteredDate > fromDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status && x.RegisteredDate > fromDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status && x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
         public List<BackupRecord> GetAllByStatusUpdateDateByStatus(DateTime fromDate, string status = "*")
@@ -46,8 +46,8 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.StatusUpdateDate > fromDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status && x.StatusUpdateDate > fromDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status && x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
         public List<BackupRecord> GetAllByDatabaseId(string id)
@@ -79,8 +79,11 @@ namespace SemanticBackup.LiteDbPersistance
                 {
                     objFound.BackupStatus = status;
                     objFound.StatusUpdateDate = updateDate;
-                    objFound.ExecutionMessage = message;
-                    objFound.ExecutionMilliseconds = $"{executionInMilliseconds:N2}ms";
+                    if (!string.IsNullOrEmpty(message))
+                    {
+                        objFound.ExecutionMessage = message;
+                        objFound.ExecutionMilliseconds = $"{executionInMilliseconds:N2}ms";
+                    }
                     bool updatedSuccess = collection.Update(objFound);
                     if (updatedSuccess)
                         this.DispatchUpdatedStatus(objFound);
