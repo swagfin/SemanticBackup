@@ -25,7 +25,7 @@ namespace SemanticBackup.WebClient.Pages.Databases
         {
             try
             {
-                var url = "BackupDatabases";
+                var url = "api/BackupDatabases/";
                 DatabaseResponse = await _httpService.GetAsync<List<BackupDatabaseInfoResponse>>(url);
             }
             catch (Exception ex)

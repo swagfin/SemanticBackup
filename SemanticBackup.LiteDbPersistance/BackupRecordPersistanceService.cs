@@ -84,6 +84,7 @@ namespace SemanticBackup.LiteDbPersistance
                     bool updatedSuccess = collection.Update(objFound);
                     if (updatedSuccess)
                         this.DispatchUpdatedStatus(objFound);
+                    return updatedSuccess;
                 }
                 return false;
             }
