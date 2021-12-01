@@ -72,7 +72,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     ExpiryDate = null,
                                     Name = backupDatabaseInfo.Name,
                                     Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, backupDatabaseInfo.DatabaseName, $"{_sharedTimeZone.Now:yyyy-MM-dd}", $"{backupDatabaseInfo.DatabaseName.ToUpper()}-{_sharedTimeZone.Now:yyyy-MM-dd-mm-ss}.{backupDatabaseInfo.DatabaseType.ToLower()}.bak"),
-                                    StatusUpdateDate = _sharedTimeZone.Now
+                                    StatusUpdateDate = _sharedTimeZone.Now,
+                                    RegisteredDate = _sharedTimeZone.Now
                                 };
 
                                 bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);

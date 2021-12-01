@@ -17,6 +17,7 @@ namespace SemanticBackup.Core.Models
         public DateTime? ExpiryDate { get; set; } = null;
         public string ExecutionMessage { get; set; }
         public string ExecutionMilliseconds { get; set; }
+        public DateTime RegisteredDate { get; set; } = DateTime.Now;
     }
     public enum BackupRecordBackupStatus
     {

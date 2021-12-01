@@ -64,6 +64,7 @@ namespace SemanticBackup.API.Controllers
                 BackupSchedule backupSchedule = new BackupSchedule
                 {
                     Id = _schedulekey,
+                    Name = defaultDb.Name,
                     BackupDatabaseInfoId = _dbkey,
                     StartDate = currentTime,
                     LastRun = currentTime.AddDays(-2),

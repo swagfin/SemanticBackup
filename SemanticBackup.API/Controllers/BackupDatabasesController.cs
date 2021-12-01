@@ -2,10 +2,12 @@
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Core;
 using SemanticBackup.API.Models.Requests;
+using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SemanticBackup.API.Controllers
 {
@@ -25,18 +27,78 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupDatabaseInfo>> Get()
+        public ActionResult<List<BackupDatabaseInfoResponse>> Get()
         {
             try
             {
-                return _backupDatabasePersistanceService.GetAll();
+                var records = _backupDatabasePersistanceService.GetAll();
+                if (records == null)
+                    return new List<BackupDatabaseInfoResponse>();
+                return records.ToList().Select(x => new BackupDatabaseInfoResponse
+                {
+                    BackupExpiryAgeInDays = x.BackupExpiryAgeInDays,
+                    DatabaseName = x.DatabaseName,
+                    DatabaseType = x.DatabaseType,
+                    Description = x.Description,
+                    Id = x.Id,
+                    Port = x.Port,
+                    Server = x.Server,
+                    Username = x.Username,
+                    Password = GetInvisibleText(x.Password),
+                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<BackupDatabaseInfo>();
+                return new List<BackupDatabaseInfoResponse>();
             }
         }
+
+        [HttpGet("{id}")]
+        public ActionResult<BackupDatabaseInfoResponse> Get(string id)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                    throw new Exception("Id can't be NULL");
+                var x = _backupDatabasePersistanceService.GetById(id);
+                if (x == null)
+                    return new NotFoundObjectResult($"No Data Found with Key: {id}");
+                return new BackupDatabaseInfoResponse
+                {
+                    BackupExpiryAgeInDays = x.BackupExpiryAgeInDays,
+                    DatabaseName = x.DatabaseName,
+                    DatabaseType = x.DatabaseType,
+                    Description = x.Description,
+                    Id = x.Id,
+                    Port = x.Port,
+                    Server = x.Server,
+                    Username = x.Username,
+                    Password = GetInvisibleText(x.Password),
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return new BadRequestObjectResult(ex.Message);
+            }
+        }
+
+        private string GetInvisibleText(string password)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(password))
+                    return string.Empty;
+                string finalCode = string.Empty;
+                foreach (char c in password)
+                    finalCode = $"{finalCode}*";
+                return finalCode;
+            }
+            catch { }
+            return string.Empty;
+        }
+
         [HttpPost]
         public ActionResult Post([FromBody] BackupDatabaseRequest request)
         {
@@ -85,7 +147,8 @@ namespace SemanticBackup.API.Controllers
                 savedObj.Server = request.Server;
                 savedObj.DatabaseName = request.DatabaseName;
                 savedObj.Username = request.Username;
-                savedObj.Password = request.Password;
+                if (!string.IsNullOrWhiteSpace(request.Password))
+                    savedObj.Password = request.Password;
                 savedObj.DatabaseType = request.DatabaseType;
                 savedObj.Port = request.Port;
                 savedObj.Description = request.Description;

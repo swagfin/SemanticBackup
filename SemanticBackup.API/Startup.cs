@@ -61,6 +61,8 @@ namespace SemanticBackup.API
             services.AddSingleton<BackupRecordHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
             services.AddSingleton<IBackupRecordStatusChangedNotifier>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
 
+            //DASHBOARD SIGNAL DISPATCH
+            services.AddSingleton<DashboardRefreshHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());
             //Signal R and Cors
             services.AddSignalR(options =>
             {
@@ -107,6 +109,7 @@ namespace SemanticBackup.API
                 endpoints.MapControllers();
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapHub<BackupRecordHubDispatcher>("/BackupRecordsNotify");
+                endpoints.MapHub<DashboardRefreshHubDispatcher>("/DasbhoardStatistics");
             });
         }
     }

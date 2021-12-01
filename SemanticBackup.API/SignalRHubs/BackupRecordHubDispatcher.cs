@@ -83,9 +83,18 @@ namespace SemanticBackup.API.SignalRHubs
                         {
                             if (BackupRecordsQueue.TryDequeue(out BackupRecord backupRecord) && backupRecord != null)
                             {
+                                //Specific Group By BackupRecord ID
                                 ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupRecord.Id);
                                 if (clientGrp != null)
                                     SendNotification(clientGrp, backupRecord);
+                                //Specific Group By Database ID
+                                ClientGroup databaseGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupRecord.BackupDatabaseInfoId);
+                                if (databaseGrp != null)
+                                    SendNotification(databaseGrp, backupRecord);
+                                //All Groups Joined
+                                ClientGroup allClientGroups = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == "*");
+                                if (allClientGroups != null)
+                                    SendNotification(allClientGroups, backupRecord);
                             }
                             else
                             {
