@@ -15,6 +15,7 @@ namespace SemanticBackup.WebClient.Pages.Databases
         private readonly ILogger<IndexModel> _logger;
 
         public List<BackupDatabaseInfoResponse> DatabaseResponse { get; set; }
+
         public IndexModel(IHttpService httpService, ILogger<IndexModel> logger)
         {
             this._httpService = httpService;
@@ -34,5 +35,6 @@ namespace SemanticBackup.WebClient.Pages.Databases
             }
             return Page();
         }
+
     }
 }
