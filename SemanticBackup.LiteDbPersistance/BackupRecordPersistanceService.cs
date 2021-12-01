@@ -69,7 +69,7 @@ namespace SemanticBackup.LiteDbPersistance
             }
         }
 
-        public bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0)
+        public bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
         {
             using (var db = new LiteDatabase(connString))
             {
@@ -83,6 +83,10 @@ namespace SemanticBackup.LiteDbPersistance
                     {
                         objFound.ExecutionMessage = message;
                         objFound.ExecutionMilliseconds = $"{executionInMilliseconds:N2}ms";
+                    }
+                    if (!string.IsNullOrEmpty(updateFilePath))
+                    {
+                        objFound.Path = updateFilePath.Trim();
                     }
                     bool updatedSuccess = collection.Update(objFound);
                     if (updatedSuccess)
