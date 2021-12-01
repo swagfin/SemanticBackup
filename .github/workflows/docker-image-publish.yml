@@ -1,4 +1,4 @@
-name: Docker Publish For SemanticBackup
+name: Docker Publish For SemanticBackup.API
 
 on:
   push:
@@ -15,10 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: docker login
-      env:
-        DOCKER_USER: ${{secrets.DOCKER_USER}}
-        DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
-      run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+      run: docker login -u ${{secrets.DOCKER_USER}} -p ${{secrets.DOCKER_PASSWORD}}
     - name: Build the Docker Image
       run: docker build . --file SemanticBackup.API/Dockerfile --tag ${{secrets.DOCKER_USER}}/semanticbackupapi:latest
     - name: Docker Push
@@ -31,10 +28,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: docker login
-      env:
-        DOCKER_USER: ${{secrets.DOCKER_USER}}
-        DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
-      run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+      run: docker login -u ${{secrets.DOCKER_USER}} -p ${{secrets.DOCKER_PASSWORD}}
     - name: Build the Docker Image
       run: docker build . --file SemanticBackup.API/Dockerfile --tag ${{secrets.DOCKER_USER}}/semanticbackupapi:latest-windows
     - name: Docker Push
