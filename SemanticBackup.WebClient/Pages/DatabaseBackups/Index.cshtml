@@ -36,33 +36,33 @@
                                 <td>@string.Format("{0:N0}", count)</td>
                                 <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
                                 <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
-                                <td class="last-status-update-for-@(record.Id)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
-                                <td class="execution-milliseconds-for-@(record.Id)">@record.ExecutionMilliseconds</td>
+                                <td class="last_status_update_for_@(record.Id)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
+                                <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
 
                                 @{
                                     if (record.BackupStatus == "EXECUTING")
                                     {
-                                        <td subscribe-status-event-id="@(record.Id)" class="subscribe-status-event status-for-@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
                                     }
-                                    if (record.BackupStatus == "COMPLETED")
+                                    else if (record.BackupStatus == "COMPLETED")
                                     {
-                                        <td subscribe-status-event-id="@(record.Id)" class="subscribe-status-event status-for-@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
                                     }
                                     else if (record.BackupStatus == "COMPRESSING")
                                     {
-                                        <td subscribe-status-event-id="@(record.Id)" class="subscribe-status-event status-for-@(record.Id)"> <span class="ui label small basic olive"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic olive"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
                                     }
                                     else if (record.BackupStatus == "READY")
                                     {
-                                        <td subscribe-status-event-id="@(record.Id)" class="status-for-@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>  </td>
                                     }
                                     else if (record.BackupStatus == "ERROR")
                                     {
-                                        <td subscribe-status-event-id="@(record.Id)" class="status-for-@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.BackupStatus</span>  </td>
                                     }
                                     else
                                     {
-                                        <td subscribe-status-event-id="@(record.Id)" class="subscribe-status-event status-for-@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.BackupStatus</span>  </td>
                                     }
                                 }
 
@@ -83,29 +83,30 @@
 </div>
 
 @section Scripts{
-<script src="~/lib/signalr/dist/browser/signalr.js"></script>
-<script type="text/javascript" src="~/assets/js/signalr-subscriber.js"></script>
-<script type="text/javascript" src="~/assets/js/time-ago.js"></script>
-<script type="text/javascript">
-       //Create Main Obersavable
-       _= getListenerAsync(baseUrl + "BackupRecordsNotify", "*", "ReceiveNotification",function (metric)
-       {
-          console.log("Received Database Backup Status Update");
-          //console.log(metric);
-          var key = metric.id;
-          var status = metric.backupStatus;
-          //Update Status
-          console.log("Updating UI Key: " + key+ ", Status: "+ status);
-          if(status=="EXECUTING"){ $(".status-for-" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>' + status + '</span>'); }
-          else if(status=="COMPLETED"){ $(".status-for-" + key).html('<span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
-          else if(status=="COMPRESSING"){ $(".status-for-" + key).html('<span class="ui label small basic olive"><i class="notched circle loading icon"></i>' + status + '</span>'); }
-          else if(status=="READY"){ $(".status-for-" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>'); }
-          else if(status=="ERROR"){ $(".status-for-" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }
-          else {  $(".status-for-" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
-          //Update Others
-          $(".execution-milliseconds-for-" + key).html(metric.executionMilliseconds);
-          $(".last-status-update-for-" + key).html(time_ago(new Date(metric.statusUpdateDate)));
-          //console.log("Updated UI Success");
-       });
-</script>
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+    <script type="text/javascript" src="~/assets/js/signalr-subscriber.js"></script>
+    <script type="text/javascript" src="~/assets/js/time-ago.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            //Create Main Obersavable
+            _ = getListenerAsync(baseUrl + "BackupRecordsNotify", "*", "ReceiveNotification", function (metric) {
+                console.log("Received Database Backup Status Update");
+                //console.log(metric);
+                var key = metric.id;
+                var status = metric.backupStatus;
+                //Update Status
+                console.log("Updating UI Key: " + key + ", Status: " + status);
+                if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>' + status + '</span>'); }
+                else if (status == "COMPLETED") { $(".event_status_for_" + key).html('<span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
+                else if (status == "COMPRESSING") { $(".event_status_for_" + key).html('<span class="ui label small basic olive"><i class="notched circle loading icon"></i>' + status + '</span>'); }
+                else if (status == "READY") { $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>'); }
+                else if (status == "ERROR") { $(".event_status_for_" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }
+                else { $(".event_status_for_" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
+                //Update Others
+                $(".execution_milliseconds_for_" + key).html(metric.executionMilliseconds);
+                $(".last_status_update_for_" + key).html(time_ago(new Date(metric.statusUpdateDate)));
+                //console.log("Updated UI Success");
+            });
+        });
+    </script>
 }
