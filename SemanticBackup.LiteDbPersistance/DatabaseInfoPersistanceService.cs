@@ -18,7 +18,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupDatabaseInfo>().Query().ToList();
+                return db.GetCollection<BackupDatabaseInfo>().Query().OrderBy(x => x.DateRegistered).ToList();
             }
         }
         public bool AddOrUpdate(BackupDatabaseInfo record)
@@ -33,7 +33,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.Id == id).FirstOrDefault();
+                return db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.Id == id).OrderBy(x => x.DateRegistered).FirstOrDefault();
             }
         }
 
