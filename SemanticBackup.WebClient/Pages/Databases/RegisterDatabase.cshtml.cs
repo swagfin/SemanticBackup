@@ -25,12 +25,9 @@ namespace SemanticBackup.WebClient.Pages.Databases
         }
         public async Task<IActionResult> OnPostAsync()
         {
-
             var url = "api/BackupDatabases/";
             var result = await _httpService.PostAsync<StatusResponseModel>(url, backupDatabaseRequest);
-
             return RedirectToPage("Index");
-
         }
     }
 }

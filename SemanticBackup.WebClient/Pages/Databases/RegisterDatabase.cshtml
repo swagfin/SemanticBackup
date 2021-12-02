@@ -1,7 +1,7 @@
 ﻿@page
 @model SemanticBackup.WebClient.Pages.Databases.RegisterDatabaseModel
 @{
-     ViewData["Title"] = "Register Database";
+    ViewData["Title"] = "Register Database";
 }
 
 <div class="content">
@@ -10,42 +10,47 @@
         <form asp-page="RegisterDatabase" method="post">
             <div class="form-group">
                 <label for="Server">Server</label>
-                 <input asp-for="backupDatabaseRequest.Server" type="text" class="form-control" required>
+                <input asp-for="backupDatabaseRequest.Server" type="text" class="form-control" required>
             </div>
             <div class="form-group">
                 <label for="DatabaseName">DatabaseName</label>
-                 <input asp-for="backupDatabaseRequest.DatabaseName" type="text" class="form-control" required>
+                <input asp-for="backupDatabaseRequest.DatabaseName" type="text" class="form-control" required>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="Username">Username</label>
-                     <input asp-for="backupDatabaseRequest.Username" type="text" class="form-control" required>
+                    <input asp-for="backupDatabaseRequest.Username" type="text" class="form-control" required>
                 </div>
                 <div class="form-group col-md-6">
                     <label for="Password">Password</label>
-                     <input asp-for="backupDatabaseRequest.Password" type="text" class="form-control" required>
+                    <input asp-for="backupDatabaseRequest.Password" type="password" class="form-control" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="Port">Port</label>
+                    <input asp-for="backupDatabaseRequest.Port" type="text" class="form-control" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="DatabaseType">DatabaseType</label>
+                    <select class="selectpicker" asp-for="backupDatabaseRequest.DatabaseType"
+                            asp-items="Html.GetEnumSelectList <SemanticBackup.WebClient.Models.Requests.BackupDatabaseInfoDbType>()" required>
+                        <option selected disabled>--Select DatabaseType--</option>
+                    </select>
                 </div>
             </div>
             <div class="form-group">
-                <label for="DatabaseType">DatabaseType</label>
-                 <input asp-for="backupDatabaseRequest.DatabaseType" type="text" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="Port">Port</label>
-                 <input asp-for="backupDatabaseRequest.Port" type="text" class="form-control" required>
-            </div>
-            <div class="form-group">
                 <label for="Description">Description</label>
-                 <input asp-for="backupDatabaseRequest.Description" type="text" class="form-control" required>
+                <input asp-for="backupDatabaseRequest.Description" type="text" class="form-control" required>
             </div>
             <div class="form-row">
                 @*<div class="form-group col-md-6">
                     <label for="DateRegistered">DateRegistered</label>
-                     <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" type="text" class="form-control" required>
-                </div>*@
+                    <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" type="text" class="form-control" required>
+                    </div>*@
                 <div class="form-group col-md-6">
                     <label for="BackupExpiryAgeInDays">BackupExpiryAgeInDays</label>
-                     <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" type="date" class="form-control" required>
+                    <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" type="date" class="form-control" required>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">Register Database</button>

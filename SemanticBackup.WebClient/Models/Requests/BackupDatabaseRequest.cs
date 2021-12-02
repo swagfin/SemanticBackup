@@ -17,4 +17,9 @@ namespace SemanticBackup.WebClient.Models.Requests
         public string Description { get; set; }
         public int BackupExpiryAgeInDays { get; set; } = 14;
     }
+
+    public enum BackupDatabaseInfoDbType
+    {
+        SQLSERVER2012, SQLSERVER2014, SQLSERVER2019, MARIADBDATABASE, MYSQLDATABASE
+    }
 }
