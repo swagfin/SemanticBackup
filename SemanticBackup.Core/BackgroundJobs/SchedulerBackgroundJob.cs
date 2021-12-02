@@ -71,7 +71,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                                     ExpiryDate = null,
                                     Name = backupDatabaseInfo.Name,
-                                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, backupDatabaseInfo.DatabaseName, $"{_sharedTimeZone.Now:yyyy-MM-dd}", $"{backupDatabaseInfo.DatabaseName.ToUpper()}-{_sharedTimeZone.Now:yyyy-MM-dd-mm-ss}.{backupDatabaseInfo.DatabaseType.ToLower()}.bak"),
+                                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat)),
                                     StatusUpdateDate = _sharedTimeZone.Now,
                                     RegisteredDate = _sharedTimeZone.Now
                                 };
@@ -104,6 +104,21 @@ namespace SemanticBackup.Core.BackgroundJobs
                 }
             });
             t.Start();
+        }
+
+        private string GetSavingPathFromFormat(BackupDatabaseInfo backupDatabaseInfo, string format)
+        {
+            DateTime currentTime = _sharedTimeZone.Now;
+            if (string.IsNullOrEmpty(format))
+            {
+                _logger.LogWarning($"Unable to Generate Path Format From Format: {format}, Error: Format Is Empty, Using Default Format");
+                return $"{backupDatabaseInfo.DatabaseName}\\{currentTime:yyyy-MM-dd}\\{backupDatabaseInfo.DatabaseName}-{currentTime:yyyy-MM-dd-mm-ss}.{backupDatabaseInfo.DatabaseType}.bak";
+            }
+            //Proceed
+            return format.Replace("{{database}}", backupDatabaseInfo.DatabaseName)
+                                         .Replace("{{date}}", $"{currentTime:yyyy-MM-dd}")
+                                         .Replace("{{datetime}}", $"{currentTime:yyyy-MM-dd-mm-ss}")
+                                         .Replace("{{databasetype}}", backupDatabaseInfo.DatabaseType);
         }
     }
 }

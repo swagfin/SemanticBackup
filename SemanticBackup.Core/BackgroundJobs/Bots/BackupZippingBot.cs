@@ -63,7 +63,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 }
                 stopwatch.Stop();
                 TryDeleteOldFile(_backupRecord.Path);
-                UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.READY.ToString(), "Successfull & Ready", stopwatch.ElapsedMilliseconds);
+                UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.READY.ToString(), "Successfull & Ready", stopwatch.ElapsedMilliseconds, newZIPPath);
                 _logger.LogInformation($"Creating Zip of Db: {_backupRecord.Path}... SUCCESS");
             }
             catch (Exception ex)
@@ -80,12 +80,12 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 throw new Exception($"No Database File In Path or May have been deleted, Path: {path}");
         }
 
-        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed)
+        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed, string newZIPPath = null)
         {
             try
             {
                 DateTime currentTime = _sharedTimeZone.Now;
-                _persistanceService.UpdateStatusFeed(recordId, status, currentTime, message, elapsed);
+                _persistanceService.UpdateStatusFeed(recordId, status, currentTime, message, elapsed, newZIPPath);
             }
             catch (Exception ex)
             {

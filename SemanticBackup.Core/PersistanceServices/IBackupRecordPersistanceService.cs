@@ -11,7 +11,7 @@ namespace SemanticBackup.Core.PersistanceServices
         bool Remove(string id);
         bool AddOrUpdate(BackupRecord record);
         bool Update(BackupRecord record);
-        bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0);
+        bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0, string newFilePath = null);
         List<BackupRecord> GetAllByStatus(string status);
         List<BackupRecord> GetAllByDatabaseId(string id);
         List<BackupRecord> GetAllByRegisteredDateByStatus(DateTime fromDate, string status = "*");
