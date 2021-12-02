@@ -54,7 +54,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
 
@@ -64,7 +64,7 @@ namespace SemanticBackup.LiteDbPersistance
             {
                 bool savedSuccess = db.GetCollection<BackupRecord>().Upsert(record);
                 if (savedSuccess)
-                    this.DispatchUpdatedStatus(record);
+                    this.DispatchUpdatedStatus(record, true);
                 return savedSuccess;
             }
         }
@@ -90,7 +90,7 @@ namespace SemanticBackup.LiteDbPersistance
                     }
                     bool updatedSuccess = collection.Update(objFound);
                     if (updatedSuccess)
-                        this.DispatchUpdatedStatus(objFound);
+                        this.DispatchUpdatedStatus(objFound, false);
                     return updatedSuccess;
                 }
                 return false;
@@ -127,13 +127,13 @@ namespace SemanticBackup.LiteDbPersistance
             }
         }
 
-        private void DispatchUpdatedStatus(BackupRecord record)
+        private void DispatchUpdatedStatus(BackupRecord record, bool isNewRecord = false)
         {
             if (_backupRecordStatusChangedNotifiers != null)
                 foreach (var notifier in _backupRecordStatusChangedNotifiers)
                     try
                     {
-                        notifier.DispatchUpdatedStatus(record);
+                        notifier.DispatchUpdatedStatus(record, isNewRecord);
                     }
                     catch { }
         }
