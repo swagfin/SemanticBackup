@@ -17,14 +17,14 @@ namespace SemanticBackup.API.SignalRHubs
         private readonly ILogger<BackupRecordHubDispatcher> _logger;
         private readonly IHubContext<BackupRecordHubDispatcher> hub;
         private readonly SharedTimeZone _sharedTimeZone;
-        private ConcurrentQueue<BackupRecord> BackupRecordsQueue = new ConcurrentQueue<BackupRecord>();
+        private ConcurrentQueue<BackupRecordMetric> BackupRecordsQueue = new ConcurrentQueue<BackupRecordMetric>();
 
         public BackupRecordHubDispatcher(ILogger<BackupRecordHubDispatcher> logger, IHubContext<BackupRecordHubDispatcher> hub, SharedTimeZone sharedTimeZone)
         {
             this._logger = logger;
             this.hub = hub;
             this._sharedTimeZone = sharedTimeZone;
-            BackupRecordsQueue = new ConcurrentQueue<BackupRecord>();
+            BackupRecordsQueue = new ConcurrentQueue<BackupRecordMetric>();
         }
 
         public void Initialize()
@@ -46,11 +46,15 @@ namespace SemanticBackup.API.SignalRHubs
             _logger.LogInformation($"Adding client: {Context.ConnectionId}");
             return base.OnConnectedAsync();
         }
-        public void DispatchUpdatedStatus(BackupRecord backupRecord)
+        public void DispatchUpdatedStatus(BackupRecord backupRecord, bool isNewRecord)
         {
             try
             {
-                BackupRecordsQueue.Enqueue(backupRecord);
+                BackupRecordsQueue.Enqueue(new BackupRecordMetric
+                {
+                    Metric = backupRecord,
+                    IsNewMetric = isNewRecord
+                });
             }
             catch { }
         }
@@ -81,20 +85,20 @@ namespace SemanticBackup.API.SignalRHubs
 
                         try
                         {
-                            if (BackupRecordsQueue.TryDequeue(out BackupRecord backupRecord) && backupRecord != null)
+                            if (BackupRecordsQueue.TryDequeue(out BackupRecordMetric backupMetricRecord) && backupMetricRecord != null)
                             {
                                 //Specific Group By BackupRecord ID
-                                ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupRecord.Id);
+                                ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupMetricRecord.Metric.Id);
                                 if (clientGrp != null)
-                                    SendNotification(clientGrp, backupRecord);
+                                    SendNotification(clientGrp, backupMetricRecord);
                                 //Specific Group By Database ID
-                                ClientGroup databaseGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupRecord.BackupDatabaseInfoId);
+                                ClientGroup databaseGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupMetricRecord.Metric.BackupDatabaseInfoId);
                                 if (databaseGrp != null)
-                                    SendNotification(databaseGrp, backupRecord);
+                                    SendNotification(databaseGrp, backupMetricRecord);
                                 //All Groups Joined
                                 ClientGroup allClientGroups = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == "*");
                                 if (allClientGroups != null)
-                                    SendNotification(allClientGroups, backupRecord);
+                                    SendNotification(allClientGroups, backupMetricRecord);
                             }
                             else
                             {
@@ -112,7 +116,7 @@ namespace SemanticBackup.API.SignalRHubs
             t.Start();
         }
 
-        private void SendNotification(ClientGroup clientGrp, BackupRecord backupRecord)
+        private void SendNotification(ClientGroup clientGrp, BackupRecordMetric backupRecordMetric)
         {
             try
             {
@@ -121,7 +125,9 @@ namespace SemanticBackup.API.SignalRHubs
                 DateTime currentTime = _sharedTimeZone.Now;
                 //Set Last Update Time
                 clientGrp.LastRefresh = currentTime;
-                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecord);
+                backupRecordMetric.LastSyncDate = currentTime;
+                backupRecordMetric.Subscription = clientGrp.Name;
+                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecordMetric); ;
                 _logger.LogInformation("Successfully sent Metrics for Group: {group}", clientGrp.Name);
             }
             catch (Exception ex)
@@ -131,5 +137,12 @@ namespace SemanticBackup.API.SignalRHubs
             }
         }
 
+    }
+    public class BackupRecordMetric
+    {
+        public string Subscription { get; set; }
+        public BackupRecord Metric { get; set; } = null;
+        public DateTime LastSyncDate { get; set; } = DateTime.Now;
+        public bool IsNewMetric { get; set; } = false;
     }
 }
