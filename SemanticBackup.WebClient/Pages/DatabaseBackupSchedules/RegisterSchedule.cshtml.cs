@@ -23,29 +23,45 @@ namespace SemanticBackup.WebClient.Pages.DatabaseBackupSchedules
             this._httpService = httpService;
             this._logger = logger;
         }
-
+        public string ErrorResponse { get; set; } = null;
         public async Task<IActionResult> OnGetAsync()
         {
-            databaseInfoSelectList = await GetBackupDatabaseInfoAsync();
-
+            await RefreshDbDropdownCollectionAsync();
             return Page();
+        }
+
+        private async Task RefreshDbDropdownCollectionAsync()
+        {
+            try
+            {
+                databaseInfoSelectList = await GetBackupDatabaseInfoAsync();
+            }
+            catch (Exception ex) { _logger.LogWarning(ex.Message); }
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
             try
             {
-                backupScheduleRequest.BackupDatabaseInfoId = Guid.NewGuid().ToString();
-                var url = "api/BackupSchedules/";
-                var result = await _httpService.PostAsync<StatusResponseModel>(url, backupScheduleRequest);
-
+                if (string.IsNullOrWhiteSpace(backupScheduleRequest.BackupDatabaseInfoId))
+                    ErrorResponse = "You have not Selected any Database from the List";
+                else if (string.IsNullOrWhiteSpace(backupScheduleRequest.ScheduleType))
+                    ErrorResponse = "First select Database Backup Schedule Type";
+                else
+                {
+                    //Proceed
+                    var url = "api/BackupSchedules/";
+                    var result = await _httpService.PostAsync<StatusResponseModel>(url, backupScheduleRequest);
+                    return RedirectToPage("Index");
+                }
             }
             catch (System.Exception ex)
             {
-                _logger.LogInformation(ex, ex.Message);
-                throw;
+                ErrorResponse = ex.Message;
+                _logger.LogInformation(ex.Message);
             }
-            return RedirectToPage("Index");
+            await RefreshDbDropdownCollectionAsync();
+            return Page();
         }
 
         private async Task<List<BackupDatabaseInfoResponse>> GetBackupDatabaseInfoAsync()

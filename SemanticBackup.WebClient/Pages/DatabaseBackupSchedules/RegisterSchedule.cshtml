@@ -5,40 +5,43 @@
 }
 <div class="content">
     <div class="text container">
-        <h4 style="text-align:center;" class="ui header blue large">Register Database Schedule</h4>
+        <h4 style="text-align:center;" class="ui header blue large">Setup Schedule</h4>
         <form asp-page="RegisterDatabase" method="post">
+
+            @{
+                if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
+                {
+                    <div class="ui icon small negative message">
+                        <i class="exclamation icon"></i>
+                        <div class="content">
+                            <div class="header">
+                                Oops! Request Failed
+                            </div>
+                            <p>@(Model.ErrorResponse)</p>
+                        </div>
+                    </div>
+                }
+            }
 
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="Server">Name</label>
-                    <input asp-for="backupScheduleRequest.Name" type="text" class="form-control" required>
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="Server">Select DatabaseInfo</label>
+                    <label for="Server">Select Database</label>
                     <select class="selectpicker form-control" asp-for="backupScheduleRequest.BackupDatabaseInfoId" required>
                         @{
-                            var databaseInfosList = Model.databaseInfoSelectList;
-                            foreach (var Select in databaseInfosList)
+                            if (Model.databaseInfoSelectList != null)
                             {
-                                <option value="@Select.Id">@Select.DatabaseName.ToString()</option>
+                                foreach (var dbrecord in Model.databaseInfoSelectList)
+                                {
+                                    <option value="@(dbrecord.Id)">@(dbrecord.DatabaseName)</option>
+                                }
                             }
+                            <option selected disabled>---SELECT DATABASE---</option>
                         }
                     </select>
                 </div>
-            </div>
-            <div class="form-row">
+
                 <div class="form-group col-md-6">
-                    <label for="Username">EveryHours</label>
-                    <input asp-for="backupScheduleRequest.EveryHours" type="text" autocomplete="off" class="form-control" required>
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="Password">StartDate</label>
-                    <input asp-for="backupScheduleRequest.StartDate" type="date" autocomplete="off" class="form-control" required>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="DatabaseType">BackupScheduleType</label>
+                    <label for="DatabaseType">Backup Backup Type</label>
                     <select class="selectpicker form-control" asp-for="backupScheduleRequest.ScheduleType" required>
                         @{
                             foreach (var scheduleType in Enum.GetValues(typeof(BackupScheduleType)).Cast<BackupScheduleType>())
@@ -48,11 +51,20 @@
                         }
                     </select>
                 </div>
+
             </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="Username">Runs Every (Hours)</label>
+                    <input asp-for="backupScheduleRequest.EveryHours" value="24" type="number" min="1" autocomplete="off" class="form-control" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="Password">Schedule Start</label>
+                    <input asp-for="backupScheduleRequest.StartDate" type="datetime" value="@(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))" autocomplete="off" class="form-control" required>
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-primary">Register Backup Schedule</button>
         </form>
     </div><!-- container -->
 </div><!-- content -->
-@section Scripts{
-    $(".dropdown").dropdown();
-}

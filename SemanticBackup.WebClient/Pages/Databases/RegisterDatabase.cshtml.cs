@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SemanticBackup.WebClient.Models.Requests;
 using SemanticBackup.WebClient.Models.Response;
 using SemanticBackup.WebClient.Services;
+using System;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.Databases
@@ -25,9 +26,18 @@ namespace SemanticBackup.WebClient.Pages.Databases
         }
         public async Task<IActionResult> OnPostAsync()
         {
-            var url = "api/BackupDatabases/";
-            var result = await _httpService.PostAsync<StatusResponseModel>(url, backupDatabaseRequest);
-            return RedirectToPage("Index");
+            try
+            {
+                var url = "api/BackupDatabases/";
+                var result = await _httpService.PostAsync<StatusResponseModel>(url, backupDatabaseRequest);
+                return RedirectToPage("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return Page();
+            }
+
         }
     }
 }
