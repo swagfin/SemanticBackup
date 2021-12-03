@@ -43,6 +43,7 @@ namespace SemanticBackup.Core.BackgroundJobs
             _logger.LogInformation("Starting service....");
             SetupBackgroundService();
             SetupBotsBackgroundService();
+            SetupBackgroundRemovedExpiredBackupsService();
             _logger.LogInformation("Service Started");
         }
 
@@ -130,6 +131,39 @@ namespace SemanticBackup.Core.BackgroundJobs
                     catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
                     //Delay
                     await Task.Delay(5000);
+                }
+            });
+            t.Start();
+        }
+
+        private void SetupBackgroundRemovedExpiredBackupsService()
+        {
+            var t = new Thread(async () =>
+            {
+                while (true)
+                {
+                    await Task.Delay(60 * 1000); //Runs After 1 Minute
+                    try
+                    {
+                        DateTime currentTime = _sharedTimeZone.Now;
+                        List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired(currentTime);
+                        if (expiredBackups == null)
+                            return;
+                        List<string> toDeleteList = new List<string>();
+                        foreach (BackupRecord backupRecord in expiredBackups)
+                            toDeleteList.Add(backupRecord.Id);
+                        _logger.LogInformation($"Queued ({expiredBackups.Count}) Expired Records for Delete");
+                        //Check if Any Delete
+                        if (toDeleteList.Count > 0)
+                            foreach (var rm in toDeleteList)
+                                if (!this._backupRecordPersistanceService.Remove(rm))
+                                    _logger.LogWarning("Unable to delete Expired Backup Record");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex.Message);
+                    }
+                    //Await
                 }
             });
             t.Start();
