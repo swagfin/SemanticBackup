@@ -37,4 +37,4 @@ jobs:
         # The local folder to copy, defaults to root project folder 
         local-dir: ./Release/
         # Server Directory to Publish To
-        server-dir: /backup.api.swagfinserver.com/
+        server-dir: ${{ secrets.FTP_SITE_SEMANTICBACKUP_API }}
