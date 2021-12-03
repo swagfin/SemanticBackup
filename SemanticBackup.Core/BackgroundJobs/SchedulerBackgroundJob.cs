@@ -65,11 +65,14 @@ namespace SemanticBackup.Core.BackgroundJobs
                             else
                             {
                                 //Proceed
+                                DateTime? RecordExpiry = null;
+                                if (backupDatabaseInfo.BackupExpiryAgeInDays >= 1)
+                                    RecordExpiry = currentTime.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
                                 BackupRecord newRecord = new BackupRecord
                                 {
                                     BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
                                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
-                                    ExpiryDate = null,
+                                    ExpiryDate = RecordExpiry,
                                     Name = backupDatabaseInfo.Name,
                                     Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat)),
                                     StatusUpdateDate = _sharedTimeZone.Now,

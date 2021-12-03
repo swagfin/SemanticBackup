@@ -32,6 +32,13 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
+        public List<BackupRecord> GetAllExpired(DateTime currentDate)
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDate != null).Where(x => x.ExpiryDate <= currentDate).OrderBy(x => x.RegisteredDate).ToList();
+            }
+        }
         public List<BackupRecord> GetAllByRegisteredDateByStatus(DateTime fromDate, string status = "*")
         {
             using (var db = new LiteDatabase(connString))
