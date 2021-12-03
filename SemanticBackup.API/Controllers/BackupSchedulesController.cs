@@ -96,7 +96,8 @@ namespace SemanticBackup.API.Controllers
                     EveryHours = request.EveryHours,
                     StartDate = request.StartDate,
                     CreatedOn = currentTime,
-                    Name = record.Name
+                    Name = record.Name,
+                    LastRun = null
                 };
                 bool savedSuccess = _backupSchedulePersistanceService.AddOrUpdate(saveObj);
                 if (!savedSuccess)
