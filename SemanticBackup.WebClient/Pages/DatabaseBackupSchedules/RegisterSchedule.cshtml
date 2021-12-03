@@ -1,0 +1,58 @@
+﻿@page
+@model SemanticBackup.WebClient.Pages.DatabaseBackupSchedules.RegisterScheduleModel
+@{
+    ViewData["Title"] = "Register Database Schedule";
+}
+<div class="content">
+    <div class="text container">
+        <h4 style="text-align:center;" class="ui header blue large">Register Database Schedule</h4>
+        <form asp-page="RegisterDatabase" method="post">
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="Server">Name</label>
+                    <input asp-for="backupScheduleRequest.Name" type="text" class="form-control" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="Server">Select DatabaseInfo</label>
+                    <select class="selectpicker form-control" asp-for="backupScheduleRequest.BackupDatabaseInfoId" required>
+                        @{
+                            var databaseInfosList = Model.databaseInfoSelectList;
+                            foreach (var Select in databaseInfosList)
+                            {
+                                <option value="@Select.Id">@Select.DatabaseName.ToString()</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="Username">EveryHours</label>
+                    <input asp-for="backupScheduleRequest.EveryHours" type="text" autocomplete="off" class="form-control" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="Password">StartDate</label>
+                    <input asp-for="backupScheduleRequest.StartDate" type="date" autocomplete="off" class="form-control" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="DatabaseType">BackupScheduleType</label>
+                    <select class="selectpicker form-control" asp-for="backupScheduleRequest.ScheduleType" required>
+                        @{
+                            foreach (var scheduleType in Enum.GetValues(typeof(BackupScheduleType)).Cast<BackupScheduleType>())
+                            {
+                                <option>@(scheduleType)</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Register Backup Schedule</button>
+        </form>
+    </div><!-- container -->
+</div><!-- content -->
+@section Scripts{
+    $(".dropdown").dropdown();
+}
