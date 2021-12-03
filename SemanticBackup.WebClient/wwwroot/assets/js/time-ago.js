@@ -33,7 +33,7 @@
         token = 'ago',
         list_choice = 1;
 
-    if (seconds <  60) {
+    if (seconds < 60) {
         return 'Just now'
     }
     if (seconds < 0) {
@@ -52,3 +52,25 @@
         }
     return time;
 }
+jQuery(document).ready(function ($) {
+    //Refresh Interval
+    function refreshUITimeAgo() {
+        $('.use-time-ago').each(function (i, obj) {
+            //@Check if Its there
+            try {
+                console.log("updating Time Ago");
+                $(this).html(time_ago(new Date($(this)?.attr('use-time-ago-value'))));
+                console.log("updating Time Ago...DONE");
+            }
+            catch (err) {
+                console.log(err.message);
+            }
+        });
+    }
+    setInterval(function () {
+        refreshUITimeAgo();
+
+    }, 30000);
+
+    refreshUITimeAgo();
+});

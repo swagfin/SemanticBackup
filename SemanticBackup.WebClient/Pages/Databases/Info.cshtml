@@ -51,7 +51,7 @@
                     <div class="header">DELETE OLD BACKUPS AFTER</div>
                     @(string.Format("{0:N0} DAYS",Model.DatabaseResponse.BackupExpiryAgeInDays))
                 </div>
-            </div>   
+            </div>
             <div class="item">
                 <i class="info blue icon"></i>
                 <div class="content">
@@ -86,8 +86,8 @@
                             <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackupschedules/@(record.Id)'">
                                 <td>@string.Format("{0:N0}", count)</td>
                                 <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
-                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
-                                <td class="last_status_update_for_@(record.Id)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
+                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.RegisteredDate)</td>
+                                <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
                                 <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
 
                                 @{
@@ -151,7 +151,7 @@
             if(response.isNewMetric && $("#record_for_" + key).length == 0)
             {
                  console.log("Prepending new Record Notification");
-                 var newElement = '<tr id="record_for_'+ key +'"><td colspan="6"><div class="ui tiny blue message"><div class="header">New backup for <b><a href="/databasebackupschedules/'+ key +'"> '+ metric.name +' </a></b> has started <span style="color:orange;margin-right:10px"> '+ time_ago(new Date(metric.registeredDate)) +'</span>&gt;&gt; Progress: <span class="event_status_for_'+ key +'"> <span class="ui label small basic"><i class="info icon"></i>QUEUED</span> </span></div></div></td></tr>';
+                 var newElement = '<tr id="record_for_'+ key +'"><td colspan="6"><div class="ui tiny blue message"><div class="header">New backup for <b><a href="/databasebackupschedules/'+ key +'"> '+ metric.name +' </a></b> has started <span style="color:orange;margin-right:10px" class="use-time-ago" use-time-ago-value="'+ metric.registeredDate +'"> Just now </span>&gt;&gt; Progress: <span class="event_status_for_'+ key +'"> <span class="ui label small basic"><i class="info icon"></i>QUEUED</span> </span></div></div></td></tr>';
                  $("#records_data_table").prepend(newElement);
             }
             //Update Status
@@ -164,7 +164,8 @@
             else { $(".event_status_for_" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
             //Update Others
             $(".execution_milliseconds_for_" + key).html(metric.executionMilliseconds);
-            $(".last_status_update_for_" + key).html(time_ago(new Date(metric.statusUpdateDate)));
+            $(".last_status_update_for_" + key).html("Just now");
+            $(".last_status_update_for_" + key).attr("use-time-ago-value", metric.statusUpdateDate);
             //console.log("Updated UI Success");
         });
     });
