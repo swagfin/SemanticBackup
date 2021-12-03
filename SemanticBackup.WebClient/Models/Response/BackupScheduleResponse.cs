@@ -10,7 +10,7 @@ namespace SemanticBackup.WebClient.Models.Response
         public string ScheduleType { get; set; }
         public int EveryHours { get; set; }
         public DateTime StartDate { get; set; }
-        public DateTime NextRun { get { return StartDate.AddHours(EveryHours); } }
+        public DateTime NextRun { get; set; }
         public DateTime? LastRun { get; set; } = null;
     }
 }
