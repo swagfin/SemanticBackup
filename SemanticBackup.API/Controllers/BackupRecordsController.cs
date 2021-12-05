@@ -64,5 +64,24 @@ namespace SemanticBackup.API.Controllers
                 return new List<BackupRecord>();
             }
         }
+
+        [HttpGet("{id}")]
+        public ActionResult<BackupRecord> Get(string id)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                    throw new Exception("Id can't be NULL");
+                var backupRecord = _backupRecordPersistanceService.GetById(id);
+                if (backupRecord == null)
+                    return new NotFoundObjectResult($"No Data Found with Key: {id}");
+                return backupRecord;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return new BadRequestObjectResult(ex.Message);
+            }
+        }
     }
 }

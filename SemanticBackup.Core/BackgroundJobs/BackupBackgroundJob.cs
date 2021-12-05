@@ -147,7 +147,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         DateTime currentTime = _sharedTimeZone.Now;
                         List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired(currentTime);
-                        if (expiredBackups == null)
+                        if (expiredBackups == null || expiredBackups.Count < 1)
                             return;
                         List<string> toDeleteList = new List<string>();
                         foreach (BackupRecord backupRecord in expiredBackups)

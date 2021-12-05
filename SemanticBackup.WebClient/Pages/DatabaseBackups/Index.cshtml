@@ -32,7 +32,7 @@
                         foreach (var record in Model.BackupRecordsResponse)
                         {
                             count++;
-                            <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackupschedules/@(record.Id)'">
+                            <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackups/@(record.Id)'">
                                 <td>@string.Format("{0:N0}", count)</td>
                                 <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
                                 <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.RegisteredDate)</td>

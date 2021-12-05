@@ -5,11 +5,9 @@ using Microsoft.Extensions.Options;
 using SemanticBackup.WebClient.Models.Response;
 using SemanticBackup.WebClient.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.WebClient.Pages.Databases
+namespace SemanticBackup.WebClient.Pages.DatabaseBackups
 {
     public class InfoModel : PageModel
     {
@@ -17,8 +15,7 @@ namespace SemanticBackup.WebClient.Pages.Databases
         private readonly ILogger<IndexModel> _logger;
 
         public string ApiEndPoint { get; }
-        public BackupDatabaseInfoResponse DatabaseResponse { get; set; }
-        public List<BackupRecordResponse> BackupRecordsResponse { get; private set; }
+        public BackupRecordResponse BackupRecordResponse { get; private set; }
 
         public InfoModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
         {
@@ -31,13 +28,10 @@ namespace SemanticBackup.WebClient.Pages.Databases
         {
             try
             {
-                var url = $"api/BackupDatabases/{id}";
-                DatabaseResponse = await _httpService.GetAsync<BackupDatabaseInfoResponse>(url);
-                //Get Backups
-                url = $"api/BackupRecords/ByDatabaseId/{id}";
-                var records = await _httpService.GetAsync<List<BackupRecordResponse>>(url);
-                if (records != null)
-                    BackupRecordsResponse = records.Take(10).ToList();
+                var url = $"api/BackupRecords/{id}";
+                BackupRecordResponse = await _httpService.GetAsync<BackupRecordResponse>(url);
+                if (BackupRecordResponse == null)
+                    return RedirectToPage("Index");
             }
             catch (Exception ex)
             {
