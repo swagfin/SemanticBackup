@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SemanticBackup.WebClient.Models.Response;
 using SemanticBackup.WebClient.Services;
 using System;
@@ -9,21 +8,16 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.DatabaseBackups
 {
-    public class InfoModel : PageModel
+    public class RerunModel : PageModel
     {
         private readonly IHttpService _httpService;
         private readonly ILogger<IndexModel> _logger;
-
-        public string ApiEndPoint { get; }
         public BackupRecordResponse BackupRecordResponse { get; private set; }
-        public string RerunStatus { get; private set; }
-        public string RerunStatusReason { get; private set; }
 
-        public InfoModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
+        public RerunModel(IHttpService httpService, ILogger<IndexModel> logger)
         {
             this._httpService = httpService;
             this._logger = logger;
-            this.ApiEndPoint = options.Value.WebApiUrl;
         }
 
         public async Task<IActionResult> OnGetAsync(string id)
@@ -34,19 +28,18 @@ namespace SemanticBackup.WebClient.Pages.DatabaseBackups
                 BackupRecordResponse = await _httpService.GetAsync<BackupRecordResponse>(url);
                 if (BackupRecordResponse == null)
                     return RedirectToPage("Index");
-                if (Request.Query.ContainsKey("re-run"))
-                {
-                    this.RerunStatus = Request.Query["re-run"];
-                    if (Request.Query.ContainsKey("reason"))
-                        this.RerunStatusReason = Request.Query["reason"];
-                }
+                if (BackupRecordResponse.BackupStatus != "ERROR")
+                    return Redirect($"/databasebackups/{BackupRecordResponse.Id}/?re-run=failed&reason=backupstatus");
+                //Proceeed 
+                var rerunUrl = $"api/BackupRecords/{id}/re-run";
+                var rerunSuccess = await _httpService.GetAsync<bool>(rerunUrl);
+                return Redirect($"/databasebackups/{BackupRecordResponse.Id}/?re-run=success");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return RedirectToPage("Index");
+                return Redirect($"/databasebackups/{BackupRecordResponse.Id}/?re-run=failed&reason=exception");
             }
-            return Page();
         }
     }
 }
