@@ -51,6 +51,7 @@ namespace SemanticBackup.API
 
             //Engines
             services.AddTransient<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
+            services.AddTransient<IMySQLServerBackupProviderService, MySQLServerBackupProviderService>();
 
             //Background Jobs
             services.AddSingleton<IProcessorInitializable, SchedulerBackgroundJob>();
