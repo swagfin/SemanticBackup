@@ -3,9 +3,7 @@ name: Docker Publish For SemanticBackup.API
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+    
 jobs:
 
   publish_linux_image:
