@@ -17,12 +17,14 @@ namespace SemanticBackup.API.Controllers
     {
         private readonly ILogger<BackupDatabasesController> _logger;
         private readonly IDatabaseInfoPersistanceService _backupDatabasePersistanceService;
+        private readonly IBackupSchedulePersistanceService _schedulePersistanceService;
         private readonly SharedTimeZone _sharedTimeZone;
 
-        public BackupDatabasesController(ILogger<BackupDatabasesController> logger, IDatabaseInfoPersistanceService databaseInfoPersistanceService, SharedTimeZone sharedTimeZone)
+        public BackupDatabasesController(ILogger<BackupDatabasesController> logger, IDatabaseInfoPersistanceService databaseInfoPersistanceService, IBackupSchedulePersistanceService schedulePersistanceService, SharedTimeZone sharedTimeZone)
         {
             _logger = logger;
             this._backupDatabasePersistanceService = databaseInfoPersistanceService;
+            this._schedulePersistanceService = schedulePersistanceService;
             this._sharedTimeZone = sharedTimeZone;
         }
 
@@ -122,6 +124,8 @@ namespace SemanticBackup.API.Controllers
                 bool savedSuccess = _backupDatabasePersistanceService.AddOrUpdate(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
+                if (request.AutoCreateSchedule)
+                    CreateScheduleFor(saveObj);
                 return Ok(saveObj);
             }
             catch (Exception ex)
@@ -129,6 +133,28 @@ namespace SemanticBackup.API.Controllers
                 _logger.LogError(ex.Message);
                 return new BadRequestObjectResult(ex.Message);
             }
+        }
+
+        private void CreateScheduleFor(BackupDatabaseInfo databaseInfo)
+        {
+            try
+            {
+                DateTime currentTime = _sharedTimeZone.Now;
+                BackupSchedule saveObj = new BackupSchedule
+                {
+                    BackupDatabaseInfoId = databaseInfo.Id,
+                    ScheduleType = BackupScheduleType.FULLBACKUP.ToString(),
+                    EveryHours = 24,
+                    StartDate = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day + 1),
+                    CreatedOn = currentTime,
+                    Name = databaseInfo.Name,
+                    LastRun = null
+                };
+                bool savedSuccess = _schedulePersistanceService.AddOrUpdate(saveObj);
+                if (!savedSuccess)
+                    throw new Exception("Data was not Saved");
+            }
+            catch (Exception ex) { _logger.LogWarning($"Unable to Auto Create Daily Backup for Database Key: {databaseInfo.Id},Error: {ex.Message}"); }
         }
 
         [HttpPut("{id}")]

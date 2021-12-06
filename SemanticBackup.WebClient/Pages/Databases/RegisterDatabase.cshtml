@@ -12,7 +12,7 @@
                 <label for="Server">Server</label>
                 <input asp-for="backupDatabaseRequest.Server" type="text" value="127.0.0.1" class="form-control" required>
             </div>
-       
+
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="Username">Username</label>
@@ -36,7 +36,7 @@
                     <label for="DatabaseType">DatabaseType</label>
                     <select class="selectpicker form-control" asp-for="backupDatabaseRequest.DatabaseType" required>
                         @{
-                            foreach(var dbType in Enum.GetValues(typeof(BackupDatabaseInfoDbType)).Cast<BackupDatabaseInfoDbType>())
+                            foreach (var dbType in Enum.GetValues(typeof(BackupDatabaseInfoDbType)).Cast<BackupDatabaseInfoDbType>())
                             {
                                 <option>@(dbType)</option>
                             }
@@ -57,6 +57,11 @@
                     <label for="BackupExpiryAgeInDays">Delete Old Backups After (Days)</label>
                     <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" value="7" class="form-control" required>
                 </div>
+            </div>
+
+            <div class="ui info tiny message">
+                <input id="backupDatabaseRequestAutoCreateSchedule" asp-for="backupDatabaseRequest.AutoCreateSchedule" checked="true">
+                <label style="cursor:pointer" for="backupDatabaseRequestAutoCreateSchedule">Auto Create Daily Backup Schedule (24hrs)</label>
             </div>
             <button type="submit" class="btn btn-primary">Register Database</button>
         </form>
