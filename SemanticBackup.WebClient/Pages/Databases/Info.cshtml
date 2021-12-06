@@ -61,75 +61,135 @@
             </div>
         </div>
 
-        <div class="ui header large">
-            Recent 10 Backups For #@(Model.DatabaseResponse?.DatabaseName)
+        <div class="ui top attached tabular primary menu">
+            <a class="item active" data-tab="recentbackups">RECENT BACKUPS</a>
+            <a class="item" data-tab="backupschedules">BACKUP SCHEDULES</a>
         </div>
+        <div class="ui bottom attached tab segment active" data-tab="recentbackups">
 
-        <table class="ui selectable table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Backup Date</th>
-                    <th>Last Updated</th>
-                    <th>Avg. Speed</th>
-                    <th>Backup Status</th>
-                </tr>
-            </thead>
-            <tbody id="records_data_table">
-                @{
-                    int count = 0;
-                    if (Model.BackupRecordsResponse != null && Model.BackupRecordsResponse.Count > 0)
-                        foreach (var record in Model.BackupRecordsResponse)
+
+            <div class="ui header large">
+                Recent 10 Backups
+            </div>
+            <table class="ui selectable table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Backup Date</th>
+                        <th>Last Updated</th>
+                        <th>Avg. Speed</th>
+                        <th>Backup Status</th>
+                    </tr>
+                </thead>
+                <tbody id="records_data_table">
+                    @{
+                        int count = 0;
+                        if (Model.BackupRecordsResponse != null && Model.BackupRecordsResponse.Count > 0)
+                            foreach (var record in Model.BackupRecordsResponse)
+                            {
+                                count++;
+                                <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackups/@(record.Id)'">
+                                    <td>@string.Format("{0:N0}", count)</td>
+                                    <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
+                                    <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.RegisteredDate)</td>
+                                    <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
+                                    <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
+
+                                    @{
+                                        if (record.BackupStatus == "EXECUTING")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "COMPLETED")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "COMPRESSING")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"> <span class="ui label small basic olive"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "READY")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "ERROR")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                        else
+                                        {
+                                            <td class="event_status_for_@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                    }
+
+                                </tr>
+                            }
+                        else
                         {
-                            count++;
-                            <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackups/@(record.Id)'">
-                                <td>@string.Format("{0:N0}", count)</td>
-                                <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
-                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.RegisteredDate)</td>
-                                <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
-                                <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
-
-                                @{
-                                    if (record.BackupStatus == "EXECUTING")
-                                    {
-                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
-                                    }
-                                    else if (record.BackupStatus == "COMPLETED")
-                                    {
-                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
-                                    }
-                                    else if (record.BackupStatus == "COMPRESSING")
-                                    {
-                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic olive"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
-                                    }
-                                    else if (record.BackupStatus == "READY")
-                                    {
-                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>  </td>
-                                    }
-                                    else if (record.BackupStatus == "ERROR")
-                                    {
-                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.BackupStatus</span>  </td>
-                                    }
-                                    else
-                                    {
-                                        <td class="event_status_for_@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.BackupStatus</span>  </td>
-                                    }
-                                }
-
+                            <tr>
+                                <td colspan="6" style="text-align:center">
+                                    <div class="ui message small warning"><div>No Recent backups for this database</div></div>
+                                </td>
                             </tr>
                         }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" style="text-align:center">
-                                <div class="ui message small warning"><div>To Data Available</div></div>
-                            </td>
-                        </tr>
                     }
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="ui bottom attached tab segment" data-tab="backupschedules">
+            <section class="ui two wide column grid">
+                <div class="eight wide column">
+                    <div class="ui header large">Scheduled Backups</div>
+                </div>
+                <div class="eight wide column">
+                    <a class="ui small blue button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="calendar icon"></i>Create Schedule</a>
+                </div>
+            </section>
+
+            <table class="ui selectable table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th class="warning" style="font-weight:bold">Name</th>
+                        <th>Schedule Type</th>
+                        <th>Every Hours</th>
+                        <th>Last Run</th>
+                        <th>Next Run</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int recordCount = 0;
+                        if (Model.BackupSchedulesResponse != null && Model.BackupSchedulesResponse.Count > 0)
+                            foreach (var record in Model.BackupSchedulesResponse)
+                            {
+                                recordCount++;
+                                <tr onclick="location.href='/databasebackupschedules/@(record.Id)'">
+                                    <td>@string.Format("{0:N0}", recordCount)</td>
+                                    <td class="positive" style="font-weight:bold;font-size:14px"> <i class="clock icon"></i> @record.Name</td>
+                                    <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
+                                    <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
+                                    <td>@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.LastRun)</td>
+                                    <td>@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.NextRun)</td>
+                                </tr>
+                            }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" style="text-align:center">
+                                    <div class="ui message small warning"><div>To Available Backup Schedules for this database</div></div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+        </div>
+
 
     </div>
 </div>
@@ -167,6 +227,9 @@
             $(".last_status_update_for_" + key).attr("use-time-ago-value", metric.statusUpdateDate);
             //console.log("Updated UI Success");
         });
+
+        //Init Tab Menu
+        $('.menu .item').tab();
     });
 </script>
 }
