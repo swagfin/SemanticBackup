@@ -20,6 +20,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
+        private readonly IMySQLServerBackupProviderService _mySQLServerBackupProviderService;
         internal readonly List<IBot> BackupsBots;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
@@ -27,7 +28,8 @@ namespace SemanticBackup.Core.BackgroundJobs
             PersistanceOptions persistanceOptions,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
-            ISQLServerBackupProviderService sQLServerBackupProviderService
+            ISQLServerBackupProviderService sQLServerBackupProviderService,
+            IMySQLServerBackupProviderService mySQLServerBackupProviderService
             )
         {
             this._logger = logger;
@@ -36,6 +38,7 @@ namespace SemanticBackup.Core.BackgroundJobs
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
+            this._mySQLServerBackupProviderService = mySQLServerBackupProviderService;
             this.BackupsBots = new List<IBot>();
         }
         public void Initialize()
@@ -74,6 +77,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 //Add Queue
                                 if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
                                     BackupsBots.Add(new SQLBackupBot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
+                                else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
+                                    BackupsBots.Add(new MySQLBackupBot(backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
                                 else
                                     throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
                                 //Finally Update Status
@@ -147,7 +152,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         DateTime currentTime = _sharedTimeZone.Now;
                         List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired(currentTime);
-                        if (expiredBackups == null)
+                        if (expiredBackups == null || expiredBackups.Count < 1)
                             return;
                         List<string> toDeleteList = new List<string>();
                         foreach (BackupRecord backupRecord in expiredBackups)

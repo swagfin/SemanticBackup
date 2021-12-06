@@ -14,8 +14,8 @@ WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
 ";
         public bool BackupDatabase(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
         {
-            if (string.IsNullOrEmpty(backupDatabaseInfo.DatabaseName) || !backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                throw new Exception($"Check Database Name: {backupDatabaseInfo.DatabaseName} for NULL or UnSupported Database Type: {backupDatabaseInfo.DatabaseType}");
+            if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
+                throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
             using (DbConnection connection = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
             {
                 connection.Open();

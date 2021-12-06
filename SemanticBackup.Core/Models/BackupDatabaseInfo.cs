@@ -25,8 +25,10 @@ namespace SemanticBackup.Core.Models
             {
                 if (!string.IsNullOrEmpty(DatabaseType) && DatabaseType.Contains("SQLSERVER"))
                     return $"Data Source={Server},{Port};Initial Catalog={DatabaseName};Persist Security Info=True;User ID={Username};Password={Password};";
+                else if (DatabaseType.Contains("MYSQL") || DatabaseType.Contains("MARIADB"))
+                    return $"server={Server};uid={Username};pwd={Password};database={DatabaseName};port={Port};CharSet=utf8;Connection Timeout=300";
                 else
-                    return $"server={Server}; port={Port}; database={DatabaseName}; user={Username}; password={Password}; Persist Security Info=False; Connect Timeout=300";
+                    return null;
             }
         }
         public DateTime DateRegistered { get; set; } = DateTime.Now;
