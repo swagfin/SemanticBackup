@@ -19,6 +19,7 @@ namespace SemanticBackup.WebClient.Pages.Databases
         public string ApiEndPoint { get; }
         public BackupDatabaseInfoResponse DatabaseResponse { get; set; }
         public List<BackupRecordResponse> BackupRecordsResponse { get; private set; }
+        public List<BackupScheduleResponse> BackupSchedulesResponse { get; private set; }
 
         public InfoModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
         {
@@ -34,10 +35,8 @@ namespace SemanticBackup.WebClient.Pages.Databases
                 var url = $"api/BackupDatabases/{id}";
                 DatabaseResponse = await _httpService.GetAsync<BackupDatabaseInfoResponse>(url);
                 //Get Backups
-                url = $"api/BackupRecords/ByDatabaseId/{id}";
-                var records = await _httpService.GetAsync<List<BackupRecordResponse>>(url);
-                if (records != null)
-                    BackupRecordsResponse = records.Take(10).ToList();
+                await GetBackupRecordsForDatabaseAsync(id);
+                await GetBackupSchedulesForDatabaseAsync(id);
             }
             catch (Exception ex)
             {
@@ -45,6 +44,28 @@ namespace SemanticBackup.WebClient.Pages.Databases
                 return RedirectToPage("Index");
             }
             return Page();
+        }
+
+        private async Task GetBackupRecordsForDatabaseAsync(string id)
+        {
+            try
+            {
+                var url = $"api/BackupRecords/ByDatabaseId/{id}";
+                var records = await _httpService.GetAsync<List<BackupRecordResponse>>(url);
+                if (records != null)
+                    BackupRecordsResponse = records.Take(10).ToList();
+            }
+            catch (Exception ex) { _logger.LogWarning($"Unable to Get Database Backup Records for Db: {id}, Error: {ex.Message}"); }
+
+        }
+        private async Task GetBackupSchedulesForDatabaseAsync(string id)
+        {
+            try
+            {
+                var url = $"api/BackupSchedules/ByDatabaseId/{id}";
+                BackupSchedulesResponse = await _httpService.GetAsync<List<BackupScheduleResponse>>(url);
+            }
+            catch (Exception ex) { _logger.LogWarning($"Unable to Get Database Schedules for Db: {id}, Error: {ex.Message}"); }
         }
     }
 }
