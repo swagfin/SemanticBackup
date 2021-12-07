@@ -1,0 +1,30 @@
+﻿@page "/managed-directories/notify-create"
+@model SemanticBackup.WebClient.Pages.ManagedDirectories.NotifyCreateModel
+@{
+    ViewData["Title"] = "Managed Directories | Notification";
+    Layout = "_LayoutNoDirectory";
+}
+<div class="container pd-x-0">
+
+
+    <div class="row row-xs">
+
+        <div class="col-lg-8 col-xl-12 mg-t-10">
+
+            <div class="ui header">Notification</div>
+
+            <div class="ui divider"></div>
+
+            <div class="ui placeholder small segment">
+                <div class="ui icon header">
+                    <i class="info icon"></i>
+                    You have not created any API Directory, <a href="~/managedDirectories/create"> create a Directory</a> and monitor their status and statistics
+                </div>
+                <a class="ui button blue" href="~/managedDirectories/create"><i class="plus add icon"></i>Create Directory</a>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>

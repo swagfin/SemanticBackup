@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Components
+@inject NavigationManager navManager
+<!DOCTYPE html>
 <html lang="en">
 <head>
 
@@ -34,48 +36,75 @@
 
     <aside class="aside aside-fixed">
         <div class="aside-header">
-            <div href="~" class="tva-logo">Semantic Backup</div>
+            <a href="/" class="aside-logo">Semantic <span> Backup</span></a>
             <a href="" class="aside-menu-link">
                 <i data-feather="menu"></i>
                 <i data-feather="x"></i>
             </a>
         </div>
         <div class="aside-body">
+
             <div class="aside-loggedin">
-                <div class="d-flex align-items-center justify-content-start">
-                    <a class="avatar" asp-page="/User/Profile"><img src="~/images/uploads/user_001.jpg" class="rounded-circle" alt=""></a>
-                    <div class="aside-alert-link">
-                        <a href="" class="new" data-toggle="tooltip" title="You have 4 new notifications"><i data-feather="bell"></i></a>
-                        <a href="/User/SignOut" class="nav-link" data-toggle="tooltip" title="Sign out"><i data-feather="log-out"></i></a>
-                    </div>
-                </div>
-                <div class="aside-loggedin-user">
-                    <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
-                        <h6 class="tx-semibold mg-b-0">George Wainaina</h6>
-                        <i data-feather="chevron-down"></i>
-                    </a>
-                    <p class="tx-color-03 tx-12 mg-b-0">Administrator</p>
-                </div>
-                <div class="collapse" id="loggedinMenu">
-                    <ul class="nav nav-aside mg-b-0">
-                        <li class="nav-item"><a href="/User/EditProfile" class="nav-link"><i data-feather="edit"></i> <span>Edit Profile</span></a></li>
-                        <li class="nav-item"><a href="/User/Profile" class="nav-link"><i data-feather="user"></i> <span>View Profile</span></a></li>
-                        <li class="nav-item"><a href="" class="nav-link"><i data-feather="settings"></i> <span>Account Settings</span></a></li>
-                        <li class="nav-item"><a href="/User/SignOut" class="nav-link"><i data-feather="log-out"></i> <span>Sign Out</span></a></li>
-                    </ul>
-                </div>
-            </div><!-- aside-loggedin -->
+
+                @{
+                    var activeDirectory = Directories.CurrentDirectory;
+                    if (Directories.ActiveDirectories != null && Directories.ActiveDirectories.Count > 0)
+                    {
+
+                        <div class="aside-loggedin-user">
+                            <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
+                                <h6 class="ui mini blue header" title="Directory: @(activeDirectory.Name) | Id: @(activeDirectory.Id)">@(activeDirectory.Name)</h6>
+                                <i data-feather="chevron-down"></i>
+                            </a>
+                            <p class="tx-color-03 tx-12 mg-b-0">Switch Directory</p>
+                        </div>
+
+
+                        <div class="collapse" id="loggedinMenu">
+                            <ul class="nav nav-aside mg-b-0">
+                                <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
+                                @{
+                                    foreach (var dir in Directories.ActiveDirectories)
+                                    {
+                                        string class_style = "";
+                                        if (activeDirectory.Id == dir.Id)
+                                        {
+                                            class_style = "active";
+                                        }
+                                        <li class="nav-item @(class_style)"><a href="~/directories/switch/@(activeDirectory.Id)" class="nav-link"><i data-feather="activity"></i> <span>@(dir.Name)</span></a></li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="nav nav-aside mg-b-0">
+                            <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
+                        </ul>
+
+
+                        navManager.NavigateTo("/managed-directories/notify-create", true);
+                    }
+
+                }
+
+
+            </div>
+
+
+            <!-- aside-loggedin -->
             <ul class="nav nav-aside">
                 <li class="nav-label">Dashboards</li>
                 <li class="nav-item active"><a href="~/" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
 
                 <li class="nav-label mg-t-25">Backup Menu</li>
 
-                 <li class="nav-item"><a href="~/Databases/" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
-                 <li class="nav-item"><a href="~/DatabaseBackupSchedules/" class="nav-link"><i data-feather="clock"></i> <span>Backup Schedules</span></a></li>
-                 <li class="nav-item"><a href="~/DatabaseBackups/" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
+                <li class="nav-item"><a href="~/Databases/" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
+                <li class="nav-item"><a href="~/DatabaseBackupSchedules/" class="nav-link"><i data-feather="clock"></i> <span>Backup Schedules</span></a></li>
+                <li class="nav-item"><a href="~/DatabaseBackups/" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
 
-              
+
                 <li class="nav-label mg-t-25">Custom</li>
 
                 <li class="nav-item with-sub">
@@ -98,9 +127,8 @@
                 <input type="search" class="form-control" placeholder="Search...">
             </div>
             <nav class="nav">
-                <a href="" class="nav-link"><i data-feather="help-circle"></i></a>
-                <a href="" class="nav-link"><i data-feather="grid"></i></a>
-                <a href="" class="nav-link"><i data-feather="align-left"></i></a>
+                <a href="" class="nav-link active"><i data-feather="grid"></i> <span class="ui basic yellow label left pointing">@(activeDirectory?.Name.ToUpper())</span></a>
+                <a href="" class="nav-link"><i data-feather="help-circle"></i> Switch Directory</a>
             </nav>
         </div><!-- content-header -->
 
@@ -140,7 +168,7 @@
     <script src="/assets/js/dashforge.js"></script>
     <script src="/assets/js/dashforge.aside.js"></script>
     <script src="/assets/js/dashforge.sampledata.js"></script>
-   
+
     <script type="text/javascript" src="~/assets/js/time-ago.js"></script>
 
     @RenderSection("Scripts", required: false)
