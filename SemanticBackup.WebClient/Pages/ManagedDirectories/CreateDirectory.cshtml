@@ -16,11 +16,11 @@
                 <div class="ui segment attached form">
                     <div class="field">
                         <label>Directory Name</label>
-                        <input asp-for="ActiveDirectoryRequest.Name" autofocus="true" autocomplete="off" type="text" required>
+                        <input asp-for="ActiveDirectoryRequest.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Server xxxxx" type="text" required>
                     </div>
                     <div class="field">
                         <label>Directory's Server URL</label>
-                        <input asp-for="ActiveDirectoryRequest.Url" type="url" title="Enter a valid Server URL" autocomplete="off" required>
+                        <input asp-for="ActiveDirectoryRequest.Url" type="url" title="Enter a valid Server URL" autocomplete="off" placeholder="e.g. http://backup.api.test.com/" required>
                     </div>
                     <p align="center">
                         <button class="ui fluid button blue" type="submit">

@@ -28,6 +28,8 @@ namespace SemanticBackup.WebClient.Pages.ManagedDirectories
             {
                 if (ActiveDirectoryRequest == null)
                     return Page();
+                //Checks Pattern
+                ActiveDirectoryRequest.Url = ActiveDirectoryRequest.Url.EndsWith("/") ? ActiveDirectoryRequest.Url : ActiveDirectoryRequest.Url + "/";
                 //Proceed
                 bool addedSuccess = this._directoryStorageService.AddDirectory(ActiveDirectoryRequest);
                 if (addedSuccess)
