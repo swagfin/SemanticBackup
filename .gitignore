@@ -362,3 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 *.db
+
+#Skip Active Directories Json Files
+active-directories.*.json
