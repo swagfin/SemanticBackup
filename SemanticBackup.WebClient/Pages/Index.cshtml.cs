@@ -7,12 +7,12 @@ namespace SemanticBackup.WebClient.Pages
     {
         public string ApiEndPoint { get; private set; }
 
+        public IndexModel()
+        {
+            ApiEndPoint = Directories.CurrentDirectory?.Url;
+        }
         public IActionResult OnGet()
         {
-            var currentDirectory = Directories.CurrentDirectory;
-            if (currentDirectory == null)
-                return Redirect("/managed-directories/notify-create");
-            ApiEndPoint = currentDirectory?.Url;
             return Page();
         }
     }
