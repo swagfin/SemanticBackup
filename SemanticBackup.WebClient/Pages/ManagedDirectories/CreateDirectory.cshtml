@@ -1,0 +1,36 @@
+﻿@page "/managed-directories/create"
+@model SemanticBackup.WebClient.Pages.ManagedDirectories.CreateDirectoryModel
+@{
+    ViewData["Title"] = "Managed Directories | Create Directory";
+    Layout = "_LayoutNoDirectory";
+}
+
+<div class="container pd-x-0">
+
+    <div class="row row-xs">
+
+        <div class="col-lg-8 col-xl-12 mg-t-10">
+            <h2>Create Directory</h2>
+
+            <form asp-page="RegisterDatabase" method="post">
+                <div class="ui segment attached form">
+                    <div class="field">
+                        <label>Directory Name</label>
+                        <input asp-for="ActiveDirectoryRequest.Name" autofocus="true" autocomplete="off" type="text" required>
+                    </div>
+                    <div class="field">
+                        <label>Directory's Server URL</label>
+                        <input asp-for="ActiveDirectoryRequest.Url" type="url" title="Enter a valid Server URL" autocomplete="off" required>
+                    </div>
+                    <p align="center">
+                        <button class="ui fluid button blue" type="submit">
+                            <i class="chart line icon"></i>
+                            Create Directory
+                        </button>
+                    </p>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

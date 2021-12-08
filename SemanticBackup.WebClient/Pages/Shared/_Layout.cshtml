@@ -53,16 +53,15 @@
 
                         <div class="aside-loggedin-user">
                             <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
-                                <h6 class="ui mini blue header" title="Directory: @(activeDirectory.Name) | Id: @(activeDirectory.Id)">@(activeDirectory.Name)</h6>
+                            <span class="ui basic yellow label bottom pointing">LOCALHOST SERVER</span>
                                 <i data-feather="chevron-down"></i>
                             </a>
-                            <p class="tx-color-03 tx-12 mg-b-0">Switch Directory</p>
                         </div>
 
 
                         <div class="collapse" id="loggedinMenu">
+                            <p class="tx-color-03 tx-12 mg-b-0">Switch Directory</p>
                             <ul class="nav nav-aside mg-b-0">
-                                <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
                                 @{
                                     foreach (var dir in Directories.ActiveDirectories)
                                     {
@@ -74,6 +73,7 @@
                                         <li class="nav-item @(class_style)"><a href="~/directories/switch/@(activeDirectory.Id)" class="nav-link"><i data-feather="activity"></i> <span>@(dir.Name)</span></a></li>
                                     }
                                 }
+                                <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
                             </ul>
                         </div>
                     }
@@ -84,7 +84,7 @@
                         </ul>
 
 
-                        navManager.NavigateTo("/managed-directories/notify-create", true);
+                        navManager.NavigateTo("/managed-directories/", true);
                     }
 
                 }
@@ -107,8 +107,8 @@
 
 
                 <li class="nav-label mg-t-25">DIRECTORIES</li>
-                <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Create Directory</span></a></li>
-                <li class="nav-item"><a href="~/directories/" class="nav-link"><i data-feather="grid"></i> <span>Manage Directories</span></a></li>
+                <li class="nav-item"><a href="~/managed-directories/create" class="nav-link"><i data-feather="plus"></i> <span>Create Directory</span></a></li>
+                <li class="nav-item"><a href="~/managed-directories/" class="nav-link"><i data-feather="grid"></i> <span>Manage Directories</span></a></li>
 
                 <li class="nav-item with-sub">
                     <a href="" class="nav-link"><i data-feather="edit"></i> <span>Custom Functions</span></a>

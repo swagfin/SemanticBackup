@@ -1,0 +1,28 @@
+﻿@page "/managed-directories"
+@model SemanticBackup.WebClient.Pages.ManagedDirectories.IndexModel
+@{
+    ViewData["Title"] = "Managed Directories";
+    Layout = "_LayoutNoDirectory";
+}
+<div class="container pd-x-0">
+    <div class="row row-xs">
+
+        <div class="col-lg-8 col-xl-12 mg-t-10">
+            <h2>Active Directories</h2>
+
+            <div class="ui message icon">
+                <i class="clone outline icon"></i>
+                <div class="content">
+                  You have not created any API Directory, <a href="~/managed-directories/create"> create a Directory</a> and monitor their status and statistics
+                    <p align="center">
+                    </p><div class="ui two buttons">
+                        <a class="ui button blue" href="~/managed-directories/create"><i class="plus add icon"></i>Create Directory</a>
+                        <a class="ui button " href="~/managed-directories/"><i class="list icon"></i>Active Directories</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

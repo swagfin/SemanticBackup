@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace SemanticBackup.WebClient.Pages.ManagedDirectories
 {
-    public class NotifyCreateModel : PageModel
+    public class IndexModel : PageModel
     {
         public void OnGet()
         {
