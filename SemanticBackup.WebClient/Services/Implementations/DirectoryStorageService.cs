@@ -117,5 +117,10 @@ namespace SemanticBackup.WebClient.Services.Implementations
                 return false;
             return SwitchToDirectory(directory.Id);
         }
+
+        public ActiveDirectory GetActiveDirectory(string id)
+        {
+            return this.CurrentDirectories.FirstOrDefault(x => x.Id == id);
+        }
     }
 }

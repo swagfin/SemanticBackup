@@ -1,0 +1,16 @@
+﻿@page "/managed-directories/switch/{id}"
+@model SemanticBackup.WebClient.Pages.ManagedDirectories.SwitchModel
+@{
+    ViewData["Title"] = "Switch Directory";
+    Layout = "_LayoutNoDirectory";
+}
+<div class="ui message icon">
+    <i class="clone outline icon"></i>
+    <div class="content">
+      Ooops! we encountered an error during switching to the specified <a href="~/managed-directories/">Active Directory</a>. Could be because the directory doesn't exists or is Invalid'
+        <p align="center">
+        </p><div class="ui two buttons">
+            <a class="ui small button basic" href="~/managed-directories/"><i class="list icon"></i>Active Directories</a>
+        </div>
+    </div>
+</div>

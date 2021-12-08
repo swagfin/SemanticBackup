@@ -7,6 +7,7 @@ namespace SemanticBackup.WebClient.Services
     {
         void InitDirectories();
         List<ActiveDirectory> GetActiveDirectories();
+        ActiveDirectory GetActiveDirectory(string id);
         bool RemoveDirectory(string id);
         bool SwitchToDirectory(string id);
         bool SwitchToDirectory(ActiveDirectory directory);

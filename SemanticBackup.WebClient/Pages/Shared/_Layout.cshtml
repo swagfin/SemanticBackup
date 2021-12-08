@@ -53,7 +53,7 @@
 
                         <div class="aside-loggedin-user">
                             <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
-                            <span class="ui basic yellow label bottom pointing">LOCALHOST SERVER</span>
+                            <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name.ToUpper())</span>
                                 <i data-feather="chevron-down"></i>
                             </a>
                         </div>
@@ -63,14 +63,14 @@
                             <p class="tx-color-03 tx-12 mg-b-0">Switch Directory</p>
                             <ul class="nav nav-aside mg-b-0">
                                 @{
-                                    foreach (var dir in Directories.ActiveDirectories)
+                                    foreach (var directory in Directories.ActiveDirectories)
                                     {
                                         string class_style = "";
-                                        if (activeDirectory.Id == dir.Id)
+                                        if (activeDirectory.Id == directory.Id)
                                         {
                                             class_style = "active";
                                         }
-                                        <li class="nav-item @(class_style)"><a href="~/managed-directories/switch/@(activeDirectory.Id)" class="nav-link"><i data-feather="activity"></i> <span>@(dir.Name)</span></a></li>
+                                        <li class="nav-item @(class_style)"><a href="~/managed-directories/switch/@(directory.Id)" class="nav-link"><i data-feather="activity"></i> <span>@(directory.Name.ToUpper())</span></a></li>
                                     }
                                 }
                                 <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
@@ -131,11 +131,11 @@
             </div>
             <nav class="nav">
                 <a href="" class="nav-link active"><i data-feather="grid"></i> <span class="ui basic yellow label left pointing">@(activeDirectory?.Name.ToUpper())</span></a>
-                <a href="" class="nav-link"><i data-feather="help-circle"></i> Switch Directory</a>
+                <a href="~/managed-directories/" class="nav-link"><i data-feather="help-circle"></i> Switch Directory</a>
             </nav>
         </div><!-- content-header -->
 
-        <div class="content-body">
+        <div class="content-body" style="background: #FAFAFA">
 
             <!--page content-->
             @RenderBody()

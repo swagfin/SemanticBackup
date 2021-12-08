@@ -2,13 +2,13 @@
   {
     "Id": "7A495336-CA28-4889-BED4-80B65A87250B",
     "Name": "Localhost Server",
-    "Url": "http://localhost:5000/",
-    "LastAccess": 0
+    "Url": "https://localhost:5001/",
+    "LastAccess": 20211208192654
   },
   {
     "Id": "41CCFA45-7A9A-47CC-A299-CD121FB5C909",
     "Name": "Production Server",
-    "Url": "http://backup.coresoft.nl/",
-    "LastAccess": 0
+    "Url": "https://backup.api.coresoft.nl/",
+    "LastAccess": 20211208192838
   }
 ]
