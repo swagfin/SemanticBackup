@@ -1,5 +1,4 @@
 ﻿@using Microsoft.AspNetCore.Components
-@inject NavigationManager navManager
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,9 +81,9 @@
                         <ul class="nav nav-aside mg-b-0">
                             <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
                         </ul>
-
-
-                        navManager.NavigateTo("/managed-directories/", true);
+                        <script type="text/javascript">
+                            location.href="/managed-directories/";
+                        </script>
                     }
 
                 }
