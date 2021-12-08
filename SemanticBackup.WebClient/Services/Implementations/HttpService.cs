@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,18 +11,13 @@ namespace SemanticBackup.WebClient.Services.Implementations
 {
     public class HttpService : IHttpService
     {
-        private readonly WebClientOptions _options;
-
-        public HttpService(IOptions<WebClientOptions> options)
-        {
-            _options = options.Value;
-        }
+        private string SigningSecret { get; set; } = "!!backupclient@coresoft.nl!!";
 
         public async Task<T> GetAsync<T>(string url)
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(_options.WebApiUrl);
+            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.GetAsync(url);
 
@@ -40,7 +34,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(_options.WebApiUrl);
+            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.PostAsync(url, new StringContent(JsonConvert.SerializeObject(data), encoding: System.Text.Encoding.UTF8, "application/json"));
             if (response.IsSuccessStatusCode)
@@ -56,7 +50,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(_options.WebApiUrl);
+            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.PutAsync(url, new StringContent(JsonConvert.SerializeObject(data), encoding: System.Text.Encoding.UTF8, "application/json"));
 
@@ -72,7 +66,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(_options.WebApiUrl);
+            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.DeleteAsync(url);
             if (response.IsSuccessStatusCode)
@@ -86,7 +80,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
 
         public string GetToken()
         {
-            var _signKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningSecret));
+            var _signKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningSecret));
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Issuer = "tv-analytics",

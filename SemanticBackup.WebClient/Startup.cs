@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SemanticBackup.WebClient.Extensions;
 using SemanticBackup.WebClient.Services;
 using SemanticBackup.WebClient.Services.Implementations;
 
@@ -20,14 +21,19 @@ namespace SemanticBackup.WebClient
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<WebClientOptions>(Configuration.GetSection("WebClientOptions"));
             services.AddTransient<IHttpService, HttpService>();
+
+            //Directory Services
+            services.AddSingleton<IDirectoryStorageService, DirectoryStorageService>();
             services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            //Init Directori 
+            app.InitActiveDirectoryServices();
+            //Proceed
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
