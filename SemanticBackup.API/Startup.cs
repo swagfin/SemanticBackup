@@ -48,7 +48,7 @@ namespace SemanticBackup.API
             services.AddTransient<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
             services.AddTransient<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
             services.AddTransient<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
-            services.AddTransient<IActiveDirectoryPersistanceService, ActiveDirectoryPersistanceService>();
+            services.AddTransient<IResourceGroupPersistanceService, ResourceGroupPersistanceService>();
 
             //Engines
             services.AddTransient<ISQLServerBackupProviderService, SQLServerBackupProviderService>();

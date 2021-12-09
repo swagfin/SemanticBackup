@@ -1,26 +1,26 @@
-﻿@page "/managed-directories"
-@model SemanticBackup.WebClient.Pages.ManagedDirectories.IndexModel
+﻿@page "/resource-groups"
+@model SemanticBackup.WebClient.Pages.ResourceGroups.IndexModel
 @{
-    ViewData["Title"] = "Managed Directories";
+    ViewData["Title"] = "Resource Groups";
     Layout = "_LayoutNoDirectory";
 }
 <div class="container pd-x-0">
     <div class="row row-xs">
 
         <div class="col-lg-8 col-xl-12 mg-t-10">
-            <h2>Active Directories</h2>
+            <h2>Resource Groups</h2>
             <div class="ui divider"></div>
             @{
-                if (Model.CurrentDirectory == null)
+                if (Model.CurrentResourceGroup == null)
                 {
                     <div class="ui message icon">
                         <i class="clone outline icon"></i>
                         <div class="content">
-                            You have not created any API Directory, <a href="~/managed-directories/create"> create a Directory</a> and monitor their status and statistics
+                            You have not created any Resource Group, <a href="~/resource-groups/create"> create a Resource Group</a> and monitor their status and statistics
                             <p align="center">
                             </p><div class="ui two buttons">
-                                <a class="ui button blue" href="~/managed-directories/create"><i class="plus add icon"></i>Create Directory</a>
-                                <a class="ui button " href="~/managed-directories/"><i class="list icon"></i>Active Directories</a>
+                                <a class="ui button blue" href="~/resource-groups/create"><i class="plus add icon"></i>Create Resource Group</a>
+                                <a class="ui button " href="~/resource-groups/"><i class="list icon"></i>Resource Groups</a>
                             </div>
                         </div>
                     </div>
@@ -33,7 +33,7 @@
                             <div class="content">
                                 <span class="right floated mini ui image" title="Default Directory"><span class="ui mini circular green label"></span></span>
                                 <div class="header">
-                                    @(Model.CurrentDirectory.Name)
+                                    @(Model.CurrentResourceGroup.Name)
                                 </div>
                                 <div class="extra meta">
                                     @(Model.ApiEndPoint)
@@ -41,14 +41,14 @@
                             </div>
                             <div class="extra content">
                                 <div class="ui two buttons">
-                                    <a href="~/managed-directories/edit/@(Model.CurrentDirectory.Id)" class="ui basic grey button"><i class="info icon"></i>Manage Directory</a>
+                                    <a href="~/resource-groups/edit/@(Model.CurrentResourceGroup.Id)" class="ui basic grey button"><i class="info icon"></i>Manage</a>
                                 </div>
                             </div>
                         </div>
 
-                        @if (Model.OtherDirectories != null && Model.OtherDirectories.Count > 0)
+                        @if (Model.OtherResourceGroups != null && Model.OtherResourceGroups.Count > 0)
                         {
-                            foreach (var directory in Model.OtherDirectories)
+                            foreach (var directory in Model.OtherResourceGroups)
                             {
                                 <div class="card">
                                     <div class="content">
@@ -62,8 +62,8 @@
                                     </div>
                                     <div class="extra content">
                                         <div class="ui two buttons">
-                                            <a href="~/managed-directories/edit/@(directory.Id)" class="ui basic grey button"><i class="info icon"></i>Manage</a>
-                                            <a class="ui basic blue button" href="~/managed-directories/switch/@(directory.Id)"><i class="chart line icon icon"></i>Switch</a>
+                                            <a href="~/resource-groups/edit/@(directory.Id)" class="ui basic grey button"><i class="info icon"></i>Manage</a>
+                                            <a class="ui basic blue button" href="~/resource-groups/switch/@(directory.Id)"><i class="chart line icon icon"></i>Switch</a>
 
                                         </div>
                                     </div>

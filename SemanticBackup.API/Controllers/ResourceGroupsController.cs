@@ -10,40 +10,40 @@ using System.Collections.Generic;
 namespace SemanticBackup.API.Controllers
 {
     [ApiController]
-    [Route("{directory}/api/[controller]")]
-    public class ActiveDirectoriesController : ControllerBase
+    [Route("{resourcegroup}/api/[controller]")]
+    public class ResourceGroupsController : ControllerBase
     {
-        private readonly ILogger<ActiveDirectoriesController> _logger;
-        private readonly IActiveDirectoryPersistanceService _activeDirectoryService;
+        private readonly ILogger<ResourceGroupsController> _logger;
+        private readonly IResourceGroupPersistanceService _activeResourcegroupService;
         private readonly SharedTimeZone _sharedTimeZone;
 
-        public ActiveDirectoriesController(ILogger<ActiveDirectoriesController> logger, IActiveDirectoryPersistanceService persistanceService, SharedTimeZone sharedTimeZone)
+        public ResourceGroupsController(ILogger<ResourceGroupsController> logger, IResourceGroupPersistanceService resourceGroupPersistance, SharedTimeZone sharedTimeZone)
         {
             _logger = logger;
-            this._activeDirectoryService = persistanceService;
+            this._activeResourcegroupService = resourceGroupPersistance;
             this._sharedTimeZone = sharedTimeZone;
         }
         [HttpGet]
-        public ActionResult<List<ActiveDirectory>> GetDirectories()
+        public ActionResult<List<ResourceGroup>> GetDirectories()
         {
             try
             {
-                return _activeDirectoryService.GetAll();
+                return _activeResourcegroupService.GetAll();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<ActiveDirectory>();
+                return new List<ResourceGroup>();
             }
         }
         [HttpGet("{id}")]
-        public ActionResult<ActiveDirectory> Get(string id)
+        public ActionResult<ResourceGroup> Get(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var record = _activeDirectoryService.GetById(id);
+                var record = _activeResourcegroupService.GetById(id);
                 if (record == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 return record;
@@ -56,7 +56,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] ActiveDirectoryRequest request)
+        public ActionResult Post([FromBody] ResourceGroupRequest request)
         {
             try
             {
@@ -64,12 +64,12 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Object value can't be NULL");
                 DateTime currentTime = _sharedTimeZone.Now;
                 long.TryParse(DateTime.Now.ToString("yyyyMMddHHmmss"), out long lastAccess);
-                ActiveDirectory saveObj = new ActiveDirectory
+                ResourceGroup saveObj = new ResourceGroup
                 {
                     Name = request.Name,
                     LastAccess = lastAccess
                 };
-                bool savedSuccess = _activeDirectoryService.Add(saveObj);
+                bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
                 return Ok(savedSuccess);
@@ -82,7 +82,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put([FromBody] ActiveDirectory request, string id)
+        public ActionResult Put([FromBody] ResourceGroup request, string id)
         {
             try
             {
@@ -92,12 +92,12 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Id can't be NULL");
                 //Verify Database Info Exists
                 //Proceed
-                var savedObj = _activeDirectoryService.GetById(id);
+                var savedObj = _activeResourcegroupService.GetById(id);
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 //Update Params
                 savedObj.Name = request.Name;
-                bool updatedSuccess = _activeDirectoryService.Update(savedObj);
+                bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
                 return Ok(updatedSuccess);
@@ -108,14 +108,14 @@ namespace SemanticBackup.API.Controllers
                 return new BadRequestObjectResult(ex.Message);
             }
         }
-        [HttpGet("switch-directory/{id}")]
-        public ActionResult GetSwitchDirectory(string id)
+        [HttpGet("switch-resource-group/{id}")]
+        public ActionResult GetSwitchResourceGroup(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                bool updatedSuccess = _activeDirectoryService.Switch(id);
+                bool updatedSuccess = _activeResourcegroupService.Switch(id);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
                 return Ok(updatedSuccess);
@@ -135,7 +135,7 @@ namespace SemanticBackup.API.Controllers
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
                 //Update Params
-                bool removedSuccess = _activeDirectoryService.Remove(id);
+                bool removedSuccess = _activeResourcegroupService.Remove(id);
                 if (!removedSuccess)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else

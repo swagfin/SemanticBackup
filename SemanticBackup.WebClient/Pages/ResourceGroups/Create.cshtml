@@ -1,7 +1,7 @@
-﻿@page "/managed-directories/create"
-@model SemanticBackup.WebClient.Pages.ManagedDirectories.CreateDirectoryModel
+﻿@page "/resource-groups/create"
+@model SemanticBackup.WebClient.Pages.ResourceGroups.CreateModel
 @{
-    ViewData["Title"] = "Managed Directories | Create Directory";
+    ViewData["Title"] = "Resource Groups | Create Resource Group";
     Layout = "_LayoutNoDirectory";
 }
 
@@ -10,18 +10,18 @@
     <div class="row row-xs">
 
         <div class="col-lg-8 col-xl-12 mg-t-10">
-            <h2>Create Directory</h2>
+            <h2>Create Resource Group</h2>
             <div class="ui divider"></div>
             <form asp-page="RegisterDatabase" method="post">
                 <div class="ui segment attached form">
                     <div class="field">
-                        <label>Directory Name</label>
-                        <input asp-for="ActiveDirectoryRequest.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Group" type="text" required>
+                        <label>Resource Group Name</label>
+                        <input asp-for="ResourceGroupRequest.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Group" type="text" required>
                     </div>
                     <p align="center">
                         <button class="ui fluid button blue" type="submit">
                             <i class="chart line icon"></i>
-                            Create Directory
+                            Create Resource Group
                         </button>
                     </p>
 

@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace SemanticBackup.API.Controllers
 {
     [ApiController]
-    [Route("{directory}/api/[controller]")]
+    [Route("{resourcegroup}/api/[controller]")]
     public class BackupDatabasesController : ControllerBase
     {
         private readonly ILogger<BackupDatabasesController> _logger;
@@ -35,11 +35,11 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupDatabaseInfoResponse>> Get(string directory)
+        public ActionResult<List<BackupDatabaseInfoResponse>> Get(string resourcegroup)
         {
             try
             {
-                var records = _backupDatabasePersistanceService.GetAll(directory);
+                var records = _backupDatabasePersistanceService.GetAll(resourcegroup);
                 if (records == null)
                     return new List<BackupDatabaseInfoResponse>();
                 return records.ToList().Select(x => new BackupDatabaseInfoResponse
@@ -108,7 +108,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] BackupDatabaseRequest request, string directory)
+        public ActionResult Post([FromBody] BackupDatabaseRequest request, string resourcegroup)
         {
             try
             {
@@ -122,7 +122,7 @@ namespace SemanticBackup.API.Controllers
                 {
                     BackupDatabaseInfo saveObj = new BackupDatabaseInfo
                     {
-                        ActiveDirectoryId = directory,
+                        ResourceGroupId = resourcegroup,
                         Server = request.Server,
                         DatabaseName = database,
                         Username = request.Username,
@@ -156,7 +156,7 @@ namespace SemanticBackup.API.Controllers
                 BackupSchedule saveObj = new BackupSchedule
                 {
                     BackupDatabaseInfoId = databaseInfo.Id,
-                    ActiveDirectoryId = databaseInfo.ActiveDirectoryId,
+                    ResourceGroupId = databaseInfo.ResourceGroupId,
                     ScheduleType = BackupScheduleType.FULLBACKUP.ToString(),
                     EveryHours = 24,
                     StartDate = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day + 1),

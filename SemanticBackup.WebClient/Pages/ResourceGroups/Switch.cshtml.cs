@@ -5,25 +5,25 @@ using SemanticBackup.WebClient.Services;
 using System;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.WebClient.Pages.ManagedDirectories
+namespace SemanticBackup.WebClient.Pages.ResourceGroups
 {
     public class SwitchModel : PageModel
     {
         private readonly ILogger<SwitchModel> _logger;
-        private readonly IDirectoryStorageService _directoryStorageService;
+        private readonly IResourceGroupService _resourceGroupsService;
 
-        public SwitchModel(ILogger<SwitchModel> logger, IDirectoryStorageService directoryStorageService)
+        public SwitchModel(ILogger<SwitchModel> logger, IResourceGroupService resourceGroupsService)
         {
             this._logger = logger;
-            this._directoryStorageService = directoryStorageService;
+            this._resourceGroupsService = resourceGroupsService;
         }
         public async Task<IActionResult> OnGetAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
-                    return Redirect("/managed-directories/");
-                bool switchedSuccess = await this._directoryStorageService.SwitchAsync(id);
+                    return Redirect("/resource-groups/");
+                bool switchedSuccess = await this._resourceGroupsService.SwitchAsync(id);
                 if (switchedSuccess)
                     return Redirect("/");
                 return Page();

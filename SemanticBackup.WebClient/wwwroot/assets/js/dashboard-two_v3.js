@@ -44,7 +44,7 @@
 
             await connection.start();
             console.log("starting dashboard hub with id: " + defaultGroupId);
-            connection.invoke("JoinGroup", { directory: directoryId ,group: defaultGroupId} ).then(function () {
+            connection.invoke("JoinGroup", { resourcegroup: resourcegroupId ,group: defaultGroupId} ).then(function () {
                 console.log("joined group");
             })
                 .catch(function (err) {

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SemanticBackup.WebClient.Models.Requests
+namespace SemanticBackup.API.Models.Requests
 {
-    public class ActiveDirectoryRequest
+    public class ResourceGroupRequest
     {
         [Required]
         public string Name { get; set; }

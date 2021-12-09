@@ -64,8 +64,8 @@ namespace SemanticBackup.API.SignalRHubs
         {
             try
             {
-                string group = $"{joinRequest.Directory}#{joinRequest.Group}";
-                _logger.LogInformation("Adding user from Group: {group}", joinRequest.Directory, joinRequest.Group);
+                string group = $"{joinRequest.Resourcegroup}#{joinRequest.Group}";
+                _logger.LogInformation("Adding user from Group: {group}", joinRequest.Resourcegroup, joinRequest.Group);
                 DashboardRefreshHubClientStorage.AddClient(group, Context.ConnectionId);
                 await Groups.AddToGroupAsync(Context.ConnectionId, group);
                 //Push Data to New
@@ -113,7 +113,7 @@ namespace SemanticBackup.API.SignalRHubs
                     _logger.LogWarning("Terminated Dispatch, Reason Group Record was not in the correct format");
                     return;
                 }
-                string directory = groupRecordParams[0];
+                string resourcegroup = groupRecordParams[0];
                 string subscriberGroup = groupRecordParams[1];
 
                 _logger.LogInformation("Preparing to send Metrics for Group: {group}", groupRecord);
@@ -127,7 +127,7 @@ namespace SemanticBackup.API.SignalRHubs
                 if (lastAVGMetric != null)
                     metricsFromDate = lastAVGMetric.TimeStamp;
 
-                var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(directory, metricsFromDate, subscriberGroup);
+                var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(resourcegroup, metricsFromDate, subscriberGroup);
                 if (recordsLatest != null && recordsLatest.Count > 0)
                     foreach (var record in recordsLatest)
                     {
@@ -147,7 +147,7 @@ namespace SemanticBackup.API.SignalRHubs
                         }
                     }
 
-                var recordsFailsLatest = _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatus(directory, metricsFromDate, BackupRecordBackupStatus.ERROR.ToString());
+                var recordsFailsLatest = _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatus(resourcegroup, metricsFromDate, BackupRecordBackupStatus.ERROR.ToString());
                 if (recordsFailsLatest != null && recordsFailsLatest.Count > 0)
                     foreach (var record in recordsFailsLatest)
                     {
@@ -171,9 +171,9 @@ namespace SemanticBackup.API.SignalRHubs
                 clientGrp.LastRefresh = currentTime;
                 //Lets Remove Metrics Surpassed  more than 24hrs to avoid Memory Overload
                 clientGrp.Metric.AvgMetrics.RemoveAll(x => x.TimeStamp < currentTime.AddHours(-24));
-                clientGrp.Metric.TotalBackupSchedules = _backupSchedulePersistanceService.GetAll(directory).Count();
-                clientGrp.Metric.TotalDatabases = _databaseInfoPersistanceService.GetAll(directory).Count();
-                clientGrp.Metric.TotalBackupRecords = _backupRecordPersistanceService.GetAll(directory).Count();
+                clientGrp.Metric.TotalBackupSchedules = _backupSchedulePersistanceService.GetAll(resourcegroup).Count();
+                clientGrp.Metric.TotalDatabases = _databaseInfoPersistanceService.GetAll(resourcegroup).Count();
+                clientGrp.Metric.TotalBackupRecords = _backupRecordPersistanceService.GetAll(resourcegroup).Count();
 
                 _ = hub.Clients.Group(groupRecord).SendAsync("ReceiveMetrics", clientGrp.Metric);
 

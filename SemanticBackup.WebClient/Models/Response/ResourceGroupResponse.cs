@@ -1,6 +1,6 @@
 ﻿namespace SemanticBackup.WebClient.Models.Response
 {
-    public class ActiveDirectoryResponse
+    public class ResourceGroupResponse
     {
         public string Id { get; set; }
         public string Name { get; set; }

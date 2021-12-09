@@ -10,11 +10,11 @@ namespace SemanticBackup.WebClient.Extensions
     {
         public static void InitActiveDirectoryServices(this IApplicationBuilder builder)
         {
-            var directoryStorageService = (IDirectoryStorageService)builder.ApplicationServices.GetService(typeof(IDirectoryStorageService));
+            var directoryStorageService = (IResourceGroupService)builder.ApplicationServices.GetService(typeof(IResourceGroupService));
             if (directoryStorageService == null)
                 return;
             //Init Directory Services
-            directoryStorageService.ReloadTempDirectories().GetAwaiter().GetResult();
+            directoryStorageService.ReloadTempResourceGroups().GetAwaiter().GetResult();
         }
 
     }
@@ -22,14 +22,14 @@ namespace SemanticBackup.WebClient.Extensions
 }
 namespace SemanticBackup.WebClient
 {
-    public static class Directories
+    public static class ResourceGroups
     {
-        public static List<ActiveDirectoryResponse> ActiveDirectories { get; set; } = new List<ActiveDirectoryResponse>();
-        public static ActiveDirectoryResponse CurrentDirectory
+        public static List<ResourceGroupResponse> All { get; set; } = new List<ResourceGroupResponse>();
+        public static ResourceGroupResponse CurrentResourceGroup
         {
             get
             {
-                return ActiveDirectories.Where(x => !string.IsNullOrWhiteSpace(x.Id)).OrderByDescending(x => x.LastAccess).FirstOrDefault();
+                return All.Where(x => !string.IsNullOrWhiteSpace(x.Id)).OrderByDescending(x => x.LastAccess).FirstOrDefault();
             }
         }
     }

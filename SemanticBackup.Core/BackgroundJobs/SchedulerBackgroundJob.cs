@@ -71,7 +71,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 BackupRecord newRecord = new BackupRecord
                                 {
                                     BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
-                                    ActiveDirectoryId = backupDatabaseInfo.ActiveDirectoryId,
+                                    ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
                                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                                     ExpiryDate = RecordExpiry,
                                     Name = backupDatabaseInfo.Name,

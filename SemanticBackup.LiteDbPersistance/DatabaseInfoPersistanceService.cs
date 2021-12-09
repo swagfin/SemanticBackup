@@ -18,7 +18,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ActiveDirectoryId == directory).OrderBy(x => x.Name).ToList();
+                return db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == directory).OrderBy(x => x.Name).ToList();
             }
         }
         public bool AddOrUpdate(BackupDatabaseInfo record)

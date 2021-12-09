@@ -46,8 +46,8 @@
             <div class="aside-loggedin">
 
                 @{
-                    var activeDirectory = Directories.CurrentDirectory;
-                    if (Directories.ActiveDirectories != null && Directories.ActiveDirectories.Count > 0)
+                    var activeDirectory = ResourceGroups.CurrentResourceGroup;
+                    if (ResourceGroups.All != null && ResourceGroups.All.Count > 0)
                     {
 
                         <div class="aside-loggedin-user">
@@ -59,30 +59,30 @@
 
 
                         <div class="collapse" id="loggedinMenu">
-                            <p class="tx-color-03 tx-12 mg-b-0">Switch Directory</p>
+                            <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
                             <ul class="nav nav-aside mg-b-0">
                                 @{
-                                    foreach (var directory in Directories.ActiveDirectories)
+                                    foreach (var directory in ResourceGroups.All)
                                     {
                                         string class_style = "";
                                         if (activeDirectory.Id == directory.Id)
                                         {
                                             class_style = "active";
                                         }
-                                        <li class="nav-item @(class_style)"><a href="~/managed-directories/switch/@(directory.Id)" class="nav-link"><i data-feather="activity"></i> <span>@(directory.Name)</span></a></li>
+                                        <li class="nav-item @(class_style)"><a href="~/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
                                     }
                                 }
-                                <li class="nav-item"><a href="~/managed-directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
+                                <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
                             </ul>
                         </div>
                     }
                     else
                     {
                         <ul class="nav nav-aside mg-b-0">
-                            <li class="nav-item"><a href="~/directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>
+                                 <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
                         </ul>
                         <script type="text/javascript">
-                            location.href="/managed-directories/";
+                            location.href="/resource-groups/";
                         </script>
                     }
 
@@ -105,9 +105,9 @@
 
 
 
-                <li class="nav-label mg-t-25">DIRECTORIES</li>
-                <li class="nav-item"><a href="~/managed-directories/create" class="nav-link"><i data-feather="plus"></i> <span>Create Directory</span></a></li>
-                <li class="nav-item"><a href="~/managed-directories/" class="nav-link"><i data-feather="grid"></i> <span>Manage Directories</span></a></li>
+                <li class="nav-label mg-t-25">RESOURCE GROUPS</li>
+                <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>Create Resource Group</span></a></li>
+                <li class="nav-item"><a href="~/resource-groups/" class="nav-link"><i data-feather="grid"></i> <span>Manage Resource Groups</span></a></li>
 
                 <li class="nav-item with-sub">
                     <a href="" class="nav-link"><i data-feather="edit"></i> <span>Custom Functions</span></a>
@@ -129,8 +129,7 @@
                 <input type="search" class="form-control" placeholder="Search...">
             </div>
             <nav class="nav">
-                <a href="" class="nav-link active"><i data-feather="grid"></i> <span class="ui basic yellow label left pointing">@(activeDirectory?.Name.ToUpper())</span></a>
-                <a href="~/managed-directories/" class="nav-link"><i data-feather="help-circle"></i> Switch Directory</a>
+                <a href="~/resource-groups/" class="nav-link active"><i data-feather="grid"></i> <span class="ui basic yellow label left pointing">@(activeDirectory?.Name)</span></a>
             </nav>
         </div><!-- content-header -->
 

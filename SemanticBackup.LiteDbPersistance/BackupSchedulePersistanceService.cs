@@ -15,25 +15,25 @@ namespace SemanticBackup.LiteDbPersistance
             this.connString = options.ConnectionStringLiteDb;
         }
 
-        public List<BackupSchedule> GetAll(string directory)
+        public List<BackupSchedule> GetAll(string resourcegroup)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.ActiveDirectoryId == directory).ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).ToList();
             }
         }
         public List<BackupSchedule> GetAllDueByDate(DateTime dateTime)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun <= dateTime && !string.IsNullOrWhiteSpace(x.ActiveDirectoryId)).OrderBy(x => x.NextRun).ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun <= dateTime && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRun).ToList();
             }
         }
         public List<BackupSchedule> GetAllByDatabaseId(string id)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ActiveDirectoryId)).ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).ToList();
             }
         }
         public bool AddOrUpdate(BackupSchedule record)

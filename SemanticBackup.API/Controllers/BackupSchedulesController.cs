@@ -10,7 +10,7 @@ using System.Collections.Generic;
 namespace SemanticBackup.API.Controllers
 {
     [ApiController]
-    [Route("{directory}/api/[controller]")]
+    [Route("{resourcegroup}/api/[controller]")]
     public class BackupSchedulesController : ControllerBase
     {
         private readonly ILogger<BackupSchedulesController> _logger;
@@ -35,11 +35,11 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupSchedule>> Get(string directory)
+        public ActionResult<List<BackupSchedule>> Get(string resourcegroup)
         {
             try
             {
-                return _backupSchedulePersistanceService.GetAll(directory);
+                return _backupSchedulePersistanceService.GetAll(resourcegroup);
             }
             catch (Exception ex)
             {
@@ -92,7 +92,7 @@ namespace SemanticBackup.API.Controllers
                 BackupSchedule saveObj = new BackupSchedule
                 {
                     BackupDatabaseInfoId = request.BackupDatabaseInfoId,
-                    ActiveDirectoryId = record.ActiveDirectoryId,
+                    ResourceGroupId = record.ResourceGroupId,
                     ScheduleType = request.ScheduleType,
                     EveryHours = request.EveryHours,
                     StartDate = request.StartDate,
@@ -128,7 +128,7 @@ namespace SemanticBackup.API.Controllers
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 //Update Params
-                savedObj.ActiveDirectoryId = record.ActiveDirectoryId;
+                savedObj.ResourceGroupId = record.ResourceGroupId;
                 savedObj.BackupDatabaseInfoId = request.BackupDatabaseInfoId;
                 savedObj.ScheduleType = request.ScheduleType;
                 savedObj.EveryHours = request.EveryHours;

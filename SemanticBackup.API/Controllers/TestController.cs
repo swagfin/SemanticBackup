@@ -48,7 +48,7 @@ namespace SemanticBackup.API.Controllers
                 BackupDatabaseInfo defaultDb = new BackupDatabaseInfo
                 {
                     Id = _dbkey,
-                    ActiveDirectoryId = directory,
+                    ResourceGroupId = directory,
                     DatabaseName = "test",
                     Server = "127.0.0.1",
                     Username = "sa",
@@ -65,7 +65,7 @@ namespace SemanticBackup.API.Controllers
                 BackupSchedule backupSchedule = new BackupSchedule
                 {
                     Id = _schedulekey,
-                    ActiveDirectoryId = directory,
+                    ResourceGroupId = directory,
                     Name = defaultDb.Name,
                     BackupDatabaseInfoId = _dbkey,
                     StartDate = currentTime,

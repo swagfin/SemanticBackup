@@ -18,11 +18,11 @@ namespace SemanticBackup.LiteDbPersistance
             this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
         }
 
-        public List<BackupRecord> GetAll(string directory)
+        public List<BackupRecord> GetAll(string resourcegroup)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ActiveDirectoryId == directory).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
         public List<BackupRecord> GetAllByStatus(string status)
@@ -39,31 +39,31 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDate != null).Where(x => x.ExpiryDate <= currentDate).OrderBy(x => x.RegisteredDate).ToList();
             }
         }
-        public List<BackupRecord> GetAllByRegisteredDateByStatus(string directory, DateTime fromDate, string status = "*")
+        public List<BackupRecord> GetAllByRegisteredDateByStatus(string resourcegroup, DateTime fromDate, string status = "*")
         {
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ActiveDirectoryId == directory).Where(x => x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ActiveDirectoryId == directory).Where(x => x.BackupStatus == status && x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
-        public List<BackupRecord> GetAllByStatusUpdateDateByStatus(string directory, DateTime fromDate, string status = "*")
+        public List<BackupRecord> GetAllByStatusUpdateDateByStatus(string resourcegroup, DateTime fromDate, string status = "*")
         {
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ActiveDirectoryId == directory).Where(x => x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ActiveDirectoryId == directory).Where(x => x.BackupStatus == status && x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
-        public List<BackupRecord> GetAllByDatabaseIdByStatus(string directory, string id, string status = "*")
+        public List<BackupRecord> GetAllByDatabaseIdByStatus(string resourcegroup, string id, string status = "*")
         {
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ActiveDirectoryId == directory).Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ActiveDirectoryId == directory).Where(x => x.BackupStatus == status && x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
             }
         }
         public List<BackupRecord> GetAllByDatabaseId(string id)

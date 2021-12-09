@@ -12,7 +12,7 @@ using System.Linq;
 namespace SemanticBackup.API.Controllers
 {
     [ApiController]
-    [Route("{directory}/api/[controller]")]
+    [Route("{resourcegroup}/api/[controller]")]
     public class BackupRecordsController : ControllerBase
     {
         private readonly ILogger<BackupRecordsController> _logger;
@@ -31,11 +31,11 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupRecord>> Get(string directory)
+        public ActionResult<List<BackupRecord>> Get(string resourcegroup)
         {
             try
             {
-                return _backupRecordPersistanceService.GetAll(directory);
+                return _backupRecordPersistanceService.GetAll(resourcegroup);
             }
             catch (Exception ex)
             {
@@ -134,7 +134,7 @@ namespace SemanticBackup.API.Controllers
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
 
                 //Check if an Existing Queued
-                var queuedExisting = this._backupRecordPersistanceService.GetAllByDatabaseIdByStatus(backupDatabaseInfo.ActiveDirectoryId, backupDatabaseInfo.Id, BackupRecordBackupStatus.QUEUED.ToString());
+                var queuedExisting = this._backupRecordPersistanceService.GetAllByDatabaseIdByStatus(backupDatabaseInfo.ResourceGroupId, backupDatabaseInfo.Id, BackupRecordBackupStatus.QUEUED.ToString());
                 if (queuedExisting != null && queuedExisting.Count > 0)
                 {
                     //No Need to Create another Just Return
@@ -148,7 +148,7 @@ namespace SemanticBackup.API.Controllers
                 BackupRecord newRecord = new BackupRecord
                 {
                     BackupDatabaseInfoId = backupDatabaseInfo.Id,
-                    ActiveDirectoryId = backupDatabaseInfo.ActiveDirectoryId,
+                    ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                     ExpiryDate = RecordExpiry,
                     Name = backupDatabaseInfo.Name,

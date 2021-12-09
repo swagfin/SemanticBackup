@@ -6,7 +6,7 @@ namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IBackupRecordPersistanceService
     {
-        List<BackupRecord> GetAll(string directory);
+        List<BackupRecord> GetAll(string resourcegroup);
         BackupRecord GetById(string id);
         bool Remove(string id);
         bool AddOrUpdate(BackupRecord record);
@@ -14,9 +14,9 @@ namespace SemanticBackup.Core.PersistanceServices
         bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0, string newFilePath = null);
         List<BackupRecord> GetAllByStatus(string status);
         List<BackupRecord> GetAllByDatabaseId(string id);
-        List<BackupRecord> GetAllByRegisteredDateByStatus(string directory, DateTime fromDate, string status = "*");
-        List<BackupRecord> GetAllByStatusUpdateDateByStatus(string directory, DateTime fromDate, string status = "*");
+        List<BackupRecord> GetAllByRegisteredDateByStatus(string resourcegroup, DateTime fromDate, string status = "*");
+        List<BackupRecord> GetAllByStatusUpdateDateByStatus(string resourcegroup, DateTime fromDate, string status = "*");
         List<BackupRecord> GetAllExpired(DateTime currentDate);
-        List<BackupRecord> GetAllByDatabaseIdByStatus(string directory, string id, string status = "*");
+        List<BackupRecord> GetAllByDatabaseIdByStatus(string resourcegroup, string id, string status = "*");
     }
 }

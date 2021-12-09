@@ -79,7 +79,7 @@
 
 <script type="text/javascript">
     var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-    var directoryId = @Html.Raw(Json.Serialize(Directories.CurrentDirectory?.Id));
+    var directoryId = @Html.Raw(Json.Serialize(ResourceGroups.CurrentResourceGroup?.Id));
             function setDbPort()
             {
                          var value = $(".set-db-port").val();
