@@ -31,7 +31,7 @@ namespace SemanticBackup.WebClient.Pages.DatabaseBackups
                 if (BackupRecordResponse.BackupStatus != "ERROR")
                     return Redirect($"/databasebackups/{BackupRecordResponse.Id}/?re-run=failed&reason=backupstatus");
                 //Proceeed 
-                var rerunUrl = $"api/BackupRecords/{id}/re-run";
+                var rerunUrl = $"api/BackupRecords/re-run/{id}";
                 var rerunSuccess = await _httpService.GetAsync<bool>(rerunUrl);
                 return Redirect($"/databasebackups/{BackupRecordResponse.Id}/?re-run=success");
             }

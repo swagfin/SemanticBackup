@@ -45,6 +45,20 @@ namespace SemanticBackup.WebClient.Pages.Databases
             }
             return Page();
         }
+        public async Task<IActionResult> OnPostAsync(string id)
+        {
+            try
+            {
+                var url = $"api/BackupRecords/request-instant-backup/{id}";
+                BackupRecordResponse backupRecord = await _httpService.GetAsync<BackupRecordResponse>(url);
+                return Redirect($"/databasebackups/{backupRecord.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+            return Redirect($"/databases/{id}");
+        }
 
         private async Task GetBackupRecordsForDatabaseAsync(string id)
         {
