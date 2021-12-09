@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SemanticBackup.WebClient.Models.Response;
 using SemanticBackup.WebClient.Services;
 using System;
@@ -20,11 +21,11 @@ namespace SemanticBackup.WebClient.Pages.Databases
         public List<BackupRecordResponse> BackupRecordsResponse { get; private set; }
         public List<BackupScheduleResponse> BackupSchedulesResponse { get; private set; }
 
-        public InfoModel(IHttpService httpService, ILogger<IndexModel> logger)
+        public InfoModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
         {
             this._httpService = httpService;
             this._logger = logger;
-            ApiEndPoint = Directories.CurrentDirectory?.Url;
+            ApiEndPoint = options.Value?.ApiUrl;
         }
 
         public async Task<IActionResult> OnGetAsync(string id)

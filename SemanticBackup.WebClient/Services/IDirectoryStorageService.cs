@@ -1,27 +1,18 @@
-﻿using System;
+﻿using SemanticBackup.WebClient.Models.Requests;
+using SemanticBackup.WebClient.Models.Response;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Services
 {
     public interface IDirectoryStorageService
     {
-        void InitDirectories();
-        List<ActiveDirectory> GetActiveDirectories();
-        ActiveDirectory GetActiveDirectory(string id);
-        bool RemoveDirectory(string id);
-        bool SwitchToDirectory(string id);
-        bool SwitchToDirectory(ActiveDirectory directory);
-        bool AddDirectory(ActiveDirectory apiDirectory);
-        bool UpdateDirectory(ActiveDirectory apiDirectory);
-    }
-}
-namespace SemanticBackup.WebClient
-{
-    public class ActiveDirectory
-    {
-        public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
-        public string Name { get; set; }
-        public string Url { get; set; }
-        public long LastAccess { get; set; } = 0;
+        Task ReloadTempDirectories(List<ActiveDirectoryResponse> activeDirectoryResponses = null);
+        Task<bool> AddAsync(ActiveDirectoryRequest apiDirectory);
+        Task<List<ActiveDirectoryResponse>> GetAllAsync();
+        Task<ActiveDirectoryResponse> GetByIdAsync(string id);
+        Task<bool> RemoveAsync(string id);
+        Task<bool> SwitchAsync(string id);
+        Task<bool> UpdateAsync(ActiveDirectoryRequest apiDirectory);
     }
 }

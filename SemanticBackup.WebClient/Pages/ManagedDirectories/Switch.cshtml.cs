@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.WebClient.Services;
 using System;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.ManagedDirectories
 {
@@ -16,16 +17,13 @@ namespace SemanticBackup.WebClient.Pages.ManagedDirectories
             this._logger = logger;
             this._directoryStorageService = directoryStorageService;
         }
-        public IActionResult OnGet(string id)
+        public async Task<IActionResult> OnGetAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     return Redirect("/managed-directories/");
-                var directory = this._directoryStorageService.GetActiveDirectory(id);
-                if (directory == null)
-                    return Page();
-                bool switchedSuccess = this._directoryStorageService.SwitchToDirectory(directory);
+                bool switchedSuccess = await this._directoryStorageService.SwitchAsync(id);
                 if (switchedSuccess)
                     return Redirect("/");
                 return Page();

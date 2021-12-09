@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SemanticBackup.WebClient.Models.Requests;
 using SemanticBackup.WebClient.Models.Response;
 using SemanticBackup.WebClient.Services;
@@ -22,11 +23,11 @@ namespace SemanticBackup.WebClient.Pages.Databases
         [BindProperty]
         public IEnumerable<string> DatabaseNames { get; set; }
         public string ErrorResponse { get; set; } = null;
-        public RegisterDatabaseModel(IHttpService httpService, ILogger<IndexModel> logger)
+        public RegisterDatabaseModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
         {
             this._httpService = httpService;
             this._logger = logger;
-            ApiEndPoint = Directories.CurrentDirectory?.Url;
+            ApiEndPoint = options.Value?.ApiUrl;
         }
         public void OnGet()
         {

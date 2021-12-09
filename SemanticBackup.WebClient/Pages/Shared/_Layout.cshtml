@@ -52,7 +52,7 @@
 
                         <div class="aside-loggedin-user">
                             <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
-                            <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name.ToUpper())</span>
+                            <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name)</span>
                                 <i data-feather="chevron-down"></i>
                             </a>
                         </div>
@@ -69,7 +69,7 @@
                                         {
                                             class_style = "active";
                                         }
-                                        <li class="nav-item @(class_style)"><a href="~/managed-directories/switch/@(directory.Id)" class="nav-link"><i data-feather="activity"></i> <span>@(directory.Name.ToUpper())</span></a></li>
+                                        <li class="nav-item @(class_style)"><a href="~/managed-directories/switch/@(directory.Id)" class="nav-link"><i data-feather="activity"></i> <span>@(directory.Name)</span></a></li>
                                     }
                                 }
                                 <li class="nav-item"><a href="~/managed-directories/create" class="nav-link"><i data-feather="plus"></i> <span>Add Directory</span></a></li>

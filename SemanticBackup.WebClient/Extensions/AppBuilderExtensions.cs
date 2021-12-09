@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using SemanticBackup.WebClient.Models.Response;
 using SemanticBackup.WebClient.Services;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +14,7 @@ namespace SemanticBackup.WebClient.Extensions
             if (directoryStorageService == null)
                 return;
             //Init Directory Services
-            directoryStorageService.InitDirectories();
-            Directories.ActiveDirectories = directoryStorageService.GetActiveDirectories();
+            directoryStorageService.ReloadTempDirectories().GetAwaiter().GetResult();
         }
 
     }
@@ -24,8 +24,8 @@ namespace SemanticBackup.WebClient
 {
     public static class Directories
     {
-        public static List<ActiveDirectory> ActiveDirectories { get; set; } = new List<ActiveDirectory>();
-        public static ActiveDirectory CurrentDirectory
+        public static List<ActiveDirectoryResponse> ActiveDirectories { get; set; } = new List<ActiveDirectoryResponse>();
+        public static ActiveDirectoryResponse CurrentDirectory
         {
             get
             {
@@ -33,4 +33,5 @@ namespace SemanticBackup.WebClient
             }
         }
     }
+
 }
