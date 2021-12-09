@@ -62,15 +62,19 @@
         </div>
 
         <div class="ui top attached tabular primary menu">
-            <a class="item active" data-tab="recentbackups">RECENT BACKUPS</a>
-            <a class="item" data-tab="backupschedules">BACKUP SCHEDULES</a>
+            <a class="item active" data-tab="recentbackups">BACKUPS</a>
+            <a class="item" data-tab="backupschedules">SCHEDULES</a>
         </div>
         <div class="ui bottom attached tab segment active" data-tab="recentbackups">
+            <section class="ui two wide column grid">
+                <div class="eight wide column">
+                    <div class="ui header large">Recent 10 Backups</div>
+                </div>
+                <div class="eight wide column">
+                    <a class="ui tiny button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="calendar icon"></i>Get Instant Backup</a>
+                </div>
+            </section>
 
-
-            <div class="ui header large">
-                Recent 10 Backups
-            </div>
             <table class="ui selectable table">
                 <thead>
                     <tr>
@@ -145,7 +149,7 @@
                     <div class="ui header large">Scheduled Backups</div>
                 </div>
                 <div class="eight wide column">
-                    <a class="ui small blue button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="calendar icon"></i>Create Schedule</a>
+                    <a class="ui tiny blue button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="calendar icon"></i>Create Schedule</a>
                 </div>
             </section>
 

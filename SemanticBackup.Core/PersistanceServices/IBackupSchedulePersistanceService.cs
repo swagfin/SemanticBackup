@@ -6,7 +6,7 @@ namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IBackupSchedulePersistanceService
     {
-        List<BackupSchedule> GetAll();
+        List<BackupSchedule> GetAll(string directory);
         BackupSchedule GetById(string id);
         bool Remove(string id);
         bool AddOrUpdate(BackupSchedule record);

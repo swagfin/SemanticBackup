@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace SemanticBackup.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("{directory}/api/[controller]")]
     public class BackupRecordsController : ControllerBase
     {
         private readonly ILogger<BackupRecordsController> _logger;
@@ -24,11 +24,11 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupRecord>> Get()
+        public ActionResult<List<BackupRecord>> Get(string directory)
         {
             try
             {
-                return _backupRecordPersistanceService.GetAll();
+                return _backupRecordPersistanceService.GetAll(directory);
             }
             catch (Exception ex)
             {
@@ -69,7 +69,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<BackupRecord> Get(string id)
+        public ActionResult<BackupRecord> GetById(string id)
         {
             try
             {

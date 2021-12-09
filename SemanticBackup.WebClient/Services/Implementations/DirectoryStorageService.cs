@@ -1,126 +1,82 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SemanticBackup.WebClient.Models.Requests;
+using SemanticBackup.WebClient.Models.Response;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Services.Implementations
 {
     public class DirectoryStorageService : IDirectoryStorageService
     {
+        public string ApiUrl { get; }
+
+        private readonly IHttpService _httpService;
         private readonly ILogger<DirectoryStorageService> _logger;
 
         public string DirectorySavingFile { get; }
-        public List<ActiveDirectory> CurrentDirectories { get { return Directories.ActiveDirectories; } private set { Directories.ActiveDirectories = value; } }
-
-        public DirectoryStorageService(IWebHostEnvironment webHostEnvironment, IConfiguration configuration, ILogger<DirectoryStorageService> logger)
+        public DirectoryStorageService(IOptions<WebClientOptions> options, IHttpService httpService, ILogger<DirectoryStorageService> logger)
         {
-            string activeDirectoriesFileName = configuration.GetValue<string>("ActiveDirectoriesFileName") ?? "active-directories.temp.json";
-            this.DirectorySavingFile = string.Format("{0}\\data\\{1}", webHostEnvironment.ContentRootPath, activeDirectoriesFileName);
+            this.ApiUrl = options.Value.ApiUrl;
+            this._httpService = httpService;
             this._logger = logger;
         }
 
-        public void InitDirectories()
-        {
-            _logger.LogInformation("Initializing Active Directories");
-            if (!File.Exists(this.DirectorySavingFile))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(this.DirectorySavingFile));
-                File.WriteAllText(this.DirectorySavingFile, "[]", Encoding.UTF8);
-                this.CurrentDirectories = new List<ActiveDirectory>();
-                return;
-            }
-            //Retrive
-            string directoryContents = File.ReadAllText(this.DirectorySavingFile, Encoding.UTF8);
-            if (string.IsNullOrEmpty(directoryContents))
-            {
-                File.WriteAllText(this.DirectorySavingFile, "[]");
-                this.CurrentDirectories = new List<ActiveDirectory>();
-                return;
-            }
-            var directories = JsonConvert.DeserializeObject<List<ActiveDirectory>>(directoryContents);
-            this.CurrentDirectories = directories ?? new List<ActiveDirectory>();
-        }
-        private void SaveCurrentDirectory()
+        public async Task ReloadTempDirectories(List<ActiveDirectoryResponse> activeDirectoryResponses = null)
         {
             try
             {
-                if (this.CurrentDirectories != null && this.CurrentDirectories.Count > 0)
-                {
-                    var nullDirectories = this.CurrentDirectories.Where(x => string.IsNullOrWhiteSpace(x.Id)).ToList();
-                    if (nullDirectories != null && nullDirectories.Count > 0)
-                        foreach (var dir in nullDirectories)
-                            this.CurrentDirectories.Remove(dir);
-                }
-                string serializedContents = JsonConvert.SerializeObject(this.CurrentDirectories, Formatting.Indented);
-                File.WriteAllText(this.DirectorySavingFile, serializedContents, Encoding.UTF8);
+                if (activeDirectoryResponses == null)
+                    Directories.ActiveDirectories = await GetAllAsync();
+                else
+                    Directories.ActiveDirectories = activeDirectoryResponses;
             }
-            catch (Exception ex) { _logger.LogWarning($"Unable to persist Directory to File, Error: {ex.Message}"); }
+            catch (Exception ex) { _logger.LogWarning(ex.Message); }
+        }
+        public async Task<List<ActiveDirectoryResponse>> GetAllAsync()
+        {
+            var url = "api/ActiveDirectories/";
+            var directories = await _httpService.GetAsync<List<ActiveDirectoryResponse>>(url);
+            await ReloadTempDirectories(directories);
+            return directories;
+        }
+        public async Task<bool> AddAsync(ActiveDirectoryRequest apiDirectory)
+        {
+            var url = "api/ActiveDirectories/";
+            bool success = await _httpService.PostAsync<bool>(url, apiDirectory);
+            await ReloadTempDirectories();
+            return success;
         }
 
-        public List<ActiveDirectory> GetActiveDirectories()
+        public async Task<bool> RemoveAsync(string id)
         {
-            return this.CurrentDirectories.Where(x => !string.IsNullOrWhiteSpace(x.Id)).ToList();
-        }
-        public bool AddDirectory(ActiveDirectory apiDirectory)
-        {
-            var existingDirectory = this.CurrentDirectories.Where(x => !string.IsNullOrWhiteSpace(x.Id)).FirstOrDefault(x => x.Id == apiDirectory.Id);
-            if (existingDirectory != null)
-                throw new Exception($"Directory with Id: {existingDirectory.Id} already exists, Directory not Saved");
-            this.CurrentDirectories.Add(apiDirectory);
-            SaveCurrentDirectory();
-            return true;
+            var url = $"api/ActiveDirectories/{id}";
+            bool success = await _httpService.DeleteAsync<bool>(url);
+            await ReloadTempDirectories();
+            return success;
         }
 
-        public bool RemoveDirectory(string id)
+        public async Task<bool> UpdateAsync(ActiveDirectoryRequest apiDirectory)
         {
-            var existingDirectory = this.CurrentDirectories.FirstOrDefault(x => x.Id == id);
-            if (existingDirectory == null)
-                return false;
-            this.CurrentDirectories.Remove(existingDirectory);
-            SaveCurrentDirectory();
-            return true;
+            var url = "api/ActiveDirectories/";
+            bool success = await _httpService.PutAsync<bool>(url, apiDirectory);
+            await ReloadTempDirectories();
+            return success;
         }
 
-        public bool UpdateDirectory(ActiveDirectory apiDirectory)
+        public async Task<bool> SwitchAsync(string id)
         {
-            var existingDirectory = this.CurrentDirectories.FirstOrDefault(x => x.Id == apiDirectory.Id);
-            if (existingDirectory == null)
-                return false;
-            existingDirectory.Url = apiDirectory.Url;
-            existingDirectory.Name = apiDirectory.Name;
-            SaveCurrentDirectory();
-            return true;
+            var url = $"api/ActiveDirectories/switch-directory/{id}";
+            bool success = await _httpService.GetAsync<bool>(url);
+            await ReloadTempDirectories();
+            return success;
         }
 
-        public bool SwitchToDirectory(string id)
+        public async Task<ActiveDirectoryResponse> GetByIdAsync(string id)
         {
-            var existingDirectory = this.CurrentDirectories.FirstOrDefault(x => x.Id == id);
-            if (existingDirectory == null)
-                return false;
-            if (long.TryParse(DateTime.Now.ToString("yyyyMMddHHmmss"), out long lastAccess))
-            {
-                existingDirectory.LastAccess = lastAccess;
-                SaveCurrentDirectory();
-                return true;
-            }
-            return true;
-        }
-
-        public bool SwitchToDirectory(ActiveDirectory directory)
-        {
-            if (directory == null)
-                return false;
-            return SwitchToDirectory(directory.Id);
-        }
-
-        public ActiveDirectory GetActiveDirectory(string id)
-        {
-            return this.CurrentDirectories.FirstOrDefault(x => x.Id == id);
+            var url = $"api/ActiveDirectories/{id}";
+            return await _httpService.GetAsync<ActiveDirectoryResponse>(url);
         }
     }
 }

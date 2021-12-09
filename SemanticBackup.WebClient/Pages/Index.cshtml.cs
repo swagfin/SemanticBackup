@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
 
 namespace SemanticBackup.WebClient.Pages
 {
@@ -7,9 +8,9 @@ namespace SemanticBackup.WebClient.Pages
     {
         public string ApiEndPoint { get; private set; }
 
-        public IndexModel()
+        public IndexModel(IOptions<WebClientOptions> options)
         {
-            ApiEndPoint = Directories.CurrentDirectory?.Url;
+            ApiEndPoint = options.Value?.ApiUrl;
         }
         public IActionResult OnGet()
         {

@@ -21,6 +21,7 @@ namespace SemanticBackup.WebClient
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<WebClientOptions>(Configuration.GetSection(nameof(WebClientOptions)));
             services.AddTransient<IHttpService, HttpService>();
 
             //Directory Services

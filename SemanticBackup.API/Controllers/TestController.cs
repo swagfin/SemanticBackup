@@ -8,7 +8,7 @@ using System;
 
 namespace SemanticBackup.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("{directory}/api/[controller]")]
     [ApiController]
     public class TestController : ControllerBase
     {
@@ -31,7 +31,7 @@ namespace SemanticBackup.API.Controllers
             this._persistanceOptions = persistanceOptions;
         }
         [HttpGet, HttpPost]
-        public ActionResult<string> GetCreateSmapleTest()
+        public ActionResult<string> GetCreateSmapleTest(string directory)
         {
             try
             {
@@ -48,6 +48,7 @@ namespace SemanticBackup.API.Controllers
                 BackupDatabaseInfo defaultDb = new BackupDatabaseInfo
                 {
                     Id = _dbkey,
+                    ActiveDirectoryId = directory,
                     DatabaseName = "test",
                     Server = "127.0.0.1",
                     Username = "sa",
@@ -64,6 +65,7 @@ namespace SemanticBackup.API.Controllers
                 BackupSchedule backupSchedule = new BackupSchedule
                 {
                     Id = _schedulekey,
+                    ActiveDirectoryId = directory,
                     Name = defaultDb.Name,
                     BackupDatabaseInfoId = _dbkey,
                     StartDate = currentTime,

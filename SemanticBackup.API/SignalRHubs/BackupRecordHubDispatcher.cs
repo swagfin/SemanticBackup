@@ -53,7 +53,8 @@ namespace SemanticBackup.API.SignalRHubs
                 BackupRecordsQueue.Enqueue(new BackupRecordMetric
                 {
                     Metric = backupRecord,
-                    IsNewMetric = isNewRecord
+                    IsNewMetric = isNewRecord,
+
                 });
             }
             catch { }
@@ -96,7 +97,7 @@ namespace SemanticBackup.API.SignalRHubs
                                 if (databaseGrp != null)
                                     SendNotification(databaseGrp, backupMetricRecord);
                                 //All Groups Joined
-                                ClientGroup allClientGroups = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == "*");
+                                ClientGroup allClientGroups = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupMetricRecord.Metric.ActiveDirectoryId);
                                 if (allClientGroups != null)
                                     SendNotification(allClientGroups, backupMetricRecord);
                             }

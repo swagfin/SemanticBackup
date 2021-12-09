@@ -44,10 +44,11 @@ namespace SemanticBackup.API
 
             //Shared TimeZone Sync DateTime
             services.AddSingleton<SharedTimeZone>(); //Configure Global Instance Reg
-
+            //Persistance
             services.AddTransient<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
             services.AddTransient<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
             services.AddTransient<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
+            services.AddTransient<IActiveDirectoryPersistanceService, ActiveDirectoryPersistanceService>();
 
             //Engines
             services.AddTransient<ISQLServerBackupProviderService, SQLServerBackupProviderService>();

@@ -5,66 +5,69 @@
 }
 <div class="content">
     <div class="text container">
-        <h4 style="text-align:center;" class="ui header blue large">Setup Schedule</h4>
+        <h2>Setup Backup Schedule</h2>
+        <div class="ui divider"></div>
         <form asp-page="RegisterDatabase" method="post">
-
-            @{
-                if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
-                {
-                    <div class="ui icon small negative message">
-                        <i class="exclamation icon"></i>
-                        <div class="content">
-                            <div class="header">
-                                Oops! Request Failed
+            <div class="ui segment attached">
+                @{
+                    if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
+                    {
+                        <div class="ui icon small negative message">
+                            <i class="exclamation icon"></i>
+                            <div class="content">
+                                <div class="header">
+                                    Oops! Request Failed
+                                </div>
+                                <p>@(Model.ErrorResponse)</p>
                             </div>
-                            <p>@(Model.ErrorResponse)</p>
                         </div>
-                    </div>
+                    }
                 }
-            }
 
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="DatabaseName">Select Database</label>
-                    <select class="selectpicker form-control" asp-for="backupScheduleRequest.BackupDatabaseInfoId" required>
-                        @{
-                            if (Model.databaseInfoSelectList != null)
-                            {
-                                foreach (var dbrecord in Model.databaseInfoSelectList)
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="DatabaseName">Select Database</label>
+                        <select class="selectpicker form-control" asp-for="backupScheduleRequest.BackupDatabaseInfoId" required>
+                            @{
+                                if (Model.databaseInfoSelectList != null)
                                 {
-                                    <option value="@(dbrecord.Id)">@(dbrecord.DatabaseName)</option>
+                                    foreach (var dbrecord in Model.databaseInfoSelectList)
+                                    {
+                                        <option value="@(dbrecord.Id)">@(dbrecord.DatabaseName)</option>
+                                    }
+                                }
+                                <option selected disabled>---SELECT DATABASE---</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="DatabaseType">Backup Backup Type</label>
+                        <select class="selectpicker form-control" asp-for="backupScheduleRequest.ScheduleType" required>
+                            @{
+                                foreach (var scheduleType in Enum.GetValues(typeof(BackupScheduleType)).Cast<BackupScheduleType>())
+                                {
+                                    <option>@(scheduleType)</option>
                                 }
                             }
-                            <option selected disabled>---SELECT DATABASE---</option>
-                        }
-                    </select>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="EveryHours">Runs Every (Hours)</label>
+                        <input asp-for="backupScheduleRequest.EveryHours" value="24" type="number" min="1" autocomplete="off" class="form-control" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="StartDate">Schedule Start</label>
+                        <input asp-for="backupScheduleRequest.StartDate" type="datetime" value="@(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))" autocomplete="off" class="form-control" required>
+                    </div>
                 </div>
 
-                <div class="form-group col-md-6">
-                    <label for="DatabaseType">Backup Backup Type</label>
-                    <select class="selectpicker form-control" asp-for="backupScheduleRequest.ScheduleType" required>
-                        @{
-                            foreach (var scheduleType in Enum.GetValues(typeof(BackupScheduleType)).Cast<BackupScheduleType>())
-                            {
-                                <option>@(scheduleType)</option>
-                            }
-                        }
-                    </select>
-                </div>
+                <button type="submit" class="btn btn-primary">Register Backup Schedule</button>
 
             </div>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="EveryHours">Runs Every (Hours)</label>
-                    <input asp-for="backupScheduleRequest.EveryHours" value="24" type="number" min="1" autocomplete="off" class="form-control" required>
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="StartDate">Schedule Start</label>
-                    <input asp-for="backupScheduleRequest.StartDate" type="datetime" value="@(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))" autocomplete="off" class="form-control" required>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Register Backup Schedule</button>
         </form>
     </div><!-- container -->
 </div><!-- content -->

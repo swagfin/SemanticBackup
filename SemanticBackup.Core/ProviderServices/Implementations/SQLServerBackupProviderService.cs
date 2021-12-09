@@ -1,7 +1,10 @@
 ﻿using SemanticBackup.Core.Models;
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.ProviderServices.Implementations
 {
@@ -27,6 +30,35 @@ WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
                 connection.Close();
                 return true;
             }
+        }
+
+        public async Task<IEnumerable<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo)
+        {
+            List<string> availableDbs = new List<string>();
+            string[] exclude = new string[] { "master", "model", "msdb", "tempdb" };
+            using (SqlConnection conn = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT name FROM master.dbo.sysdatabases"))
+                {
+                    conn.Open();
+                    cmd.Connection = conn;
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (reader.HasRows)
+                        {
+                            while (reader.Read())
+                            {
+                                string dbName = reader?.GetString(0);
+                                if (!exclude.Contains(dbName))
+                                    availableDbs.Add(dbName);
+                            }
+                        }
+                        reader.Close();
+                    }
+                    conn.Close();
+                }
+            }
+            return availableDbs;
         }
     }
 }

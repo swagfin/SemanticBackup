@@ -5,7 +5,7 @@ namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IDatabaseInfoPersistanceService
     {
-        List<BackupDatabaseInfo> GetAll();
+        List<BackupDatabaseInfo> GetAll(string directory);
         BackupDatabaseInfo GetById(string id);
         bool Remove(string id);
         bool AddOrUpdate(BackupDatabaseInfo record);

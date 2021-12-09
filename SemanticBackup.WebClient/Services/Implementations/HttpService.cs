@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,13 +12,19 @@ namespace SemanticBackup.WebClient.Services.Implementations
 {
     public class HttpService : IHttpService
     {
-        private string SigningSecret { get; set; } = "!!backupclient@coresoft.nl!!";
+        public string ApiEndPoint { get; }
+        private string SigningSecret { get; set; } = string.Empty;
+        public HttpService(IOptions<WebClientOptions> options)
+        {
+            ApiEndPoint = options.Value?.ApiUrl;
+            SigningSecret = options.Value?.SigningSecret;
+        }
 
         public async Task<T> GetAsync<T>(string url)
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.GetAsync(url);
 
@@ -34,7 +41,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.PostAsync(url, new StringContent(JsonConvert.SerializeObject(data), encoding: System.Text.Encoding.UTF8, "application/json"));
             if (response.IsSuccessStatusCode)
@@ -50,7 +57,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.PutAsync(url, new StringContent(JsonConvert.SerializeObject(data), encoding: System.Text.Encoding.UTF8, "application/json"));
 
@@ -66,7 +73,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(Directories.CurrentDirectory?.Url);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.DeleteAsync(url);
             if (response.IsSuccessStatusCode)
