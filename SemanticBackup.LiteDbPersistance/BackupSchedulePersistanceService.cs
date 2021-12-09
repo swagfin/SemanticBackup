@@ -15,25 +15,25 @@ namespace SemanticBackup.LiteDbPersistance
             this.connString = options.ConnectionStringLiteDb;
         }
 
-        public List<BackupSchedule> GetAll()
+        public List<BackupSchedule> GetAll(string directory)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.ActiveDirectoryId == directory).ToList();
             }
         }
         public List<BackupSchedule> GetAllDueByDate(DateTime dateTime)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun <= dateTime).OrderBy(x => x.NextRun).ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun <= dateTime && !string.IsNullOrWhiteSpace(x.ActiveDirectoryId)).OrderBy(x => x.NextRun).ToList();
             }
         }
         public List<BackupSchedule> GetAllByDatabaseId(string id)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id).ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ActiveDirectoryId)).ToList();
             }
         }
         public bool AddOrUpdate(BackupSchedule record)

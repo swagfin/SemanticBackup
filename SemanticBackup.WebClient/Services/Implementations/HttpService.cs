@@ -24,7 +24,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(ApiEndPoint);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.GetAsync(url);
 
@@ -41,7 +41,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(ApiEndPoint);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.PostAsync(url, new StringContent(JsonConvert.SerializeObject(data), encoding: System.Text.Encoding.UTF8, "application/json"));
             if (response.IsSuccessStatusCode)
@@ -57,7 +57,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(ApiEndPoint);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.PutAsync(url, new StringContent(JsonConvert.SerializeObject(data), encoding: System.Text.Encoding.UTF8, "application/json"));
 
@@ -73,7 +73,7 @@ namespace SemanticBackup.WebClient.Services.Implementations
         {
             var accessToken = GetToken();
             HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(ApiEndPoint);
+            client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (Directories.CurrentDirectory == null) ? "*" : Directories.CurrentDirectory?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.DeleteAsync(url);
             if (response.IsSuccessStatusCode)

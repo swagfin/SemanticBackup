@@ -60,12 +60,12 @@ namespace SemanticBackup.API.SignalRHubs
             return base.OnConnectedAsync();
         }
 
-        public async Task JoinGroup(object groupObj)
+        public async Task JoinGroup(JoinRequest joinRequest)
         {
             try
             {
-                string group = groupObj.ToString();
-                _logger.LogInformation("Adding user to Group: {group}", group);
+                string group = $"{joinRequest.Directory}#{joinRequest.Group}";
+                _logger.LogInformation("Adding user from Group: {group}", joinRequest.Directory, joinRequest.Group);
                 DashboardRefreshHubClientStorage.AddClient(group, Context.ConnectionId);
                 await Groups.AddToGroupAsync(Context.ConnectionId, group);
                 //Push Data to New
@@ -103,12 +103,22 @@ namespace SemanticBackup.API.SignalRHubs
             t.Start();
         }
 
-        private void SendMetrics(string group)
+        private void SendMetrics(string groupRecord)
         {
             try
             {
-                _logger.LogInformation("Preparing to send Metrics for Group: {group}", group);
-                DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == group);
+                string[] groupRecordParams = groupRecord.Split('#');
+                if (groupRecordParams.Length < 2)
+                {
+                    _logger.LogWarning("Terminated Dispatch, Reason Group Record was not in the correct format");
+                    return;
+                }
+                string directory = groupRecordParams[0];
+                string subscriberGroup = groupRecordParams[1];
+
+                _logger.LogInformation("Preparing to send Metrics for Group: {group}", groupRecord);
+
+                DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);
                 //DateTime
                 DateTime currentTime = _sharedTimeZone.Now;
                 DateTime metricsFromDate = currentTime.AddHours(-24);// 24hrs Ago
@@ -117,7 +127,7 @@ namespace SemanticBackup.API.SignalRHubs
                 if (lastAVGMetric != null)
                     metricsFromDate = lastAVGMetric.TimeStamp;
 
-                var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(metricsFromDate, group);
+                var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(directory, metricsFromDate, subscriberGroup);
                 if (recordsLatest != null && recordsLatest.Count > 0)
                     foreach (var record in recordsLatest)
                     {
@@ -137,7 +147,7 @@ namespace SemanticBackup.API.SignalRHubs
                         }
                     }
 
-                var recordsFailsLatest = _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatus(metricsFromDate, BackupRecordBackupStatus.ERROR.ToString());
+                var recordsFailsLatest = _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatus(directory, metricsFromDate, BackupRecordBackupStatus.ERROR.ToString());
                 if (recordsFailsLatest != null && recordsFailsLatest.Count > 0)
                     foreach (var record in recordsFailsLatest)
                     {
@@ -161,13 +171,13 @@ namespace SemanticBackup.API.SignalRHubs
                 clientGrp.LastRefresh = currentTime;
                 //Lets Remove Metrics Surpassed  more than 24hrs to avoid Memory Overload
                 clientGrp.Metric.AvgMetrics.RemoveAll(x => x.TimeStamp < currentTime.AddHours(-24));
-                clientGrp.Metric.TotalBackupSchedules = _backupSchedulePersistanceService.GetAll().Count();
-                clientGrp.Metric.TotalDatabases = _databaseInfoPersistanceService.GetAll().Count();
-                clientGrp.Metric.TotalBackupRecords = _backupRecordPersistanceService.GetAll().Count();
+                clientGrp.Metric.TotalBackupSchedules = _backupSchedulePersistanceService.GetAll(directory).Count();
+                clientGrp.Metric.TotalDatabases = _databaseInfoPersistanceService.GetAll(directory).Count();
+                clientGrp.Metric.TotalBackupRecords = _backupRecordPersistanceService.GetAll(directory).Count();
 
-                _ = hub.Clients.Group(group).SendAsync("ReceiveMetrics", clientGrp.Metric);
+                _ = hub.Clients.Group(groupRecord).SendAsync("ReceiveMetrics", clientGrp.Metric);
 
-                _logger.LogInformation("Successfully sent Metrics for Group: {group}", group);
+                _logger.LogInformation("Successfully sent Metrics for Group: {group}", groupRecord);
             }
             catch (Exception ex)
             {

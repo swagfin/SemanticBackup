@@ -79,6 +79,7 @@
 
 <script type="text/javascript">
     var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+    var directoryId = @Html.Raw(Json.Serialize(Directories.CurrentDirectory?.Id));
             function setDbPort()
             {
                          var value = $(".set-db-port").val();
@@ -109,7 +110,7 @@
                //Proceed
                $.ajax({
                        type: 'POST',
-                       url: baseUrl + 'api/BackupDatabases/pre-get-database-collection',
+                       url: baseUrl + directoryId + '/api/BackupDatabases/pre-get-database-collection',
                        data: dataObj,
                        success: function(msg)
                        {

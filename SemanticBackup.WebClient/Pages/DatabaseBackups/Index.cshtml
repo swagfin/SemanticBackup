@@ -5,7 +5,8 @@
 }
 @{
     <script type="text/javascript">
-                        var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+        var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+        var directoryId = @Html.Raw(Json.Serialize(Directories.CurrentDirectory?.Id));
     </script>
 }
 <div class="container pd-x-0">
@@ -35,49 +36,49 @@
                         foreach (var record in Model.BackupRecordsResponse)
                         {
                             count++;
-                                                                            <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackups/@(record.Id)'">
-                                                                                <td>@string.Format("{0:N0}", count)</td>
-                                                                                <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
-                                                                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.RegisteredDate)</td>
-                                                                                <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
-                                                                                <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
+                            <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackups/@(record.Id)'">
+                                <td>@string.Format("{0:N0}", count)</td>
+                                <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
+                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.RegisteredDate)</td>
+                                <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
+                                <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
 
                                 @{
                                     if (record.BackupStatus == "EXECUTING")
                                     {
-                                                                                                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
                                     }
                                     else if (record.BackupStatus == "COMPLETED")
                                     {
-                                                                                                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
                                     }
                                     else if (record.BackupStatus == "COMPRESSING")
                                     {
-                                                                                                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic olive"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic olive"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
                                     }
                                     else if (record.BackupStatus == "READY")
                                     {
-                                                                                                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>  </td>
                                     }
                                     else if (record.BackupStatus == "ERROR")
                                     {
-                                                                                                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.BackupStatus</span>  </td>
                                     }
                                     else
                                     {
-                                                                                                                        <td class="event_status_for_@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.BackupStatus</span>  </td>
+                                        <td class="event_status_for_@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.BackupStatus</span>  </td>
                                     }
                                 }
 
-                                                                            </tr>
+                            </tr>
                         }
                     else
                     {
-                                                        <tr>
-                                                            <td colspan="6" style="text-align:center">
-                                                                <div class="ui message small warning"><div>To Data Available</div></div>
-                                                            </td>
-                                                        </tr>
+                        <tr>
+                            <td colspan="6" style="text-align:center">
+                                <div class="ui message small warning"><div>To Data Available</div></div>
+                            </td>
+                        </tr>
                     }
                 }
             </tbody>
@@ -90,7 +91,7 @@
 <script type="text/javascript">
     jQuery(document).ready(function ($) {
         //Create Main Obersavable
-        _ = getListenerAsync(baseUrl + "BackupRecordsNotify", "*", "ReceiveNotification", function (response) {
+        _ = getListenerAsync(baseUrl + "BackupRecordsNotify", directoryId, "ReceiveNotification", function (response) {
             console.log("Received Database Backup Status Update");
             //console.log(response);
             var metric = response.metric;

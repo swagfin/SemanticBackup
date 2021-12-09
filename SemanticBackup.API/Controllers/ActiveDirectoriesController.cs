@@ -10,7 +10,7 @@ using System.Collections.Generic;
 namespace SemanticBackup.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("{directory}/api/[controller]")]
     public class ActiveDirectoriesController : ControllerBase
     {
         private readonly ILogger<ActiveDirectoriesController> _logger;
@@ -24,7 +24,7 @@ namespace SemanticBackup.API.Controllers
             this._sharedTimeZone = sharedTimeZone;
         }
         [HttpGet]
-        public ActionResult<List<ActiveDirectory>> Get()
+        public ActionResult<List<ActiveDirectory>> GetDirectories()
         {
             try
             {
@@ -43,10 +43,10 @@ namespace SemanticBackup.API.Controllers
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var directory = _activeDirectoryService.GetById(id);
-                if (directory == null)
+                var record = _activeDirectoryService.GetById(id);
+                if (record == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
-                return directory;
+                return record;
             }
             catch (Exception ex)
             {
