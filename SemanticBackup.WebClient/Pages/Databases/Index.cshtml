@@ -34,7 +34,7 @@
                                 <td>@string.Format("{0:N0}", count)</td>
                                 <td class="positive" style="font-weight:bold;font-size:14px"> <i class="database icon"></i> @record.DatabaseName</td>
                                 <td>@record.Server</td>
-                                <td>@record.DatabaseType</td>
+                                <td><span class="ui small basic @(record.ColorCode) label">@(@record.DatabaseType)</span></td>
                                 <td>@string.Format("{0:N0}HRS", record.BackupExpiryAgeInDays)</td>
                                 <td><a href="/databases/@(record.Id)" class="ui small blue label"><i class="info icon"></i>View Info</a></td>
                             </tr>

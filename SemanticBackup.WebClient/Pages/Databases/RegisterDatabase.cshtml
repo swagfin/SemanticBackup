@@ -6,64 +6,132 @@
 
 <div class="content">
     <div class="text container">
-        <h4 style="text-align:center;" class="ui header blue large">Register Database</h4>
-        <form asp-page="RegisterDatabase" method="post">
-            <div class="form-group">
-                <label for="Server">Server</label>
-                <input asp-for="backupDatabaseRequest.Server" type="text" value="127.0.0.1" class="form-control" required>
-            </div>
+        <h2>Register Database</h2>
+        <div class="ui divider"></div>
+        @{
+            if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
+            {
+                <div class="ui tiny negative message"><b>@(Model.ErrorResponse)</b></div>
+            }
+        }
+        <form asp-page="RegisterDatabase" method="post" class="database-registration-page">
+            <div class="ui segment attached">
 
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="Username">Username</label>
-                    <input asp-for="backupDatabaseRequest.Username" type="text" autocomplete="off" class="form-control" required>
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="Password">Password</label>
-                    <input asp-for="backupDatabaseRequest.Password" type="password" autocomplete="off" class="form-control" required>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="DatabaseName">Database Name</label>
-                <input asp-for="backupDatabaseRequest.DatabaseName" type="text" class="form-control" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="Port">Port</label>
-                    <input asp-for="backupDatabaseRequest.Port" type="text" value="0" autocomplete="off" class="form-control" required>
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="DatabaseType">DatabaseType</label>
-                    <select class="selectpicker form-control" asp-for="backupDatabaseRequest.DatabaseType" required>
-                        @{
-                            foreach (var dbType in Enum.GetValues(typeof(BackupDatabaseInfoDbType)).Cast<BackupDatabaseInfoDbType>())
-                            {
-                                <option>@(dbType)</option>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="DatabaseType">DatabaseType</label>
+                        <select autofocus="true" onchange="setDbPort();refreshDbList();" class="selectpicker form-control set-db-port refresh-db-type" asp-for="backupDatabaseRequest.DatabaseType" required>
+                            @{
+                                foreach (var dbType in Enum.GetValues(typeof(BackupDatabaseInfoDbType)).Cast<BackupDatabaseInfoDbType>())
+                                {
+                                    <option>@(dbType)</option>
+                                }
                             }
-                        }
-                    </select>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-7">
+                        <label for="Server">Server</label>
+                        <input asp-for="backupDatabaseRequest.Server" onchange="refreshDbList();" type="text" value="127.0.0.1" class="form-control refresh-db-server" required>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="Port">Port</label>
+                        <input asp-for="backupDatabaseRequest.Port" type="text" onchange="refreshDbList();" value="0" autocomplete="off" class="form-control set-db-port-val refresh-db-port" required>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="Description">Description</label>
-                <input asp-for="backupDatabaseRequest.Description" autocomplete="off" type="text" class="form-control">
-            </div>
-            <div class="form-row">
-                @*<div class="form-group col-md-6">
-                    <label for="DateRegistered">DateRegistered</label>
-                    <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" type="text" class="form-control" required>
-                    </div>*@
-                <div class="form-group col-md-6">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="Username">Username</label>
+                        <input asp-for="backupDatabaseRequest.Username" type="text" onchange="refreshDbList();" autocomplete="off" class="form-control refresh-db-username" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="Password">Password</label>
+                        <input asp-for="backupDatabaseRequest.Password" type="password" onchange="refreshDbList();" autocomplete="off" class="form-control refresh-db-password" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="DatabaseName">Database Name</label>
+                    <div class="database-dropdown-container">
+                        <select class="ui fluid search small dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames"></select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                </div>
+                <div class="form-group">
+                    <label for="Description">Description</label>
+                    <input asp-for="backupDatabaseRequest.Description" autocomplete="off" type="text" class="form-control">
+                </div>
+
+                <div class="form-group">
                     <label for="BackupExpiryAgeInDays">Delete Old Backups After (Days)</label>
                     <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" value="7" class="form-control" required>
                 </div>
+                <div class="ui info tiny message">
+                    <input id="backupDatabaseRequestAutoCreateSchedule" asp-for="backupDatabaseRequest.AutoCreateSchedule" checked="true">
+                    <label style="cursor:pointer" for="backupDatabaseRequestAutoCreateSchedule">Auto Create Daily Backup Schedule (24hrs)</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Register Database</button>
             </div>
-
-            <div class="ui info tiny message">
-                <input id="backupDatabaseRequestAutoCreateSchedule" asp-for="backupDatabaseRequest.AutoCreateSchedule" checked="true">
-                <label style="cursor:pointer" for="backupDatabaseRequestAutoCreateSchedule">Auto Create Daily Backup Schedule (24hrs)</label>
-            </div>
-            <button type="submit" class="btn btn-primary">Register Database</button>
         </form>
     </div><!-- container -->
 </div><!-- content -->
+@section Scripts{
+
+<script type="text/javascript">
+    var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+            function setDbPort()
+            {
+                         var value = $(".set-db-port").val();
+                            if(value.includes("MARIADB") || value.includes("MYSQL")){
+                                $(".set-db-port-val").val('3306');
+                            }
+                            else if(value.includes("SQLSERVER")){
+                                $(".set-db-port-val").val('1433');
+                            }
+            };
+            //Initi
+           setDbPort();
+           $(".database-dropdown-search").dropdown({allowAdditions: true});
+
+           function refreshDbList()
+           {
+               //loading
+               console.log("Refreshing Db Collection");
+               //Create Request Object
+               var dataObj = {type:$(".refresh-db-type").val(), server: $(".refresh-db-server").val(), username:$(".refresh-db-username").val(), password: $(".refresh-db-password").val(), port: $(".refresh-db-port").val()};
+               //Valid
+               if(dataObj.server.length==0 || dataObj.username.length==0 || dataObj.password.length==0)
+               {
+                  // console.log("Skipped Query, Missing required params");
+                   return;
+               }
+               $(".database-dropdown-search").addClass("loading");
+               //Proceed
+               $.ajax({
+                       type: 'POST',
+                       url: baseUrl + 'api/BackupDatabases/pre-get-database-collection',
+                       data: dataObj,
+                       success: function(msg)
+                       {
+                         //console.log(msg);
+                         var elementOptions = "";
+                           if(msg!=null)
+                           {
+                                msg.forEach(function (item, index){
+                                    elementOptions += '<option value="'+ item +'">'+ item +'</option>';
+                                });
+                           }
+                           //Append
+                           $(".database-dropdown-container").html('<select autofocus class="ui fluid search dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames">'+ elementOptions +'</select>');
+                           $(".database-dropdown-search").dropdown({allowAdditions: true});
+                       },
+                       error: function(xhr, status, error)
+                       {
+                           console.log(status);
+                           $(".database-dropdown-search").removeClass("loading");
+                       }
+
+                   });
+           };
+</script>
+}
