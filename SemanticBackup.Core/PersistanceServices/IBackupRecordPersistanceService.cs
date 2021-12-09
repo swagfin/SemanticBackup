@@ -17,5 +17,6 @@ namespace SemanticBackup.Core.PersistanceServices
         List<BackupRecord> GetAllByRegisteredDateByStatus(string directory, DateTime fromDate, string status = "*");
         List<BackupRecord> GetAllByStatusUpdateDateByStatus(string directory, DateTime fromDate, string status = "*");
         List<BackupRecord> GetAllExpired(DateTime currentDate);
+        List<BackupRecord> GetAllByDatabaseIdByStatus(string directory, string id, string status = "*");
     }
 }

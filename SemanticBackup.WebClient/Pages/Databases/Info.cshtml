@@ -68,10 +68,12 @@
         <div class="ui bottom attached tab segment active" data-tab="recentbackups">
             <section class="ui two wide column grid">
                 <div class="eight wide column">
-                    <div class="ui header large">Recent 10 Backups</div>
+                    <h3>Recent 10 Backups</h3>
                 </div>
                 <div class="eight wide column">
-                    <a class="ui tiny button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="calendar icon"></i>Get Instant Backup</a>
+                     <form asp-page="Info" method="post">
+                        <button class="ui tiny green button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="cloud upload icon"></i>Get Instant Backup</button>
+                    </form>
                 </div>
             </section>
 
@@ -146,7 +148,7 @@
         <div class="ui bottom attached tab segment" data-tab="backupschedules">
             <section class="ui two wide column grid">
                 <div class="eight wide column">
-                    <div class="ui header large">Scheduled Backups</div>
+                    <h3>Scheduled Backups</h3>
                 </div>
                 <div class="eight wide column">
                     <a class="ui tiny blue button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="calendar icon"></i>Create Schedule</a>
