@@ -18,12 +18,12 @@ namespace SemanticBackup.Core.Models
         {
             get
             {
-                if (LastRunUTC == null)
+                if (LastRunUTC.Date == new DateTime(2000, 1, 1).Date)
                     return StartDateUTC;
                 return ((DateTime)LastRunUTC).AddHours(EveryHours);
             }
         }
-        public DateTime? LastRunUTC { get; set; } = null;
+        public DateTime LastRunUTC { get; set; } = new DateTime(2000, 1, 1).Date;
         public DateTime CreatedOnUTC { get; set; } = DateTime.UtcNow;
     }
     public enum BackupScheduleType

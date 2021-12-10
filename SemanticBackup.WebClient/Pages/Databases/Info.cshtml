@@ -178,7 +178,7 @@
                                     <td class="positive" style="font-weight:bold;font-size:14px"> <i class="clock icon"></i> @record.Name</td>
                                     <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
                                     <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
-                                    <td>@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.LastRun)</td>
+                                    <td>@(record.LastRunPreviewable)</td>
                                     <td>@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.NextRun)</td>
                                 </tr>
                             }

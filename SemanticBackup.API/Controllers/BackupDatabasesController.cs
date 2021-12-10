@@ -157,8 +157,7 @@ namespace SemanticBackup.API.Controllers
                     EveryHours = 24,
                     StartDateUTC = new DateTime(currentTimeUTC.Year, currentTimeUTC.Month, currentTimeUTC.Day + 1),
                     CreatedOnUTC = currentTimeUTC,
-                    Name = databaseInfo.Name,
-                    LastRunUTC = null
+                    Name = databaseInfo.Name
                 };
                 bool savedSuccess = _schedulePersistanceService.AddOrUpdate(saveObj);
                 if (!savedSuccess)

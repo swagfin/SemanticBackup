@@ -2,10 +2,12 @@
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Core;
 using SemanticBackup.API.Models.Requests;
+using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SemanticBackup.API.Controllers
 {
@@ -15,13 +17,15 @@ namespace SemanticBackup.API.Controllers
     {
         private readonly ILogger<BackupSchedulesController> _logger;
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
+        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly SharedTimeZone _sharedTimeZone;
 
-        public BackupSchedulesController(ILogger<BackupSchedulesController> logger, IBackupSchedulePersistanceService persistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService, SharedTimeZone sharedTimeZone)
+        public BackupSchedulesController(ILogger<BackupSchedulesController> logger, IBackupSchedulePersistanceService persistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService, SharedTimeZone sharedTimeZone)
         {
             _logger = logger;
             this._backupSchedulePersistanceService = persistanceService;
+            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sharedTimeZone = sharedTimeZone;
         }
@@ -35,46 +39,86 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupSchedule>> Get(string resourcegroup)
+        public ActionResult<List<BackupScheduleResponse>> Get(string resourcegroup)
         {
             try
             {
-                return _backupSchedulePersistanceService.GetAll(resourcegroup);
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
+                var records = _backupSchedulePersistanceService.GetAll(resourcegroup);
+                return records.Select(x => new BackupScheduleResponse
+                {
+                    Id = x.Id,
+                    BackupDatabaseInfoId = x.BackupDatabaseInfoId,
+                    EveryHours = x.EveryHours,
+                    Name = x.Name,
+                    ScheduleType = x.ScheduleType,
+                    LastRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.LastRunUTC, resourceGroup?.TimeZone),
+                    NextRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.NextRunUTC, resourceGroup?.TimeZone),
+                    StartDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StartDateUTC, resourceGroup?.TimeZone),
+                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<BackupSchedule>();
+                return new List<BackupScheduleResponse>();
             }
         }
 
         [HttpGet("CurrentDue")]
-        public ActionResult<List<BackupSchedule>> GetCurrentDue()
+        public ActionResult<List<BackupScheduleResponse>> GetCurrentDue(string resourcegroup)
         {
             try
             {
-                return _backupSchedulePersistanceService.GetAllDueByDate();
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
+                var records = _backupSchedulePersistanceService.GetAllDueByDate();
+                return records.Select(x => new BackupScheduleResponse
+                {
+                    Id = x.Id,
+                    BackupDatabaseInfoId = x.BackupDatabaseInfoId,
+                    EveryHours = x.EveryHours,
+                    Name = x.Name,
+                    ScheduleType = x.ScheduleType,
+                    LastRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.LastRunUTC, resourceGroup?.TimeZone),
+                    NextRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.NextRunUTC, resourceGroup?.TimeZone),
+                    StartDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StartDateUTC, resourceGroup?.TimeZone),
+                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<BackupSchedule>();
+                return new List<BackupScheduleResponse>();
             }
         }
 
         [HttpGet("ByDatabaseId/{id}")]
-        public ActionResult<List<BackupSchedule>> GetByDatabaseId(string id)
+        public ActionResult<List<BackupScheduleResponse>> GetByDatabaseId(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     return new BadRequestObjectResult("Database Id can't be Null or Empty");
-                return _backupSchedulePersistanceService.GetAllByDatabaseId(id);
+                var backupDatabaseInfo = _databaseInfoPersistanceService.GetById(id);
+                if (backupDatabaseInfo == null)
+                    return new NotFoundObjectResult($"No Data Found with Key: {id}");
+                var records = _backupSchedulePersistanceService.GetAllByDatabaseId(id);
+                //GET Db Resource Group
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                return records.Select(x => new BackupScheduleResponse
+                {
+                    Id = x.Id,
+                    BackupDatabaseInfoId = x.BackupDatabaseInfoId,
+                    EveryHours = x.EveryHours,
+                    Name = x.Name,
+                    ScheduleType = x.ScheduleType,
+                    LastRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.LastRunUTC, resourceGroup?.TimeZone),
+                    NextRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.NextRunUTC, resourceGroup?.TimeZone),
+                    StartDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StartDateUTC, resourceGroup?.TimeZone),
+                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<BackupSchedule>();
+                return new List<BackupScheduleResponse>();
             }
         }
 
@@ -98,12 +142,11 @@ namespace SemanticBackup.API.Controllers
                     StartDateUTC = startTimeUTC,
                     CreatedOnUTC = currentTimeUTC,
                     Name = backupDatabaseInfo.Name,
-                    LastRunUTC = null
                 };
                 bool savedSuccess = _backupSchedulePersistanceService.AddOrUpdate(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
-                return Ok(saveObj);
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -139,7 +182,7 @@ namespace SemanticBackup.API.Controllers
                 bool updatedSuccess = _backupSchedulePersistanceService.Update(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
-                return Ok(savedObj);
+                return Ok();
             }
             catch (Exception ex)
             {
