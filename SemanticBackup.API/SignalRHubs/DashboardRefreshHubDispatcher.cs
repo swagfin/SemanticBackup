@@ -6,6 +6,7 @@ using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading;
@@ -125,6 +126,8 @@ namespace SemanticBackup.API.SignalRHubs
 
                 DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);
                 DateTime metricsFromDateLocal = currentTimeLocal.AddHours(-24);// 24hrs Ago
+                //Clear All
+                clientGrp.Metric.AvgMetrics = new List<RealTimeViewModel>();
 
                 var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(resourcegroup, metricsFromDateLocal, subscriberGroup);
                 if (recordsLatest != null && recordsLatest.Count > 0)
@@ -177,7 +180,7 @@ namespace SemanticBackup.API.SignalRHubs
                     SuccessCount = x.SuccessCount,
                     TimeStamp = _sharedTimeZone.ConvertUtcDateToLocalTime(x.TimeStamp, resourceGroup?.TimeZone),
                     TimeStampCurrent = _sharedTimeZone.ConvertUtcDateToLocalTime(x.TimeStamp, resourceGroup?.TimeZone).IgnoreSeconds(false).ToString("hh tt")
-                }).ToList();
+                }).OrderBy(x => x.TimeStamp).ToList();
 
                 clientGrp.Metric.TotalBackupSchedules = _backupSchedulePersistanceService.GetAll(resourcegroup).Count();
                 clientGrp.Metric.TotalDatabases = _databaseInfoPersistanceService.GetAll(resourcegroup).Count();
