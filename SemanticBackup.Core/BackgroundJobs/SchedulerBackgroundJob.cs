@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
@@ -13,7 +12,6 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class SchedulerBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<SchedulerBackgroundJob> _logger;
-        private readonly SharedTimeZone _sharedTimeZone;
         private readonly PersistanceOptions _persistanceOptions;
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
@@ -21,14 +19,12 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
 
         public SchedulerBackgroundJob(ILogger<SchedulerBackgroundJob> logger,
-            SharedTimeZone sharedTimeZone,
             PersistanceOptions persistanceOptions,
             IBackupSchedulePersistanceService backupSchedulePersistanceService,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService)
         {
             this._logger = logger;
-            this._sharedTimeZone = sharedTimeZone;
             this._persistanceOptions = persistanceOptions;
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._backupRecordPersistanceService = backupRecordPersistanceService;

@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -19,10 +18,8 @@ namespace SemanticBackup.Core.BackgroundJobs
         internal List<IBot> BackupZippingBots { get; private set; }
 
         public BackupBackgroundZIPJob(ILogger<BackupBackgroundZIPJob> logger,
-            SharedTimeZone sharedTimeZone,
             PersistanceOptions persistanceOptions,
-            IBackupRecordPersistanceService backupRecordPersistanceService
-            )
+            IBackupRecordPersistanceService backupRecordPersistanceService)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;

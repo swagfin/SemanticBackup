@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SemanticBackup.API.Core;
 using SemanticBackup.API.Extensions;
 using SemanticBackup.API.SignalRHubs;
 using SemanticBackup.Core;
@@ -42,8 +41,6 @@ namespace SemanticBackup.API
             persistanceOptions.DefaultBackupDirectory = persistanceOptions.DefaultBackupDirectory.Replace("{{env}}", this.Environment.ContentRootPath);
             services.AddSingleton(persistanceOptions); //Configure Global Instance Reg
 
-            //Shared TimeZone Sync DateTime
-            services.AddTransient<SharedTimeZone>(); //Configure Global Instance Reg
             //Persistance
             services.AddTransient<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
             services.AddTransient<IBackupRecordPersistanceService, BackupRecordPersistanceService>();

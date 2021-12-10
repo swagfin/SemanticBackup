@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
@@ -21,16 +20,14 @@ namespace SemanticBackup.API.Controllers
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
         private readonly PersistanceOptions _persistanceOptions;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
-        private readonly SharedTimeZone _sharedTimeZone;
 
-        public BackupRecordsController(ILogger<BackupRecordsController> logger, IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, PersistanceOptions persistanceOptions, IDatabaseInfoPersistanceService databaseInfoPersistanceService, SharedTimeZone sharedTimeZone)
+        public BackupRecordsController(ILogger<BackupRecordsController> logger, IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, PersistanceOptions persistanceOptions, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
         {
             _logger = logger;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this._persistanceOptions = persistanceOptions;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
-            this._sharedTimeZone = sharedTimeZone;
         }
 
         [HttpGet]

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core;
@@ -20,15 +19,13 @@ namespace SemanticBackup.API.Controllers
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
-        private readonly SharedTimeZone _sharedTimeZone;
 
-        public BackupSchedulesController(ILogger<BackupSchedulesController> logger, IBackupSchedulePersistanceService persistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService, SharedTimeZone sharedTimeZone)
+        public BackupSchedulesController(ILogger<BackupSchedulesController> logger, IBackupSchedulePersistanceService persistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
         {
             _logger = logger;
             this._backupSchedulePersistanceService = persistanceService;
             this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
-            this._sharedTimeZone = sharedTimeZone;
         }
 
         private BackupDatabaseInfo VerifyDatabaseExistsById(string backupDatabaseInfoId)

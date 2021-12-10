@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -23,7 +22,6 @@ namespace SemanticBackup.Core.BackgroundJobs
         internal readonly List<IBot> BackupsBots;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
-            SharedTimeZone sharedTimeZone,
             PersistanceOptions persistanceOptions,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,

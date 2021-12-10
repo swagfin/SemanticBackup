@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -18,7 +17,6 @@ namespace SemanticBackup.API.SignalRHubs
     {
         private readonly ILogger<DashboardRefreshHubDispatcher> _logger;
         private readonly IHubContext<DashboardRefreshHubDispatcher> hub;
-        private readonly SharedTimeZone _sharedTimeZone;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
@@ -26,14 +24,12 @@ namespace SemanticBackup.API.SignalRHubs
 
         public DashboardRefreshHubDispatcher(ILogger<DashboardRefreshHubDispatcher> logger,
             IHubContext<DashboardRefreshHubDispatcher> hub,
-            SharedTimeZone sharedTimeZone,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
             IBackupSchedulePersistanceService backupSchedulePersistanceService,
             IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService)
         {
             this._logger = logger;
             this.hub = hub;
-            this._sharedTimeZone = sharedTimeZone;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
