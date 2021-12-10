@@ -18,13 +18,14 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
+        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
 
         public SchedulerBackgroundJob(ILogger<SchedulerBackgroundJob> logger,
             SharedTimeZone sharedTimeZone,
             PersistanceOptions persistanceOptions,
             IBackupSchedulePersistanceService backupSchedulePersistanceService,
             IBackupRecordPersistanceService backupRecordPersistanceService,
-            IDatabaseInfoPersistanceService databaseInfoPersistanceService)
+            IDatabaseInfoPersistanceService databaseInfoPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService)
         {
             this._logger = logger;
             this._sharedTimeZone = sharedTimeZone;
@@ -32,6 +33,7 @@ namespace SemanticBackup.Core.BackgroundJobs
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
+            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
         }
         public void Initialize()
         {
@@ -65,7 +67,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 else
                                 {
                                     //Proceed
-                                    DateTime currentTimeResourceTimeZone = _sharedTimeZone.GetLocalTimeByResourceGroupId(backupDatabaseInfo.ResourceGroupId);
+                                    var resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                                    DateTime resourceGroupLocalTime = DateTime.UtcNow.ConvertFromUTC(resourceGroup?.TimeZone);
                                     DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
                                     BackupRecord newRecord = new BackupRecord
                                     {
@@ -74,7 +77,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                                         ExpiryDateUTC = RecordExpiryUTC,
                                         Name = backupDatabaseInfo.Name,
-                                        Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeResourceTimeZone)),
+                                        Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
                                         StatusUpdateDateUTC = currentTimeUTC,
                                         RegisteredDateUTC = currentTimeUTC
                                     };

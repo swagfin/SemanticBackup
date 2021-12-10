@@ -49,9 +49,9 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = x.BackupDatabaseInfoId,
                     ExecutionMilliseconds = x.ExecutionMilliseconds,
                     Path = x.Path,
-                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.ExpiryDateUTC, resourceGroup?.TimeZone),
-                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.RegisteredDateUTC, resourceGroup?.TimeZone),
-                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                    ExpiryDate = x.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    RegisteredDate = x.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    StatusUpdateDate = x.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                 }).ToList();
             }
             catch (Exception ex)
@@ -82,9 +82,9 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = x.BackupDatabaseInfoId,
                     ExecutionMilliseconds = x.ExecutionMilliseconds,
                     Path = x.Path,
-                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.ExpiryDateUTC, resourceGroup?.TimeZone),
-                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.RegisteredDateUTC, resourceGroup?.TimeZone),
-                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                    ExpiryDate = x.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    RegisteredDate = x.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    StatusUpdateDate = x.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                 }).ToList();
             }
             catch (Exception ex)
@@ -112,9 +112,9 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = x.BackupDatabaseInfoId,
                     ExecutionMilliseconds = x.ExecutionMilliseconds,
                     Path = x.Path,
-                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.ExpiryDateUTC, resourceGroup?.TimeZone),
-                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.RegisteredDateUTC, resourceGroup?.TimeZone),
-                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                    ExpiryDate = x.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    RegisteredDate = x.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    StatusUpdateDate = x.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                 }).ToList();
             }
             catch (Exception ex)
@@ -144,9 +144,9 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = record.BackupDatabaseInfoId,
                     ExecutionMilliseconds = record.ExecutionMilliseconds,
                     Path = record.Path,
-                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(record.ExpiryDateUTC, resourceGroup?.TimeZone),
-                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(record.RegisteredDateUTC, resourceGroup?.TimeZone),
-                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(record.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                    ExpiryDate = record.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    RegisteredDate = record.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    StatusUpdateDate = record.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                 };
             }
             catch (Exception ex)
@@ -201,9 +201,11 @@ namespace SemanticBackup.API.Controllers
                     //No Need to Create another Just Return
                     return queuedExisting.FirstOrDefault();
                 }
+                //Resource Group
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo?.ResourceGroupId);
                 //Proceed Otherwise
                 DateTime currentTimeUTC = DateTime.UtcNow;
-                DateTime currentTimeResourceTimeZone = _sharedTimeZone.GetLocalTimeByResourceGroupId(backupDatabaseInfo.ResourceGroupId);
+                DateTime currentTimeLocal = currentTimeUTC.ConvertFromUTC(resourceGroup?.TimeZone);
                 DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
                 BackupRecord newRecord = new BackupRecord
                 {
@@ -212,7 +214,7 @@ namespace SemanticBackup.API.Controllers
                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                     ExpiryDateUTC = RecordExpiryUTC,
                     Name = backupDatabaseInfo.Name,
-                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeResourceTimeZone)),
+                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeLocal)),
                     StatusUpdateDateUTC = currentTimeUTC,
                     RegisteredDateUTC = currentTimeUTC
                 };

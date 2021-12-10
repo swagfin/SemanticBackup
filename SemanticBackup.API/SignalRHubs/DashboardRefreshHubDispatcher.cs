@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Core;
-using SemanticBackup.API.Extensions;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -122,14 +121,14 @@ namespace SemanticBackup.API.SignalRHubs
                 //Resource Group Timezone
                 //Change UTC now to Resource Group TimeZone
                 ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
-                DateTime currentTimeLocal = _sharedTimeZone.GetLocalTimeByTimezone(resourceGroup?.TimeZone);
+                DateTime currentTimeUTC = DateTime.UtcNow;
 
                 DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);
-                DateTime metricsFromDateLocal = currentTimeLocal.AddHours(-24);// 24hrs Ago
+                DateTime metricsFromDatUTC = currentTimeUTC.AddHours(-24);// 24hrs Ago
                 //Clear All
                 clientGrp.Metric.AvgMetrics = new List<RealTimeViewModel>();
 
-                var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(resourcegroup, metricsFromDateLocal, subscriberGroup);
+                var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(resourcegroup, metricsFromDatUTC, subscriberGroup);
                 if (recordsLatest != null && recordsLatest.Count > 0)
                     foreach (var record in recordsLatest)
                     {
@@ -149,7 +148,7 @@ namespace SemanticBackup.API.SignalRHubs
                         }
                     }
 
-                var recordsFailsLatest = _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatus(resourcegroup, metricsFromDateLocal, BackupRecordBackupStatus.ERROR.ToString());
+                var recordsFailsLatest = _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatus(resourcegroup, metricsFromDatUTC, BackupRecordBackupStatus.ERROR.ToString());
                 if (recordsFailsLatest != null && recordsFailsLatest.Count > 0)
                     foreach (var record in recordsFailsLatest)
                     {
@@ -170,16 +169,14 @@ namespace SemanticBackup.API.SignalRHubs
                     }
 
                 //Set Last Update Time
-                clientGrp.LastRefreshUTC = DateTime.UtcNow;
-                //Lets Remove Metrics Surpassed  more than 24hrs to avoid Memory Overload
-                clientGrp.Metric.AvgMetrics.RemoveAll(x => x.TimeStamp < currentTimeLocal.AddHours(-24));
+                clientGrp.LastRefreshUTC = currentTimeUTC;
                 //Convert Dates from Utc to Local Time
                 clientGrp.Metric.AvgMetrics = clientGrp.Metric.AvgMetrics.Select(x => new RealTimeViewModel
                 {
                     ErrorsCount = x.ErrorsCount,
                     SuccessCount = x.SuccessCount,
-                    TimeStamp = _sharedTimeZone.ConvertUtcDateToLocalTime(x.TimeStamp, resourceGroup?.TimeZone),
-                    TimeStampCurrent = _sharedTimeZone.ConvertUtcDateToLocalTime(x.TimeStamp, resourceGroup?.TimeZone).IgnoreSeconds(false).ToString("hh tt")
+                    TimeStamp = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone),
+                    TimeStampCurrent = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone).IgnoreSeconds(false).ToString("hh tt")
                 }).OrderBy(x => x.TimeStamp).ToList();
 
                 clientGrp.Metric.TotalBackupSchedules = _backupSchedulePersistanceService.GetAll(resourcegroup).Count();

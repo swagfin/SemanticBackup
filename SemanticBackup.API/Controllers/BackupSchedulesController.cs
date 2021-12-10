@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Core;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
+using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
@@ -52,9 +53,9 @@ namespace SemanticBackup.API.Controllers
                     EveryHours = x.EveryHours,
                     Name = x.Name,
                     ScheduleType = x.ScheduleType,
-                    LastRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.LastRunUTC, resourceGroup?.TimeZone),
-                    NextRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.NextRunUTC, resourceGroup?.TimeZone),
-                    StartDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StartDateUTC, resourceGroup?.TimeZone),
+                    LastRun = x.LastRunUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    NextRun = x.NextRunUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    StartDate = x.StartDateUTC.ConvertFromUTC(resourceGroup?.TimeZone)
                 }).ToList();
             }
             catch (Exception ex)
@@ -78,9 +79,9 @@ namespace SemanticBackup.API.Controllers
                     EveryHours = x.EveryHours,
                     Name = x.Name,
                     ScheduleType = x.ScheduleType,
-                    LastRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.LastRunUTC, resourceGroup?.TimeZone),
-                    NextRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.NextRunUTC, resourceGroup?.TimeZone),
-                    StartDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StartDateUTC, resourceGroup?.TimeZone),
+                    LastRun = x.LastRunUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    NextRun = x.NextRunUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    StartDate = x.StartDateUTC.ConvertFromUTC(resourceGroup?.TimeZone)
                 }).ToList();
             }
             catch (Exception ex)
@@ -110,9 +111,9 @@ namespace SemanticBackup.API.Controllers
                     EveryHours = x.EveryHours,
                     Name = x.Name,
                     ScheduleType = x.ScheduleType,
-                    LastRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.LastRunUTC, resourceGroup?.TimeZone),
-                    NextRun = _sharedTimeZone.ConvertUtcDateToLocalTime(x.NextRunUTC, resourceGroup?.TimeZone),
-                    StartDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StartDateUTC, resourceGroup?.TimeZone),
+                    LastRun = x.LastRunUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    NextRun = x.NextRunUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    StartDate = x.StartDateUTC.ConvertFromUTC(resourceGroup?.TimeZone)
                 }).ToList();
             }
             catch (Exception ex)
@@ -131,15 +132,16 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Object value can't be NULL");
                 //Verify Database Info Exists
                 BackupDatabaseInfo backupDatabaseInfo = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                //Get Times By Timezone
                 DateTime currentTimeUTC = DateTime.UtcNow;
-                DateTime startTimeUTC = _sharedTimeZone.ConvertLocalTimeToUtc(request.StartDate, backupDatabaseInfo.ResourceGroupId);
                 BackupSchedule saveObj = new BackupSchedule
                 {
                     BackupDatabaseInfoId = request.BackupDatabaseInfoId,
                     ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
                     ScheduleType = request.ScheduleType,
                     EveryHours = request.EveryHours,
-                    StartDateUTC = startTimeUTC,
+                    StartDateUTC = request.StartDate.ConvertToUTC(resourceGroup?.TimeZone),
                     CreatedOnUTC = currentTimeUTC,
                     Name = backupDatabaseInfo.Name,
                 };
@@ -171,13 +173,13 @@ namespace SemanticBackup.API.Controllers
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
 
-                DateTime startTimeUTC = _sharedTimeZone.ConvertLocalTimeToUtc(request.StartDate, backupDatabaseInfo.ResourceGroupId);
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
                 //Update Params
                 savedObj.ResourceGroupId = backupDatabaseInfo.ResourceGroupId;
                 savedObj.BackupDatabaseInfoId = request.BackupDatabaseInfoId;
                 savedObj.ScheduleType = request.ScheduleType;
                 savedObj.EveryHours = request.EveryHours;
-                savedObj.StartDateUTC = startTimeUTC;
+                savedObj.StartDateUTC = request.StartDate.ConvertToUTC(resourceGroup?.TimeZone);
                 savedObj.Name = backupDatabaseInfo.Name;
                 bool updatedSuccess = _backupSchedulePersistanceService.Update(savedObj);
                 if (!updatedSuccess)
