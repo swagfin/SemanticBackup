@@ -19,6 +19,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).ToList();
             }
         }
@@ -26,6 +27,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRunUTC <= DateTime.UtcNow && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRunUTC).ToList();
             }
         }
@@ -33,6 +35,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).ToList();
             }
         }
@@ -40,6 +43,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Upsert(record);
             }
         }
@@ -48,6 +52,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Query().Where(x => x.Id == id).FirstOrDefault();
             }
         }
@@ -56,6 +61,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 var collection = db.GetCollection<BackupSchedule>();
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
@@ -68,6 +74,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Update(record);
             }
         }

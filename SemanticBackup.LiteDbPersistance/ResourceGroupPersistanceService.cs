@@ -24,6 +24,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<ResourceGroup>().Upsert(record);
             }
         }
@@ -32,6 +33,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<ResourceGroup>().Query().OrderBy(x => x.Name).ToList();
             }
         }
@@ -40,6 +42,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == id).OrderBy(x => x.Name).FirstOrDefault();
             }
         }
@@ -48,6 +51,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 var collection = db.GetCollection<ResourceGroup>();
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
@@ -94,6 +98,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 var collection = db.GetCollection<ResourceGroup>();
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
@@ -112,6 +117,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<ResourceGroup>().Update(record);
             }
         }
