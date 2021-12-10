@@ -9,10 +9,16 @@ namespace SemanticBackup.LiteDbPersistance
     public class ResourceGroupPersistanceService : IResourceGroupPersistanceService
     {
         private readonly ConnectionString connString;
+        private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
+        private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
+        private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
 
-        public ResourceGroupPersistanceService(LiteDbPersistanceOptions options)
+        public ResourceGroupPersistanceService(LiteDbPersistanceOptions options, IBackupRecordPersistanceService backupRecordPersistanceService, IBackupSchedulePersistanceService backupSchedulePersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
         {
             this.connString = options.ConnectionStringLiteDb;
+            this._backupRecordPersistanceService = backupRecordPersistanceService;
+            this._backupSchedulePersistanceService = backupSchedulePersistanceService;
+            this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
         public bool Add(ResourceGroup record)
         {
@@ -45,9 +51,43 @@ namespace SemanticBackup.LiteDbPersistance
                 var collection = db.GetCollection<ResourceGroup>();
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
-                    return collection.Delete(new BsonValue(objFound.Id));
+                {
+                    bool success = collection.Delete(new BsonValue(objFound.Id));
+                    TryDeleteAllResourcesForGroup(id);
+                    return success;
+                }
                 return false;
             }
+        }
+
+        private void TryDeleteAllResourcesForGroup(string resourceGroupId)
+        {
+            //Delete Databases
+            try
+            {
+                var associatedDatabases = _databaseInfoPersistanceService.GetAll(resourceGroupId);
+                if (associatedDatabases != null)
+                    foreach (var record in associatedDatabases)
+                        _databaseInfoPersistanceService.Remove(record.Id);
+            }
+            catch { }
+            //Delete Schedules
+            try
+            {
+                var associatedSchedules = _backupSchedulePersistanceService.GetAll(resourceGroupId);
+                if (associatedSchedules != null)
+                    foreach (var record in associatedSchedules)
+                        _backupSchedulePersistanceService.Remove(record.Id);
+            }
+            catch { }
+            try
+            {
+                var associatedBackupRecords = _backupRecordPersistanceService.GetAll(resourceGroupId);
+                if (associatedBackupRecords != null)
+                    foreach (var record in associatedBackupRecords)
+                        _backupRecordPersistanceService.Remove(record.Id);
+            }
+            catch { }
         }
 
         public bool Switch(string id)

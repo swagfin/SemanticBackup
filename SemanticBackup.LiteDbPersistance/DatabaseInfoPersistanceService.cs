@@ -14,11 +14,11 @@ namespace SemanticBackup.LiteDbPersistance
             this.connString = options.ConnectionStringLiteDb;
         }
 
-        public List<BackupDatabaseInfo> GetAll(string directory)
+        public List<BackupDatabaseInfo> GetAll(string resourcegroup)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == directory).OrderBy(x => x.Name).ToList();
+                return db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourcegroup).OrderBy(x => x.Name).ToList();
             }
         }
         public bool AddOrUpdate(BackupDatabaseInfo record)
