@@ -57,40 +57,41 @@ namespace SemanticBackup.Core.BackgroundJobs
                     try
                     {
                         List<BackupRecord> queuedBackups = this._backupRecordPersistanceService.GetAllByStatus(BackupRecordBackupStatus.QUEUED.ToString());
-                        if (queuedBackups == null)
-                            return;
-                        List<string> scheduleToDelete = new List<string>();
-                        foreach (BackupRecord backupRecord in queuedBackups)
+                        if (queuedBackups != null)
                         {
-                            _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
-                            BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(backupRecord.BackupDatabaseInfoId);
-                            if (backupDatabaseInfo == null)
+                            List<string> scheduleToDelete = new List<string>();
+                            foreach (BackupRecord backupRecord in queuedBackups)
                             {
-                                _logger.LogWarning($"No Database Info matches with Id: {backupRecord.BackupDatabaseInfoId}, Backup Database Record will be Deleted: {backupRecord.Id}");
-                                scheduleToDelete.Add(backupRecord.Id);
-                            }
-                            else
-                            {
-                                //Add Queue
-                                if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                    BackupsBots.Add(new SQLBackupBot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
-                                else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                    BackupsBots.Add(new MySQLBackupBot(backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
+                                BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(backupRecord.BackupDatabaseInfoId);
+                                if (backupDatabaseInfo == null)
+                                {
+                                    _logger.LogWarning($"No Database Info matches with Id: {backupRecord.BackupDatabaseInfoId}, Backup Database Record will be Deleted: {backupRecord.Id}");
+                                    scheduleToDelete.Add(backupRecord.Id);
+                                }
                                 else
-                                    throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
-                                //Finally Update Status
-                                bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
-                                if (updated)
-                                    _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
-                                else
-                                    _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
-                            }
+                                {
+                                    //Add Queue
+                                    if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
+                                        BackupsBots.Add(new SQLBackupBot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                    else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
+                                        BackupsBots.Add(new MySQLBackupBot(backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                    else
+                                        throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
+                                    //Finally Update Status
+                                    bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
+                                    if (updated)
+                                        _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
+                                    else
+                                        _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
+                                }
 
+                            }
+                            //Check if Any Delete
+                            if (scheduleToDelete.Count > 0)
+                                foreach (var rm in scheduleToDelete)
+                                    this._backupRecordPersistanceService.Remove(rm);
                         }
-                        //Check if Any Delete
-                        if (scheduleToDelete.Count > 0)
-                            foreach (var rm in scheduleToDelete)
-                                this._backupRecordPersistanceService.Remove(rm);
                     }
                     catch (Exception ex)
                     {

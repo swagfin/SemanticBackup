@@ -50,52 +50,54 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         DateTime currentTimeUTC = DateTime.UtcNow;
                         List<BackupSchedule> dueSchedules = this._backupSchedulePersistanceService.GetAllDueByDate();
-                        if (dueSchedules == null)
-                            return;
-                        List<string> scheduleToDelete = new List<string>();
-                        foreach (BackupSchedule schedule in dueSchedules)
+                        if (dueSchedules != null)
                         {
-                            _logger.LogInformation($"Queueing Scheduled Backup...");
-                            BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(schedule.BackupDatabaseInfoId);
-                            if (backupDatabaseInfo == null)
+                            List<string> scheduleToDelete = new List<string>();
+                            foreach (BackupSchedule schedule in dueSchedules)
                             {
-                                _logger.LogWarning($"No Database Info matches with Id: {schedule.BackupDatabaseInfoId}, Schedule Record will be Deleted: {schedule.Id}");
-                                scheduleToDelete.Add(schedule.Id);
-                            }
-                            else
-                            {
-                                //Proceed
-                                DateTime currentTimeResourceTimeZone = _sharedTimeZone.GetLocalTimeByResourceGroupId(backupDatabaseInfo.ResourceGroupId);
-                                DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
-                                BackupRecord newRecord = new BackupRecord
+                                _logger.LogInformation($"Queueing Scheduled Backup...");
+                                BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(schedule.BackupDatabaseInfoId);
+                                if (backupDatabaseInfo == null)
                                 {
-                                    BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
-                                    ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
-                                    BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
-                                    ExpiryDateUTC = RecordExpiryUTC,
-                                    Name = backupDatabaseInfo.Name,
-                                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeResourceTimeZone)),
-                                    StatusUpdateDateUTC = currentTimeUTC,
-                                    RegisteredDateUTC = currentTimeUTC
-                                };
-
-                                bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
-                                if (!addedSuccess)
-                                    throw new Exception("Unable to Queue Database for Backup");
+                                    _logger.LogWarning($"No Database Info matches with Id: {schedule.BackupDatabaseInfoId}, Schedule Record will be Deleted: {schedule.Id}");
+                                    scheduleToDelete.Add(schedule.Id);
+                                }
                                 else
-                                    _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
-                                //Update Schedule
-                                schedule.LastRunUTC = currentTimeUTC;
-                                bool updatedSchedule = this._backupSchedulePersistanceService.Update(schedule);
-                                if (!updatedSchedule)
-                                    _logger.LogWarning("Unable to Update Scheduled Next Run");
-                            }
+                                {
+                                    //Proceed
+                                    DateTime currentTimeResourceTimeZone = _sharedTimeZone.GetLocalTimeByResourceGroupId(backupDatabaseInfo.ResourceGroupId);
+                                    DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
+                                    BackupRecord newRecord = new BackupRecord
+                                    {
+                                        BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
+                                        ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
+                                        BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
+                                        ExpiryDateUTC = RecordExpiryUTC,
+                                        Name = backupDatabaseInfo.Name,
+                                        Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeResourceTimeZone)),
+                                        StatusUpdateDateUTC = currentTimeUTC,
+                                        RegisteredDateUTC = currentTimeUTC
+                                    };
 
+                                    bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
+                                    if (!addedSuccess)
+                                        throw new Exception("Unable to Queue Database for Backup");
+                                    else
+                                        _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
+                                    //Update Schedule
+                                    schedule.LastRunUTC = currentTimeUTC;
+                                    bool updatedSchedule = this._backupSchedulePersistanceService.Update(schedule);
+                                    if (!updatedSchedule)
+                                        _logger.LogWarning("Unable to Update Scheduled Next Run");
+                                }
+
+                            }
+                            //Check if Any Delete
+                            if (scheduleToDelete.Count > 0)
+                                foreach (var rm in scheduleToDelete)
+                                    this._backupSchedulePersistanceService.Remove(rm);
                         }
-                        //Check if Any Delete
-                        if (scheduleToDelete.Count > 0)
-                            foreach (var rm in scheduleToDelete)
-                                this._backupSchedulePersistanceService.Remove(rm);
+
                     }
                     catch (Exception ex)
                     {
