@@ -19,7 +19,7 @@ namespace SemanticBackup.WebClient.Models.Response
                 if ((DateTime.UtcNow.Date - LastRun.Date).TotalDays > 1000)
                     return "Never";
                 else
-                    return string.Format("{0:yyyy-MM-dd hh:mm tt}", LastRun);
+                    return string.Format("{0:yyyy-MM-dd HH:mm}", LastRun);
             }
         }
     }
