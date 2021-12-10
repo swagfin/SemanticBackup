@@ -1,6 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
@@ -15,16 +14,14 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
     {
         private readonly BackupRecord _backupRecord;
         private readonly IBackupRecordPersistanceService _persistanceService;
-        private readonly SharedTimeZone _sharedTimeZone;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public BackupZippingRobot(BackupRecord backupRecord, IBackupRecordPersistanceService persistanceService, SharedTimeZone sharedTimeZone, ILogger logger)
+        public BackupZippingRobot(BackupRecord backupRecord, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {
             this._backupRecord = backupRecord;
             this._persistanceService = persistanceService;
-            this._sharedTimeZone = sharedTimeZone;
             this._logger = logger;
         }
         public async Task RunAsync()
@@ -40,14 +37,13 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 stopwatch.Start();
 
                 string newZIPPath = _backupRecord.Path.Replace(".bak", ".zip");
-                DateTime currentTime = _sharedTimeZone.Now;
                 using (ZipOutputStream s = new ZipOutputStream(File.Create(newZIPPath)))
                 {
 
                     s.SetLevel(9); // 0 - store only to 9 - means best compression
                     byte[] buffer = new byte[4096];
                     var entry = new ZipEntry(Path.GetFileName(_backupRecord.Path));
-                    entry.DateTime = currentTime;
+                    entry.DateTime = DateTime.UtcNow;
                     s.PutNextEntry(entry);
                     using (FileStream fs = File.OpenRead(_backupRecord.Path))
                     {
@@ -84,8 +80,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         {
             try
             {
-                DateTime currentTime = _sharedTimeZone.Now;
-                _persistanceService.UpdateStatusFeed(recordId, status, currentTime, message, elapsed, newZIPPath);
+                _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed, newZIPPath);
             }
             catch (Exception ex)
             {

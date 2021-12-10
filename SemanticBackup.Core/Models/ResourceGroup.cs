@@ -10,5 +10,6 @@ namespace SemanticBackup.Core.Models
         [Required]
         public string Name { get; set; }
         public long LastAccess { get; set; } = 0;
+        public string TimeZone { get; set; }
     }
 }

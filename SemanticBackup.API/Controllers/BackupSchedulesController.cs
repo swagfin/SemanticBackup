@@ -53,8 +53,7 @@ namespace SemanticBackup.API.Controllers
         {
             try
             {
-                DateTime currentTime = _sharedTimeZone.Now;
-                return _backupSchedulePersistanceService.GetAllDueByDate(currentTime);
+                return _backupSchedulePersistanceService.GetAllDueByDate();
             }
             catch (Exception ex)
             {
@@ -87,18 +86,19 @@ namespace SemanticBackup.API.Controllers
                 if (request == null)
                     throw new Exception("Object value can't be NULL");
                 //Verify Database Info Exists
-                var record = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
-                DateTime currentTime = _sharedTimeZone.Now;
+                BackupDatabaseInfo backupDatabaseInfo = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
+                DateTime currentTimeUTC = DateTime.UtcNow;
+                DateTime startTimeUTC = _sharedTimeZone.ConvertLocalTimeToUtc(request.StartDate, backupDatabaseInfo.ResourceGroupId);
                 BackupSchedule saveObj = new BackupSchedule
                 {
                     BackupDatabaseInfoId = request.BackupDatabaseInfoId,
-                    ResourceGroupId = record.ResourceGroupId,
+                    ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
                     ScheduleType = request.ScheduleType,
                     EveryHours = request.EveryHours,
-                    StartDate = request.StartDate,
-                    CreatedOn = currentTime,
-                    Name = record.Name,
-                    LastRun = null
+                    StartDateUTC = startTimeUTC,
+                    CreatedOnUTC = currentTimeUTC,
+                    Name = backupDatabaseInfo.Name,
+                    LastRunUTC = null
                 };
                 bool savedSuccess = _backupSchedulePersistanceService.AddOrUpdate(saveObj);
                 if (!savedSuccess)
@@ -122,18 +122,20 @@ namespace SemanticBackup.API.Controllers
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
                 //Verify Database Info Exists
-                var record = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
+                BackupDatabaseInfo backupDatabaseInfo = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
                 //Proceed
                 var savedObj = _backupSchedulePersistanceService.GetById(id);
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
+
+                DateTime startTimeUTC = _sharedTimeZone.ConvertLocalTimeToUtc(request.StartDate, backupDatabaseInfo.ResourceGroupId);
                 //Update Params
-                savedObj.ResourceGroupId = record.ResourceGroupId;
+                savedObj.ResourceGroupId = backupDatabaseInfo.ResourceGroupId;
                 savedObj.BackupDatabaseInfoId = request.BackupDatabaseInfoId;
                 savedObj.ScheduleType = request.ScheduleType;
                 savedObj.EveryHours = request.EveryHours;
-                savedObj.StartDate = request.StartDate;
-                savedObj.Name = record.Name;
+                savedObj.StartDateUTC = startTimeUTC;
+                savedObj.Name = backupDatabaseInfo.Name;
                 bool updatedSuccess = _backupSchedulePersistanceService.Update(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");

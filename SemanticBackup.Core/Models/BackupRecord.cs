@@ -14,11 +14,11 @@ namespace SemanticBackup.Core.Models
         public string BackupStatus { get; set; } = BackupRecordBackupStatus.QUEUED.ToString();
         [Required]
         public string Path { get; set; }
-        public DateTime StatusUpdateDate { get; set; } = DateTime.Now;
-        public DateTime? ExpiryDate { get; set; } = null;
+        public DateTime StatusUpdateDateUTC { get; set; } = DateTime.UtcNow;
+        public DateTime ExpiryDateUTC { get; set; } = DateTime.UtcNow.AddDays(7);
         public string ExecutionMessage { get; set; }
         public string ExecutionMilliseconds { get; set; }
-        public DateTime RegisteredDate { get; set; } = DateTime.Now;
+        public DateTime RegisteredDateUTC { get; set; } = DateTime.UtcNow;
     }
     public enum BackupRecordBackupStatus
     {

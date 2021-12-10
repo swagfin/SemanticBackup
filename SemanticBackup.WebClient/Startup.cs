@@ -25,6 +25,7 @@ namespace SemanticBackup.WebClient
             services.AddTransient<IHttpService, HttpService>();
 
             //Directory Services
+            services.AddSingleton<TimeZoneHelper>(); //TimeZones
             services.AddSingleton<IResourceGroupService, ResourceGroupService>();
             services.AddRazorPages();
         }

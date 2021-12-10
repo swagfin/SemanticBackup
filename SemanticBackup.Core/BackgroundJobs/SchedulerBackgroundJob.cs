@@ -48,8 +48,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                 {
                     try
                     {
-                        DateTime currentTime = _sharedTimeZone.Now;
-                        List<BackupSchedule> dueSchedules = this._backupSchedulePersistanceService.GetAllDueByDate(currentTime);
+                        DateTime currentTimeUTC = DateTime.UtcNow;
+                        List<BackupSchedule> dueSchedules = this._backupSchedulePersistanceService.GetAllDueByDate();
                         if (dueSchedules == null)
                             return;
                         List<string> scheduleToDelete = new List<string>();
@@ -65,19 +65,18 @@ namespace SemanticBackup.Core.BackgroundJobs
                             else
                             {
                                 //Proceed
-                                DateTime? RecordExpiry = null;
-                                if (backupDatabaseInfo.BackupExpiryAgeInDays >= 1)
-                                    RecordExpiry = currentTime.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
+                                DateTime currentTimeResourceTimeZone = _sharedTimeZone.GetLocalTimeByResourceGroupId(backupDatabaseInfo.ResourceGroupId);
+                                DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
                                 BackupRecord newRecord = new BackupRecord
                                 {
                                     BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
                                     ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
                                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
-                                    ExpiryDate = RecordExpiry,
+                                    ExpiryDateUTC = RecordExpiryUTC,
                                     Name = backupDatabaseInfo.Name,
-                                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTime)),
-                                    StatusUpdateDate = _sharedTimeZone.Now,
-                                    RegisteredDate = _sharedTimeZone.Now
+                                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeResourceTimeZone)),
+                                    StatusUpdateDateUTC = currentTimeUTC,
+                                    RegisteredDateUTC = currentTimeUTC
                                 };
 
                                 bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
@@ -86,7 +85,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 else
                                     _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
                                 //Update Schedule
-                                schedule.LastRun = _sharedTimeZone.Now;
+                                schedule.LastRunUTC = currentTimeUTC;
                                 bool updatedSchedule = this._backupSchedulePersistanceService.Update(schedule);
                                 if (!updatedSchedule)
                                     _logger.LogWarning("Unable to Update Scheduled Next Run");

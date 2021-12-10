@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SemanticBackup.WebClient.Models.Response
+namespace SemanticBackup.API.Models.Response
 {
     public class BackupRecordResponse
     {

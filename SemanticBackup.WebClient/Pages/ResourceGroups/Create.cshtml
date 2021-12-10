@@ -18,6 +18,22 @@
                         <label>Resource Group Name</label>
                         <input asp-for="ResourceGroupRequest.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Group" type="text" required>
                     </div>
+                    <div class="field">
+                        <label>Resource Group Timezone</label>
+                        <select asp-for="ResourceGroupRequest.TimeZone" class="ui fluid search small dropdown timezone-dropdown-search" required>
+                            @{
+                                if (Model.TimeZoneCollections != null && Model.TimeZoneCollections.Count > 0)
+                                {
+                                    foreach(var timezone in Model.TimeZoneCollections)
+                                    {
+                                        <option value="@(timezone.Value)">@(timezone.Text)  (@(timezone.Value))</option>
+                                    }
+                                }
+                            }
+                            <option selected value="E. Africa Standard Time">(UTC+03:00) Nairobi (E. Africa Standard Time) (Default)</option>
+                        </select>
+                    </div>
+
                     <p align="center">
                         <button class="ui fluid button blue" type="submit">
                             <i class="chart line icon"></i>
@@ -30,3 +46,8 @@
         </div>
     </div>
 </div>
+@section Scripts{
+<script type="text/javascript">
+    $(".timezone-dropdown-search").dropdown({allowAdditions: false});
+</script>
+}

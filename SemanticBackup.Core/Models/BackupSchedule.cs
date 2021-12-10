@@ -13,18 +13,18 @@ namespace SemanticBackup.Core.Models
         public string Name { get; set; }
         public string ScheduleType { get; set; } = BackupScheduleType.FULLBACKUP.ToString();
         public int EveryHours { get; set; } = 24;
-        public DateTime StartDate { get; set; } = DateTime.Now;
-        public DateTime NextRun
+        public DateTime StartDateUTC { get; set; } = DateTime.UtcNow;
+        public DateTime NextRunUTC
         {
             get
             {
-                if (LastRun == null)
-                    return StartDate;
-                return ((DateTime)LastRun).AddHours(EveryHours);
+                if (LastRunUTC == null)
+                    return StartDateUTC;
+                return ((DateTime)LastRunUTC).AddHours(EveryHours);
             }
         }
-        public DateTime? LastRun { get; set; } = null;
-        public DateTime CreatedOn { get; set; } = DateTime.Now;
+        public DateTime? LastRunUTC { get; set; } = null;
+        public DateTime CreatedOnUTC { get; set; } = DateTime.UtcNow;
     }
     public enum BackupScheduleType
     {

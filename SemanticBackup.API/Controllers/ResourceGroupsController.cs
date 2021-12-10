@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.API.Models.Requests;
+using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
@@ -15,13 +15,13 @@ namespace SemanticBackup.API.Controllers
     {
         private readonly ILogger<ResourceGroupsController> _logger;
         private readonly IResourceGroupPersistanceService _activeResourcegroupService;
-        private readonly SharedTimeZone _sharedTimeZone;
+        private readonly PersistanceOptions _persistanceOptions;
 
-        public ResourceGroupsController(ILogger<ResourceGroupsController> logger, IResourceGroupPersistanceService resourceGroupPersistance, SharedTimeZone sharedTimeZone)
+        public ResourceGroupsController(ILogger<ResourceGroupsController> logger, IResourceGroupPersistanceService resourceGroupPersistance, PersistanceOptions persistanceOptions)
         {
             _logger = logger;
             this._activeResourcegroupService = resourceGroupPersistance;
-            this._sharedTimeZone = sharedTimeZone;
+            this._persistanceOptions = persistanceOptions;
         }
         [HttpGet]
         public ActionResult<List<ResourceGroup>> GetDirectories()
@@ -62,12 +62,15 @@ namespace SemanticBackup.API.Controllers
             {
                 if (request == null)
                     throw new Exception("Object value can't be NULL");
-                DateTime currentTime = _sharedTimeZone.Now;
-                long.TryParse(DateTime.Now.ToString("yyyyMMddHHmmss"), out long lastAccess);
+                //Check TimeZone Provided
+                request.TimeZone = (string.IsNullOrWhiteSpace(request.TimeZone)) ? _persistanceOptions.ServerDefaultTimeZone : request.TimeZone;
+                //Proceed
+                long.TryParse(DateTime.UtcNow.ToString("yyyyMMddHHmmss"), out long lastAccess);
                 ResourceGroup saveObj = new ResourceGroup
                 {
                     Name = request.Name,
-                    LastAccess = lastAccess
+                    LastAccess = lastAccess,
+                    TimeZone = request.TimeZone
                 };
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
@@ -96,7 +99,10 @@ namespace SemanticBackup.API.Controllers
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 //Update Params
+                request.TimeZone = (string.IsNullOrWhiteSpace(request.TimeZone)) ? _persistanceOptions.ServerDefaultTimeZone : request.TimeZone;
                 savedObj.Name = request.Name;
+                savedObj.TimeZone = request.TimeZone;
+                //Update
                 bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");

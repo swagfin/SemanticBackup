@@ -22,11 +22,11 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).ToList();
             }
         }
-        public List<BackupSchedule> GetAllDueByDate(DateTime dateTime)
+        public List<BackupSchedule> GetAllDueByDate()
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun <= dateTime && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRun).ToList();
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRunUTC <= DateTime.UtcNow && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRunUTC).ToList();
             }
         }
         public List<BackupSchedule> GetAllByDatabaseId(string id)

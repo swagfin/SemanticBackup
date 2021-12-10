@@ -1,34 +1,78 @@
 ﻿using SemanticBackup.Core;
+using SemanticBackup.Core.Models;
+using SemanticBackup.Core.PersistanceServices;
 using System;
 
 namespace SemanticBackup.API.Core
 {
     public class SharedTimeZone
     {
-        private PersistanceOptions Options { get; }
-        public TimeZoneInfo CurrentTimeZone { get; }
-        public SharedTimeZone(PersistanceOptions persistanceOptions)
+        private readonly IResourceGroupPersistanceService resourceGroupPersistanceService;
+        public string DefaultTimezone { get; }
+
+        public SharedTimeZone(PersistanceOptions persistanceOptions, IResourceGroupPersistanceService resourceGroupPersistanceService)
         {
-            this.Options = persistanceOptions;
-            string timezone = string.IsNullOrWhiteSpace(Options.ServerDefaultTimeZone) ? "E. Africa Standard Time" : Options.ServerDefaultTimeZone;
-            this.CurrentTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timezone);
+            this.resourceGroupPersistanceService = resourceGroupPersistanceService;
+            this.DefaultTimezone = string.IsNullOrWhiteSpace(persistanceOptions.ServerDefaultTimeZone) ? "GMT Standard Time" : persistanceOptions.ServerDefaultTimeZone;
         }
 
-        public DateTime Now
+        public DateTime ConvertLocalTimeToUtc(DateTime dateTimeLocal, string timezone)
         {
-            get
-            {
-                try
-                {
-                    DateTime dateTime = DateTime.UtcNow;
 
-                    dateTime = DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified);
-                    DateTime finalDate = TimeZoneInfo.ConvertTimeFromUtc(dateTime, this.CurrentTimeZone);
-                    return finalDate;
-                }
-                catch { }
-                return DateTime.Now;
+            try
+            {
+                string tzIdentifier = string.IsNullOrWhiteSpace(timezone) ? timezone : DefaultTimezone;
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(tzIdentifier);
+                dateTimeLocal = DateTime.SpecifyKind(dateTimeLocal, DateTimeKind.Unspecified);
+                DateTime finalDateUTC = TimeZoneInfo.ConvertTimeToUtc(dateTimeLocal, tz);
+                return finalDateUTC;
             }
+            catch { }
+            return DateTime.UtcNow;
+        }
+        public DateTime ConvertUtcDateToLocalTime(DateTime dateTimeUTC, string timezone)
+        {
+
+            try
+            {
+                string tzIdentifier = string.IsNullOrWhiteSpace(timezone) ? timezone : DefaultTimezone;
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(tzIdentifier);
+                dateTimeUTC = DateTime.SpecifyKind(dateTimeUTC, DateTimeKind.Unspecified);
+                DateTime finalLocalTime = TimeZoneInfo.ConvertTimeFromUtc(dateTimeUTC, tz);
+                return finalLocalTime;
+            }
+            catch { }
+            return DateTime.UtcNow;
+        }
+
+        public DateTime GetLocalTimeByResourceGroupId(string resourceGroupId)
+        {
+
+            try
+            {
+                ResourceGroup resourceGroup = resourceGroupPersistanceService.GetById(resourceGroupId);
+                if (resourceGroup == null)
+                    return DateTime.UtcNow;
+                return GetLocalTimeByTimezone(resourceGroup.TimeZone);
+            }
+            catch { }
+            return DateTime.UtcNow;
+        }
+
+        public DateTime GetLocalTimeByTimezone(string timezone)
+        {
+
+            try
+            {
+                string tzIdentifier = string.IsNullOrWhiteSpace(timezone) ? timezone : DefaultTimezone;
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(tzIdentifier);
+                DateTime dateTime = DateTime.UtcNow;
+                dateTime = DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified);
+                DateTime finalDate = TimeZoneInfo.ConvertTimeFromUtc(dateTime, tz);
+                return finalDate;
+            }
+            catch { }
+            return DateTime.UtcNow;
         }
 
     }

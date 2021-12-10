@@ -22,21 +22,21 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).OrderByDescending(x => x.RegisteredDateUTC).ToList();
             }
         }
         public List<BackupRecord> GetAllByStatus(string status)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).OrderByDescending(x => x.RegisteredDateUTC).ToList();
             }
         }
-        public List<BackupRecord> GetAllExpired(DateTime currentDate)
+        public List<BackupRecord> GetAllExpired()
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDate != null).Where(x => x.ExpiryDate <= currentDate).OrderBy(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDateUTC != null).Where(x => x.ExpiryDateUTC <= DateTime.UtcNow).OrderBy(x => x.RegisteredDateUTC).ToList();
             }
         }
         public List<BackupRecord> GetAllByRegisteredDateByStatus(string resourcegroup, DateTime fromDate, string status = "*")
@@ -44,8 +44,8 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.RegisteredDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.RegisteredDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.RegisteredDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToList();
             }
         }
         public List<BackupRecord> GetAllByStatusUpdateDateByStatus(string resourcegroup, DateTime fromDate, string status = "*")
@@ -53,8 +53,8 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.StatusUpdateDate > fromDate).OrderByDescending(x => x.RegisteredDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.StatusUpdateDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.StatusUpdateDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToList();
             }
         }
         public List<BackupRecord> GetAllByDatabaseIdByStatus(string resourcegroup, string id, string status = "*")
@@ -62,15 +62,15 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
+                    return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToList();
             }
         }
         public List<BackupRecord> GetAllByDatabaseId(string id)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDate).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToList();
             }
         }
 
@@ -85,7 +85,7 @@ namespace SemanticBackup.LiteDbPersistance
             }
         }
 
-        public bool UpdateStatusFeed(string id, string status, DateTime updateDate, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
+        public bool UpdateStatusFeed(string id, string status, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
         {
             using (var db = new LiteDatabase(connString))
             {
@@ -94,7 +94,7 @@ namespace SemanticBackup.LiteDbPersistance
                 if (objFound != null)
                 {
                     objFound.BackupStatus = status;
-                    objFound.StatusUpdateDate = updateDate;
+                    objFound.StatusUpdateDateUTC = DateTime.UtcNow;
                     if (!string.IsNullOrEmpty(message))
                     {
                         objFound.ExecutionMessage = message;

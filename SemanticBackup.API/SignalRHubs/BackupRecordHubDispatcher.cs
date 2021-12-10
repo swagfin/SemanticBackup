@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using System;
@@ -16,14 +15,12 @@ namespace SemanticBackup.API.SignalRHubs
     {
         private readonly ILogger<BackupRecordHubDispatcher> _logger;
         private readonly IHubContext<BackupRecordHubDispatcher> hub;
-        private readonly SharedTimeZone _sharedTimeZone;
         private ConcurrentQueue<BackupRecordMetric> BackupRecordsQueue = new ConcurrentQueue<BackupRecordMetric>();
 
-        public BackupRecordHubDispatcher(ILogger<BackupRecordHubDispatcher> logger, IHubContext<BackupRecordHubDispatcher> hub, SharedTimeZone sharedTimeZone)
+        public BackupRecordHubDispatcher(ILogger<BackupRecordHubDispatcher> logger, IHubContext<BackupRecordHubDispatcher> hub)
         {
             this._logger = logger;
             this.hub = hub;
-            this._sharedTimeZone = sharedTimeZone;
             BackupRecordsQueue = new ConcurrentQueue<BackupRecordMetric>();
         }
 
@@ -123,10 +120,9 @@ namespace SemanticBackup.API.SignalRHubs
             {
 
                 _logger.LogInformation("Sending Metrics to Connected: {group}", clientGrp.Name);
-                DateTime currentTime = _sharedTimeZone.Now;
                 //Set Last Update Time
-                clientGrp.LastRefresh = currentTime;
-                backupRecordMetric.LastSyncDate = currentTime;
+                clientGrp.LastRefreshUTC = DateTime.UtcNow;
+                backupRecordMetric.LastSyncDateUTC = DateTime.UtcNow;
                 backupRecordMetric.Subscription = clientGrp.Name;
                 _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecordMetric); ;
                 _logger.LogInformation("Successfully sent Metrics for Group: {group}", clientGrp.Name);
@@ -143,7 +139,7 @@ namespace SemanticBackup.API.SignalRHubs
     {
         public string Subscription { get; set; }
         public BackupRecord Metric { get; set; } = null;
-        public DateTime LastSyncDate { get; set; } = DateTime.Now;
+        public DateTime LastSyncDateUTC { get; set; } = DateTime.UtcNow;
         public bool IsNewMetric { get; set; } = false;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Core;
+using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -17,75 +18,136 @@ namespace SemanticBackup.API.Controllers
     {
         private readonly ILogger<BackupRecordsController> _logger;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
+        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
         private readonly PersistanceOptions _persistanceOptions;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
-        private readonly SharedTimeZone sharedTimeZone;
+        private readonly SharedTimeZone _sharedTimeZone;
 
-        public BackupRecordsController(ILogger<BackupRecordsController> logger, IBackupRecordPersistanceService backupRecordPersistanceService, PersistanceOptions persistanceOptions, IDatabaseInfoPersistanceService databaseInfoPersistanceService, SharedTimeZone sharedTimeZone)
+        public BackupRecordsController(ILogger<BackupRecordsController> logger, IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, PersistanceOptions persistanceOptions, IDatabaseInfoPersistanceService databaseInfoPersistanceService, SharedTimeZone sharedTimeZone)
         {
             _logger = logger;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
+            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this._persistanceOptions = persistanceOptions;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
-            this.sharedTimeZone = sharedTimeZone;
+            this._sharedTimeZone = sharedTimeZone;
         }
 
         [HttpGet]
-        public ActionResult<List<BackupRecord>> Get(string resourcegroup)
+        public ActionResult<List<BackupRecordResponse>> Get(string resourcegroup)
         {
             try
             {
-                return _backupRecordPersistanceService.GetAll(resourcegroup);
+                List<BackupRecord> records = _backupRecordPersistanceService.GetAll(resourcegroup);
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
+                return records.Select(x => new BackupRecordResponse
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    BackupStatus = x.BackupStatus,
+                    ExecutionMessage = x.ExecutionMessage,
+                    BackupDatabaseInfoId = x.BackupDatabaseInfoId,
+                    ExecutionMilliseconds = x.ExecutionMilliseconds,
+                    Path = x.Path,
+                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.ExpiryDateUTC, resourceGroup?.TimeZone),
+                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.RegisteredDateUTC, resourceGroup?.TimeZone),
+                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<BackupRecord>();
+                return new List<BackupRecordResponse>();
             }
         }
         [HttpGet("ByDatabaseId/{id}")]
-        public ActionResult<List<BackupRecord>> GetByDatabaseId(string id)
+        public ActionResult<List<BackupRecordResponse>> GetByDatabaseId(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     return new BadRequestObjectResult("Database Id can't be Null or Empty");
-                return _backupRecordPersistanceService.GetAllByDatabaseId(id);
+                BackupDatabaseInfo validDatabase = _databaseInfoPersistanceService.GetById(id);
+                if (validDatabase == null)
+                    return new List<BackupRecordResponse>();
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(validDatabase.ResourceGroupId);
+                //Get Records By Database Id
+                List<BackupRecord> records = _backupRecordPersistanceService.GetAllByDatabaseId(id);
+                return records.Select(x => new BackupRecordResponse
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    BackupStatus = x.BackupStatus,
+                    ExecutionMessage = x.ExecutionMessage,
+                    BackupDatabaseInfoId = x.BackupDatabaseInfoId,
+                    ExecutionMilliseconds = x.ExecutionMilliseconds,
+                    Path = x.Path,
+                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.ExpiryDateUTC, resourceGroup?.TimeZone),
+                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.RegisteredDateUTC, resourceGroup?.TimeZone),
+                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<BackupRecord>();
+                return new List<BackupRecordResponse>();
             }
         }
 
         [HttpGet("ByStatus/{status}")]
-        public ActionResult<List<BackupRecord>> GetByStatus(string status)
+        public ActionResult<List<BackupRecordResponse>> GetByStatus(string status, string resourcegroup)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(status))
                     return new BadRequestObjectResult("Status was not Provided");
-                return _backupRecordPersistanceService.GetAllByStatus(status);
+                var records = _backupRecordPersistanceService.GetAllByStatus(status);
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
+                return records.Select(x => new BackupRecordResponse
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    BackupStatus = x.BackupStatus,
+                    ExecutionMessage = x.ExecutionMessage,
+                    BackupDatabaseInfoId = x.BackupDatabaseInfoId,
+                    ExecutionMilliseconds = x.ExecutionMilliseconds,
+                    Path = x.Path,
+                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.ExpiryDateUTC, resourceGroup?.TimeZone),
+                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.RegisteredDateUTC, resourceGroup?.TimeZone),
+                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(x.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return new List<BackupRecord>();
+                return new List<BackupRecordResponse>();
             }
         }
 
         [HttpGet("{id}")]
-        public ActionResult<BackupRecord> GetById(string id)
+        public ActionResult<BackupRecordResponse> GetById(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var backupRecord = _backupRecordPersistanceService.GetById(id);
-                if (backupRecord == null)
+                BackupRecord record = _backupRecordPersistanceService.GetById(id);
+                if (record == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
-                return backupRecord;
+                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(record.ResourceGroupId);
+                return new BackupRecordResponse
+                {
+                    Id = record.Id,
+                    Name = record.Name,
+                    BackupStatus = record.BackupStatus,
+                    ExecutionMessage = record.ExecutionMessage,
+                    BackupDatabaseInfoId = record.BackupDatabaseInfoId,
+                    ExecutionMilliseconds = record.ExecutionMilliseconds,
+                    Path = record.Path,
+                    ExpiryDate = _sharedTimeZone.ConvertUtcDateToLocalTime(record.ExpiryDateUTC, resourceGroup?.TimeZone),
+                    RegisteredDate = _sharedTimeZone.ConvertUtcDateToLocalTime(record.RegisteredDateUTC, resourceGroup?.TimeZone),
+                    StatusUpdateDate = _sharedTimeZone.ConvertUtcDateToLocalTime(record.StatusUpdateDateUTC, resourceGroup?.TimeZone)
+                };
             }
             catch (Exception ex)
             {
@@ -95,7 +157,7 @@ namespace SemanticBackup.API.Controllers
         }
         [Route("re-run/{id}")]
         [HttpGet, HttpPost]
-        public ActionResult<BackupRecord> GetInitRerun(string id)
+        public ActionResult GetInitRerun(string id)
         {
             try
             {
@@ -106,9 +168,8 @@ namespace SemanticBackup.API.Controllers
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else if (backupRecord.BackupStatus != "ERROR")
                     return new ConflictObjectResult($"STATUS need to be ERROR, Current Status for this record is: {backupRecord.BackupStatus}");
-                DateTime startedAt = sharedTimeZone.Now;
                 string newBackupPath = backupRecord.Path.Replace(".zip", ".bak");
-                bool rerunSuccess = _backupRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.QUEUED.ToString(), startedAt, "Queued for Re-run", 0, newBackupPath);
+                bool rerunSuccess = _backupRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.QUEUED.ToString(), "Queued for Re-run", 0, newBackupPath);
                 if (rerunSuccess)
                     return Ok(rerunSuccess);
                 else
@@ -141,20 +202,19 @@ namespace SemanticBackup.API.Controllers
                     return queuedExisting.FirstOrDefault();
                 }
                 //Proceed Otherwise
-                DateTime currentTime = sharedTimeZone.Now;
-                DateTime? RecordExpiry = null;
-                if (backupDatabaseInfo.BackupExpiryAgeInDays >= 1)
-                    RecordExpiry = currentTime.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
+                DateTime currentTimeUTC = DateTime.UtcNow;
+                DateTime currentTimeResourceTimeZone = _sharedTimeZone.GetLocalTimeByResourceGroupId(backupDatabaseInfo.ResourceGroupId);
+                DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
                 BackupRecord newRecord = new BackupRecord
                 {
                     BackupDatabaseInfoId = backupDatabaseInfo.Id,
                     ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
-                    ExpiryDate = RecordExpiry,
+                    ExpiryDateUTC = RecordExpiryUTC,
                     Name = backupDatabaseInfo.Name,
-                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTime)),
-                    StatusUpdateDate = currentTime,
-                    RegisteredDate = currentTime
+                    Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeResourceTimeZone)),
+                    StatusUpdateDateUTC = currentTimeUTC,
+                    RegisteredDateUTC = currentTimeUTC
                 };
                 bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
                 if (addedSuccess)

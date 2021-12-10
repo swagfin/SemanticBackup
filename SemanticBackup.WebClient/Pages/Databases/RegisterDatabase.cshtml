@@ -64,7 +64,7 @@
 
                 <div class="form-group">
                     <label for="BackupExpiryAgeInDays">Delete Old Backups After (Days)</label>
-                    <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" value="7" class="form-control" required>
+                    <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" min="1" value="7" class="form-control" required>
                 </div>
                 <div class="ui info tiny message">
                     <input id="backupDatabaseRequestAutoCreateSchedule" asp-for="backupDatabaseRequest.AutoCreateSchedule" checked="true">

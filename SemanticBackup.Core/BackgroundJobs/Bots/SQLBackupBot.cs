@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.Core.ProviderServices;
@@ -16,18 +15,16 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly BackupRecord _backupRecord;
         private readonly ISQLServerBackupProviderService _backupProviderService;
         private readonly IBackupRecordPersistanceService _persistanceService;
-        private readonly SharedTimeZone _sharedTimeZone;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public SQLBackupBot(BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, ISQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, SharedTimeZone sharedTimeZone, ILogger logger)
+        public SQLBackupBot(BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, ISQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {
             this._databaseInfo = databaseInfo;
             this._backupRecord = backupRecord;
             this._backupProviderService = backupProviderService;
             this._persistanceService = persistanceService;
-            this._sharedTimeZone = sharedTimeZone;
             this._logger = logger;
         }
         public async Task RunAsync()
@@ -69,8 +66,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         {
             try
             {
-                DateTime currentTime = _sharedTimeZone.Now;
-                _persistanceService.UpdateStatusFeed(recordId, status, currentTime, message, elapsed);
+                _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed);
             }
             catch (Exception ex)
             {
