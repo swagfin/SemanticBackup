@@ -61,7 +61,7 @@
             </div>
         </div>
 
-        <div class="ui top attached tabular primary menu">
+        <div class="ui top attached tabular primary small menu">
             <a class="item active" data-tab="recentbackups">BACKUPS</a>
             <a class="item" data-tab="backupschedules">SCHEDULES</a>
         </div>
@@ -77,7 +77,7 @@
                 </div>
             </section>
 
-            <table class="ui selectable table">
+            <table class="ui selectable small table">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -97,7 +97,7 @@
                                 count++;
                                 <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackups/@(record.Id)'">
                                     <td>@string.Format("{0:N0}", count)</td>
-                                    <td class="positive" style="font-weight:bold;font-size:14px"> <i class="cloud upload icon"></i> @record.Name</td>
+                                    <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.Name</td>
                                     <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.RegisteredDate)</td>
                                     <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", record.StatusUpdateDate)</td>
                                     <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
@@ -155,7 +155,7 @@
                 </div>
             </section>
 
-            <table class="ui selectable table">
+            <table class="ui selectable small table">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -175,7 +175,7 @@
                                 recordCount++;
                                 <tr onclick="location.href='/databasebackupschedules/@(record.Id)'">
                                     <td>@string.Format("{0:N0}", recordCount)</td>
-                                    <td class="positive" style="font-weight:bold;font-size:14px"> <i class="clock icon"></i> @record.Name</td>
+                                    <td class="positive" style="font-weight:bold;font-size:12px"> <i class="clock icon"></i> @record.Name</td>
                                     <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
                                     <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
                                     <td>@(record.LastRunPreviewable)</td>

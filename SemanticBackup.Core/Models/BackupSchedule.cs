@@ -18,9 +18,9 @@ namespace SemanticBackup.Core.Models
         {
             get
             {
-                if (LastRunUTC.Date == new DateTime(2000, 1, 1).Date)
+                if ((DateTime.UtcNow.Date - LastRunUTC.Date).TotalDays > 1000)
                     return StartDateUTC;
-                return ((DateTime)LastRunUTC).AddHours(EveryHours);
+                return LastRunUTC.AddHours(EveryHours);
             }
         }
         public DateTime LastRunUTC { get; set; } = new DateTime(2000, 1, 1).Date;
