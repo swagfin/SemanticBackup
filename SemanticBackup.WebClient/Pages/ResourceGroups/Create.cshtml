@@ -24,13 +24,32 @@
                             @{
                                 if (Model.TimeZoneCollections != null && Model.TimeZoneCollections.Count > 0)
                                 {
-                                    foreach(var timezone in Model.TimeZoneCollections)
+                                    foreach (var timezone in Model.TimeZoneCollections)
                                     {
                                         <option value="@(timezone.Value)">@(timezone.Text)  (@(timezone.Value))</option>
                                     }
                                 }
                             }
                             <option selected value="E. Africa Standard Time">(UTC+03:00) Nairobi (E. Africa Standard Time) (Default)</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>Maximum Running (Bots)</label>
+                        <select asp-for="ResourceGroupRequest.MaximumBackupRunningThreads" class="ui fluid small dropdown threads-dropdown-search" required>
+                            <option value="1">1 Single Bot (Unlimited CPU/Resources)</option>
+                            <option value="2">2 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="3">3 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option selected value="4">4 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="5">5 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="6">6 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="7">7 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="8">8 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="9">9 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="10">10 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="11">11 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="12">12 Concurrent Bots (Unlimited CPU/Resources)</option>
+                            <option value="50">Maximum None-Cluster Bots (Unlimited CPU/Resources)</option>
                         </select>
                     </div>
 

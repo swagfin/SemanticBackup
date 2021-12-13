@@ -36,7 +36,10 @@
                                     @(Model.CurrentResourceGroup.Name)
                                 </div>
                                 <div class="extra meta">
-                                    @(Model.ApiEndPoint)
+                                    <div class="ui divider"></div>
+                                    <span><b><i class="server icon"></i> Server:</b> @(Model.ApiEndPoint)</span><br />
+                                    <span><b><i class="clock icon"></i> Timezone:</b> @(Model.CurrentResourceGroup.TimeZone)</span><br />
+                                    <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", Model.CurrentResourceGroup.MaximumBackupRunningThreads)</span>
                                 </div>
                             </div>
                             <div class="extra content">
@@ -48,22 +51,25 @@
 
                         @if (Model.OtherResourceGroups != null && Model.OtherResourceGroups.Count > 0)
                         {
-                            foreach (var directory in Model.OtherResourceGroups)
+                            foreach (var resourceGrp in Model.OtherResourceGroups)
                             {
                                 <div class="card">
                                     <div class="content">
                                         <span class="right floated mini ui image"><span class="ui mini circular red label"></span></span>
                                         <div class="header">
-                                            @(directory.Name)
+                                            @(resourceGrp.Name)
                                         </div>
                                         <div class="extra meta">
-                                            @(Model.ApiEndPoint)
+                                            <div class="ui divider"></div>
+                                            <span><b><i class="server icon"></i> Server:</b> @(Model.ApiEndPoint)</span><br />
+                                            <span><b><i class="clock icon"></i> Timezone:</b> @(resourceGrp.TimeZone)</span><br />
+                                            <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", resourceGrp.MaximumBackupRunningThreads)</span>
                                         </div>
                                     </div>
                                     <div class="extra content">
                                         <div class="ui two buttons">
-                                            <a href="~/resource-groups/edit/@(directory.Id)" class="ui basic grey button"><i class="info icon"></i>Manage</a>
-                                            <a class="ui basic blue button" href="~/resource-groups/switch/@(directory.Id)"><i class="chart line icon icon"></i>Switch</a>
+                                            <a href="~/resource-groups/edit/@(resourceGrp.Id)" class="ui basic grey button"><i class="info icon"></i>Manage</a>
+                                            <a class="ui basic blue button" href="~/resource-groups/switch/@(resourceGrp.Id)"><i class="chart line icon icon"></i>Switch</a>
 
                                         </div>
                                     </div>
@@ -74,11 +80,6 @@
 
                 }
             }
-
-
-
-
-
 
         </div>
     </div>

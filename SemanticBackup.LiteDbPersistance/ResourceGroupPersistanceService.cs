@@ -102,7 +102,7 @@ namespace SemanticBackup.LiteDbPersistance
                 var collection = db.GetCollection<ResourceGroup>();
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
-                    if (long.TryParse(DateTime.Now.ToString("yyyyMMddHHmmss"), out long lastAccess))
+                    if (long.TryParse(DateTime.UtcNow.ToString("yyyyMMddHHmmss"), out long lastAccess))
                     {
                         objFound.LastAccess = lastAccess;
                         bool updatedSuccess = collection.Update(objFound);

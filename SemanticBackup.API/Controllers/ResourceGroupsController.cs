@@ -64,13 +64,15 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Object value can't be NULL");
                 //Check TimeZone Provided
                 request.TimeZone = (string.IsNullOrWhiteSpace(request.TimeZone)) ? _persistanceOptions.ServerDefaultTimeZone : request.TimeZone;
+                request.MaximumBackupRunningThreads = (request.MaximumBackupRunningThreads < 1) ? 1 : request.MaximumBackupRunningThreads;
                 //Proceed
                 long.TryParse(DateTime.UtcNow.ToString("yyyyMMddHHmmss"), out long lastAccess);
                 ResourceGroup saveObj = new ResourceGroup
                 {
                     Name = request.Name,
                     LastAccess = lastAccess,
-                    TimeZone = request.TimeZone
+                    TimeZone = request.TimeZone,
+                    MaximumBackupRunningThreads = request.MaximumBackupRunningThreads
                 };
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
