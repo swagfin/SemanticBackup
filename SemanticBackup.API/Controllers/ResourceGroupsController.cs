@@ -72,7 +72,8 @@ namespace SemanticBackup.API.Controllers
                     Name = request.Name,
                     LastAccess = lastAccess,
                     TimeZone = request.TimeZone,
-                    MaximumRunningBots = request.MaximumRunningBots
+                    MaximumRunningBots = request.MaximumRunningBots,
+                    CompressBackupFiles = request.CompressBackupFiles
                 };
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
@@ -104,6 +105,8 @@ namespace SemanticBackup.API.Controllers
                 request.TimeZone = (string.IsNullOrWhiteSpace(request.TimeZone)) ? _persistanceOptions.ServerDefaultTimeZone : request.TimeZone;
                 savedObj.Name = request.Name;
                 savedObj.TimeZone = request.TimeZone;
+                savedObj.MaximumRunningBots = request.MaximumRunningBots;
+                savedObj.CompressBackupFiles = request.CompressBackupFiles;
                 //Update
                 bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
                 if (!updatedSuccess)

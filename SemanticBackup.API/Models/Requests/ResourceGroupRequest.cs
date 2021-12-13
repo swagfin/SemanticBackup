@@ -9,5 +9,6 @@ namespace SemanticBackup.API.Models.Requests
         public string TimeZone { get; set; } = null;
         [Range(1, 50)]
         public int MaximumRunningBots { get; set; } = 1;
+        public bool CompressBackupFiles { get; set; } = true;
     }
 }

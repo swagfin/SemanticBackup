@@ -53,7 +53,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 if (resourceGroup != null)
                                 {
                                     //Use Resource Group Threads
-                                    if (this._persistanceOptions.CompressBackupFiles)
+                                    if (resourceGroup.CompressBackupFiles)
                                     {
                                         //Check Resource Group Maximum Threads
                                         if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))

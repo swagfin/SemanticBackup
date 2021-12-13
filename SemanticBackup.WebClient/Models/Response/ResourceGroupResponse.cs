@@ -7,5 +7,6 @@
         public long LastAccess { get; set; } = 0;
         public string TimeZone { get; set; } = null;
         public int MaximumRunningBots { get; set; }
+        public bool CompressBackupFiles { get; set; } = true;
     }
 }

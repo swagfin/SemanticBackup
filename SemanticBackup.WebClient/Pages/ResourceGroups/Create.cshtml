@@ -53,6 +53,13 @@
                         </select>
                     </div>
 
+                    <div class="field">
+                        <label><i class="file archive outline icon"></i>Backup Files Compression</label>
+                        <span>
+                            <input checked="true" id="ResourceGroupRequest_CompressBackupFiles" asp-for="ResourceGroupRequest.CompressBackupFiles">
+                            <label title="Backup Files (.bak) will be Compressed as Zip Files (.zip)" style="cursor:pointer" for="ResourceGroupRequest_CompressBackupFiles">Auto Compress Backup File to .ZIP files</label>
+                        </span>
+                    </div>
                     <p align="center">
                         <button class="ui fluid button blue" type="submit">
                             <i class="chart line icon"></i>
