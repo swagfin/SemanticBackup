@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
@@ -15,12 +16,14 @@ namespace SemanticBackup.API.Controllers
     {
         private readonly ILogger<ResourceGroupsController> _logger;
         private readonly IResourceGroupPersistanceService _activeResourcegroupService;
+        private readonly IContentDeliveryConfigPersistanceService _contentDeliveryConfigPersistanceService;
         private readonly PersistanceOptions _persistanceOptions;
 
-        public ResourceGroupsController(ILogger<ResourceGroupsController> logger, IResourceGroupPersistanceService resourceGroupPersistance, PersistanceOptions persistanceOptions)
+        public ResourceGroupsController(ILogger<ResourceGroupsController> logger, IResourceGroupPersistanceService resourceGroupPersistance, IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService, PersistanceOptions persistanceOptions)
         {
             _logger = logger;
             this._activeResourcegroupService = resourceGroupPersistance;
+            this._contentDeliveryConfigPersistanceService = contentDeliveryConfigPersistanceService;
             this._persistanceOptions = persistanceOptions;
         }
         [HttpGet]
@@ -79,6 +82,15 @@ namespace SemanticBackup.API.Controllers
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
+
+                //Post Check and Get Delivery Settings
+                List<ContentDeliveryConfiguration> configs = GetPostedConfigurations(saveObj.Id, request);
+                if (configs != null && configs.Count > 0)
+                {
+                    bool addedSuccess = this._contentDeliveryConfigPersistanceService.AddOrUpdate(configs);
+                    if (!addedSuccess)
+                        _logger.LogWarning("Resource Group Content Delivery Settings were not Saved");
+                }
                 return Ok(savedSuccess);
             }
             catch (Exception ex)
@@ -113,6 +125,17 @@ namespace SemanticBackup.API.Controllers
                 bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
+                //Post Check and Get Delivery Settings
+                List<ContentDeliveryConfiguration> configs = GetPostedConfigurations(savedObj.Id, request);
+                if (configs != null && configs.Count > 0)
+                {
+                    //Remove Old
+                    this._contentDeliveryConfigPersistanceService.RemoveAllByResourceGroup(savedObj.Id);
+                    //Update New
+                    bool addedSuccess = this._contentDeliveryConfigPersistanceService.AddOrUpdate(configs);
+                    if (!addedSuccess)
+                        _logger.LogWarning("Resource Group Content Delivery Settings were not Updated");
+                }
                 return Ok(updatedSuccess);
             }
             catch (Exception ex)
@@ -159,6 +182,45 @@ namespace SemanticBackup.API.Controllers
                 _logger.LogError(ex.Message);
                 return new BadRequestObjectResult(ex.Message);
             }
+        }
+
+        private List<ContentDeliveryConfiguration> GetPostedConfigurations(string resourceGroupId, ResourceGroupRequest request)
+        {
+            List<ContentDeliveryConfiguration> configs = new List<ContentDeliveryConfiguration>();
+            try
+            {
+                if (request == null)
+                    return configs;
+                //Download Link
+                if (request.RSDownloadLinkSetting != null && request.RSDownloadLinkSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.DOWNLOAD_LINK.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSDownloadLinkSetting)
+                    });
+                //FTP Configs
+                if (request.RSFTPSetting != null && request.RSFTPSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.FTP_UPLOAD.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSFTPSetting)
+                    });
+                //Email SMTP
+                if (request.RSEmailSMTPSetting != null && request.RSEmailSMTPSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.EMAIL_SMTP.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting)
+                    });
+            }
+            catch (Exception ex) { _logger.LogError(ex.Message); }
+            return configs;
         }
     }
 }

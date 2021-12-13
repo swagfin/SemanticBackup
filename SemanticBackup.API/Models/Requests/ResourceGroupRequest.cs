@@ -12,5 +12,8 @@ namespace SemanticBackup.API.Models.Requests
         public bool CompressBackupFiles { get; set; } = true;
         [Range(1, 366)]
         public int BackupExpiryAgeInDays { get; set; } = 7;
+        public RSDownloadLinkSetting RSDownloadLinkSetting { get; set; } = null;
+        public RSFTPSetting RSFTPSetting { get; set; } = null;
+        public RSEmailSMTPSetting RSEmailSMTPSetting { get; set; } = null;
     }
 }

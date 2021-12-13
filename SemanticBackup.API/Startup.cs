@@ -46,8 +46,9 @@ namespace SemanticBackup.API
             services.AddTransient<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
             services.AddTransient<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
             services.AddTransient<IResourceGroupPersistanceService, ResourceGroupPersistanceService>();
+            services.AddTransient<IContentDeliveryConfigPersistanceService, ContentDeliveryConfigPersistanceService>();
 
-            //Engines
+            //Backup Provider Engines
             services.AddTransient<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
             services.AddTransient<IMySQLServerBackupProviderService, MySQLServerBackupProviderService>();
 
@@ -55,7 +56,7 @@ namespace SemanticBackup.API
             services.AddSingleton<IProcessorInitializable, SchedulerBackgroundJob>();
             services.AddSingleton<IProcessorInitializable, BackupBackgroundJob>(); //Main Backup Thread Lunching Bots
             services.AddSingleton<IProcessorInitializable, BackupBackgroundZIPJob>(); //Zipper Thread Lunching Bots
-            services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>());
+            services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
 
             //Notifications
             services.AddSingleton<BackupRecordHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
