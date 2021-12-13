@@ -83,7 +83,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             Name = backupDatabaseInfo.Name,
                                             Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
                                             StatusUpdateDateUTC = currentTimeUTC,
-                                            RegisteredDateUTC = currentTimeUTC
+                                            RegisteredDateUTC = currentTimeUTC,
+                                            ExecutedDeliveryRun = false
                                         };
 
                                         bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);

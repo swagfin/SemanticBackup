@@ -11,7 +11,7 @@ using static SemanticBackup.API.SignalRHubs.BackupRecordHubClientStore;
 
 namespace SemanticBackup.API.SignalRHubs
 {
-    public class BackupRecordHubDispatcher : Hub, IBackupRecordStatusChangedNotifier, IProcessorInitializable
+    public class BackupRecordHubDispatcher : Hub, IRecordStatusChangedNotifier, IProcessorInitializable
     {
         private readonly ILogger<BackupRecordHubDispatcher> _logger;
         private readonly IHubContext<BackupRecordHubDispatcher> hub;
@@ -134,6 +134,10 @@ namespace SemanticBackup.API.SignalRHubs
             }
         }
 
+        public void DispatchUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord)
+        {
+            throw new NotImplementedException();
+        }
     }
     public class BackupRecordMetric
     {

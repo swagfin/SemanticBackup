@@ -46,6 +46,7 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = x.BackupDatabaseInfoId,
                     ExecutionMilliseconds = x.ExecutionMilliseconds,
                     Path = x.Path,
+                    ExecutedDeliveryRun = x.ExecutedDeliveryRun,
                     ExpiryDate = x.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     RegisteredDate = x.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     StatusUpdateDate = x.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
@@ -79,6 +80,7 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = x.BackupDatabaseInfoId,
                     ExecutionMilliseconds = x.ExecutionMilliseconds,
                     Path = x.Path,
+                    ExecutedDeliveryRun = x.ExecutedDeliveryRun,
                     ExpiryDate = x.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     RegisteredDate = x.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     StatusUpdateDate = x.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
@@ -109,6 +111,7 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = x.BackupDatabaseInfoId,
                     ExecutionMilliseconds = x.ExecutionMilliseconds,
                     Path = x.Path,
+                    ExecutedDeliveryRun = x.ExecutedDeliveryRun,
                     ExpiryDate = x.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     RegisteredDate = x.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     StatusUpdateDate = x.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
@@ -141,6 +144,7 @@ namespace SemanticBackup.API.Controllers
                     BackupDatabaseInfoId = record.BackupDatabaseInfoId,
                     ExecutionMilliseconds = record.ExecutionMilliseconds,
                     Path = record.Path,
+                    ExecutedDeliveryRun = record.ExecutedDeliveryRun,
                     ExpiryDate = record.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     RegisteredDate = record.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
                     StatusUpdateDate = record.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
@@ -213,7 +217,8 @@ namespace SemanticBackup.API.Controllers
                     Name = backupDatabaseInfo.Name,
                     Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeLocal)),
                     StatusUpdateDateUTC = currentTimeUTC,
-                    RegisteredDateUTC = currentTimeUTC
+                    RegisteredDateUTC = currentTimeUTC,
+                    ExecutedDeliveryRun = false
                 };
                 bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
                 if (addedSuccess)

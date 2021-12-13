@@ -10,9 +10,9 @@ namespace SemanticBackup.LiteDbPersistance
     public class BackupRecordPersistanceService : IBackupRecordPersistanceService
     {
         private readonly ConnectionString connString;
-        private readonly IEnumerable<IBackupRecordStatusChangedNotifier> _backupRecordStatusChangedNotifiers;
+        private readonly IEnumerable<IRecordStatusChangedNotifier> _backupRecordStatusChangedNotifiers;
 
-        public BackupRecordPersistanceService(LiteDbPersistanceOptions options, IEnumerable<IBackupRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers)
+        public BackupRecordPersistanceService(LiteDbPersistanceOptions options, IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers)
         {
             this.connString = options.ConnectionStringLiteDb;
             this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;

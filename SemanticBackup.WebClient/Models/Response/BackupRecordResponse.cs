@@ -13,6 +13,7 @@ namespace SemanticBackup.WebClient.Models.Response
         public DateTime ExpiryDate { get; set; }
         public string ExecutionMessage { get; set; }
         public string ExecutionMilliseconds { get; set; }
+        public bool ExecutedDeliveryRun { get; set; } = false;
         public DateTime RegisteredDate { get; set; }
     }
 }

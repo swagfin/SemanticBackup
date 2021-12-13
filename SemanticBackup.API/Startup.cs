@@ -47,6 +47,7 @@ namespace SemanticBackup.API
             services.AddTransient<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
             services.AddTransient<IResourceGroupPersistanceService, ResourceGroupPersistanceService>();
             services.AddTransient<IContentDeliveryConfigPersistanceService, ContentDeliveryConfigPersistanceService>();
+            services.AddTransient<IContentDeliveryRecordPersistanceService, ContentDeliveryRecordPersistanceService>();
 
             //Backup Provider Engines
             services.AddTransient<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
@@ -60,7 +61,7 @@ namespace SemanticBackup.API
 
             //Notifications
             services.AddSingleton<BackupRecordHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
-            services.AddSingleton<IBackupRecordStatusChangedNotifier>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
+            services.AddSingleton<IRecordStatusChangedNotifier>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
 
             //DASHBOARD SIGNAL DISPATCH
             services.AddSingleton<DashboardRefreshHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());
