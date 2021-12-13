@@ -12,14 +12,18 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
     internal class BackupZippingRobot : IBot
     {
+        private readonly string _resourceGroupId;
         private readonly BackupRecord _backupRecord;
         private readonly IBackupRecordPersistanceService _persistanceService;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public BackupZippingRobot(BackupRecord backupRecord, IBackupRecordPersistanceService persistanceService, ILogger logger)
+        public string resourceGroupId => _resourceGroupId;
+
+        public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {
+            this._resourceGroupId = resourceGroupId;
             this._backupRecord = backupRecord;
             this._persistanceService = persistanceService;
             this._logger = logger;

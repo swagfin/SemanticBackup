@@ -11,6 +11,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
     internal class MySQLBackupBot : IBot
     {
+        private readonly string _resourceGroup;
         private readonly BackupDatabaseInfo _databaseInfo;
         private readonly BackupRecord _backupRecord;
         private readonly IMySQLServerBackupProviderService _backupProviderService;
@@ -19,8 +20,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public MySQLBackupBot(BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IMySQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, ILogger logger)
+        public string resourceGroupId => _resourceGroup;
+
+        public MySQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IMySQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {
+            this._resourceGroup = resourceGroupId;
             this._databaseInfo = databaseInfo;
             this._backupRecord = backupRecord;
             this._backupProviderService = backupProviderService;

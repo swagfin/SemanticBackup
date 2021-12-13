@@ -7,5 +7,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         Task RunAsync();
         bool IsCompleted { get; }
         bool IsStarted { get; }
+        string resourceGroupId { get; }
+
     }
 }

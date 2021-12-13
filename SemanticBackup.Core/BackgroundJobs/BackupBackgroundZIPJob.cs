@@ -15,15 +15,18 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly ILogger<BackupBackgroundZIPJob> _logger;
         private readonly PersistanceOptions _persistanceOptions;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
+        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
+
         internal List<IBot> BackupZippingBots { get; private set; }
 
         public BackupBackgroundZIPJob(ILogger<BackupBackgroundZIPJob> logger,
             PersistanceOptions persistanceOptions,
-            IBackupRecordPersistanceService backupRecordPersistanceService)
+            IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
+            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this.BackupZippingBots = new List<IBot>();
         }
 
@@ -48,26 +51,40 @@ namespace SemanticBackup.Core.BackgroundJobs
                         {
                             foreach (BackupRecord backupRecord in queuedBackups)
                             {
-                                if (this._persistanceOptions.CompressBackupFiles)
+                                //Check if valid Resource Group
+                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecord.ResourceGroupId);
+                                if (resourceGroup != null)
                                 {
-                                    _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
-                                    //Add to Queue
-                                    BackupZippingBots.Add(new BackupZippingRobot(backupRecord, _backupRecordPersistanceService, _logger));
-                                    bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
-                                    if (updated)
-                                        _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
+                                    //Use Resource Group Threads
+                                    if (this._persistanceOptions.CompressBackupFiles)
+                                    {
+                                        //Check Resource Group Maximum Threads
+                                        int runningResourceGrpThreads = this.BackupZippingBots.Where(x => x.resourceGroupId == resourceGroup.Id).Count(x => x.IsStarted && !x.IsCompleted);
+                                        int availableResourceGrpThreads = resourceGroup.MaximumBackupRunningThreads - runningResourceGrpThreads;
+                                        if (availableResourceGrpThreads > 0)
+                                        {
+                                            _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
+                                            //Add to Queue
+                                            BackupZippingBots.Add(new BackupZippingRobot(resourceGroup.Id, backupRecord, _backupRecordPersistanceService, _logger));
+                                            bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
+                                            if (updated)
+                                                _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
+                                            else
+                                                _logger.LogWarning($"Queued for Zipping But Failed to Update Status for Backup Record Key: #{backupRecord.Id}");
+                                        }
+                                    }
                                     else
-                                        _logger.LogWarning($"Queued for Zipping But Failed to Update Status for Backup Record Key: #{backupRecord.Id}");
+                                    {
+                                        _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
+                                        bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.READY.ToString());
+                                        if (updated)
+                                            _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
+                                        else
+                                            _logger.LogWarning($"Failed to Update Status as READY for Backup Record Key: #{backupRecord.Id}");
+                                    }
                                 }
                                 else
-                                {
-                                    _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
-                                    bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.READY.ToString());
-                                    if (updated)
-                                        _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
-                                    else
-                                        _logger.LogWarning($"Failed to Update Status as READY for Backup Record Key: #{backupRecord.Id}");
-                                }
+                                    _logger.LogWarning($"The Backup Record Id: {backupRecord.Id}, doesn't seem to have been assigned to a valid Resource Group Id: {backupRecord.ResourceGroupId}, Zipping Skipped");
 
                             }
                         }

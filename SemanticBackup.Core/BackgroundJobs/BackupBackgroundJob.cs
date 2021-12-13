@@ -19,6 +19,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
         private readonly IMySQLServerBackupProviderService _mySQLServerBackupProviderService;
+        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
         internal readonly List<IBot> BackupsBots;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
@@ -26,8 +27,7 @@ namespace SemanticBackup.Core.BackgroundJobs
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
             ISQLServerBackupProviderService sQLServerBackupProviderService,
-            IMySQLServerBackupProviderService mySQLServerBackupProviderService
-            )
+            IMySQLServerBackupProviderService mySQLServerBackupProviderService, IResourceGroupPersistanceService resourceGroupPersistanceService)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;
@@ -35,6 +35,7 @@ namespace SemanticBackup.Core.BackgroundJobs
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
             this._mySQLServerBackupProviderService = mySQLServerBackupProviderService;
+            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this.BackupsBots = new List<IBot>();
         }
         public void Initialize()
@@ -69,21 +70,38 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 }
                                 else
                                 {
-                                    //Add Queue
-                                    if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                        BackupsBots.Add(new SQLBackupBot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
-                                    else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                        BackupsBots.Add(new MySQLBackupBot(backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                    //Check if valid Resource Group
+                                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                                    if (resourceGroup == null)
+                                    {
+                                        _logger.LogWarning($"The Database Id: {backupRecord.BackupDatabaseInfoId}, doesn't seem to have been assigned to a valid Resource Group Id: {backupDatabaseInfo.ResourceGroupId}, Record will be Deleted");
+                                        scheduleToDelete.Add(backupRecord.Id);
+                                    }
                                     else
-                                        throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
-                                    //Finally Update Status
-                                    bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
-                                    if (updated)
-                                        _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
-                                    else
-                                        _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
-                                }
+                                    {
+                                        //Each Resource Group May have different Bots Running Time
+                                        int runningResourceGrpThreads = this.BackupsBots.Where(x => x.resourceGroupId == resourceGroup.Id).Count(x => x.IsStarted && !x.IsCompleted);
+                                        int availableResourceGrpThreads = resourceGroup.MaximumBackupRunningThreads - runningResourceGrpThreads;
+                                        if (availableResourceGrpThreads > 0)
+                                        {
+                                            if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
+                                                BackupsBots.Add(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                            else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
+                                                BackupsBots.Add(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                            else
+                                                throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
+                                            //Finally Update Status
+                                            bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
+                                            if (updated)
+                                                _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
+                                            else
+                                                _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
+                                        }
+                                        else
+                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} has Exceeded its Maximum Allocated Running Threads Count: {resourceGroup.MaximumBackupRunningThreads}");
+                                    }
 
+                                }
                             }
                             //Check if Any Delete
                             if (scheduleToDelete.Count > 0)
@@ -113,15 +131,10 @@ namespace SemanticBackup.Core.BackgroundJobs
                         if (this.BackupsBots != null || this.BackupsBots.Count > 0)
                         {
                             //Start and Stop Bacup Bots
-                            int runningThreads = this.BackupsBots.Count(x => x.IsStarted && !x.IsCompleted);
-                            int takeCount = _persistanceOptions.MaximumBackupRunningThreads - runningThreads;
-                            if (takeCount > 0)
-                            {
-                                List<IBot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
-                                if (botsNotStarted != null && botsNotStarted.Count > 0)
-                                    foreach (IBot bot in botsNotStarted)
-                                        _ = bot.RunAsync();
-                            }
+                            List<IBot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).ToList();
+                            if (botsNotStarted != null && botsNotStarted.Count > 0)
+                                foreach (IBot bot in botsNotStarted)
+                                    _ = bot.RunAsync();
                             //Remove Completed
                             List<IBot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
                             if (botsCompleted != null && botsCompleted.Count > 0)
