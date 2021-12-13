@@ -63,31 +63,41 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 else
                                 {
                                     //Proceed
-                                    var resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
-                                    DateTime resourceGroupLocalTime = DateTime.UtcNow.ConvertFromUTC(resourceGroup?.TimeZone);
-                                    DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
-                                    BackupRecord newRecord = new BackupRecord
+                                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                                    if (resourceGroup == null)
                                     {
-                                        BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
-                                        ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
-                                        BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
-                                        ExpiryDateUTC = RecordExpiryUTC,
-                                        Name = backupDatabaseInfo.Name,
-                                        Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
-                                        StatusUpdateDateUTC = currentTimeUTC,
-                                        RegisteredDateUTC = currentTimeUTC
-                                    };
-
-                                    bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
-                                    if (!addedSuccess)
-                                        throw new Exception("Unable to Queue Database for Backup");
+                                        _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");
+                                        scheduleToDelete.Add(schedule.Id);
+                                    }
                                     else
-                                        _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
-                                    //Update Schedule
-                                    schedule.LastRunUTC = currentTimeUTC;
-                                    bool updatedSchedule = this._backupSchedulePersistanceService.Update(schedule);
-                                    if (!updatedSchedule)
-                                        _logger.LogWarning("Unable to Update Scheduled Next Run");
+                                    {
+                                        //has valid Resource Group Proceed
+                                        DateTime resourceGroupLocalTime = DateTime.UtcNow.ConvertFromUTC(resourceGroup?.TimeZone);
+                                        DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
+                                        BackupRecord newRecord = new BackupRecord
+                                        {
+                                            BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
+                                            ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
+                                            BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
+                                            ExpiryDateUTC = RecordExpiryUTC,
+                                            Name = backupDatabaseInfo.Name,
+                                            Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
+                                            StatusUpdateDateUTC = currentTimeUTC,
+                                            RegisteredDateUTC = currentTimeUTC
+                                        };
+
+                                        bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
+                                        if (!addedSuccess)
+                                            throw new Exception("Unable to Queue Database for Backup");
+                                        else
+                                            _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
+                                        //Update Schedule
+                                        schedule.LastRunUTC = currentTimeUTC;
+                                        bool updatedSchedule = this._backupSchedulePersistanceService.Update(schedule);
+                                        if (!updatedSchedule)
+                                            _logger.LogWarning("Unable to Update Scheduled Next Run");
+                                    }
+
                                 }
 
                             }

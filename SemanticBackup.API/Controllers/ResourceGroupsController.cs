@@ -73,7 +73,8 @@ namespace SemanticBackup.API.Controllers
                     LastAccess = lastAccess,
                     TimeZone = request.TimeZone,
                     MaximumRunningBots = request.MaximumRunningBots,
-                    CompressBackupFiles = request.CompressBackupFiles
+                    CompressBackupFiles = request.CompressBackupFiles,
+                    BackupExpiryAgeInDays = request.BackupExpiryAgeInDays
                 };
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
@@ -88,7 +89,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put([FromBody] ResourceGroup request, string id)
+        public ActionResult Put([FromBody] ResourceGroupRequest request, string id)
         {
             try
             {
@@ -107,6 +108,7 @@ namespace SemanticBackup.API.Controllers
                 savedObj.TimeZone = request.TimeZone;
                 savedObj.MaximumRunningBots = request.MaximumRunningBots;
                 savedObj.CompressBackupFiles = request.CompressBackupFiles;
+                savedObj.BackupExpiryAgeInDays = request.BackupExpiryAgeInDays;
                 //Update
                 bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
                 if (!updatedSuccess)

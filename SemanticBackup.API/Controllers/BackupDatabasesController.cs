@@ -41,7 +41,6 @@ namespace SemanticBackup.API.Controllers
                     return new List<BackupDatabaseInfoResponse>();
                 return records.ToList().Select(x => new BackupDatabaseInfoResponse
                 {
-                    BackupExpiryAgeInDays = x.BackupExpiryAgeInDays,
                     DatabaseName = x.DatabaseName,
                     DatabaseType = x.DatabaseType,
                     Description = x.Description,
@@ -71,7 +70,6 @@ namespace SemanticBackup.API.Controllers
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 return new BackupDatabaseInfoResponse
                 {
-                    BackupExpiryAgeInDays = x.BackupExpiryAgeInDays,
                     DatabaseName = x.DatabaseName,
                     DatabaseType = x.DatabaseType,
                     Description = x.Description,
@@ -126,8 +124,7 @@ namespace SemanticBackup.API.Controllers
                         DatabaseType = request.DatabaseType,
                         Port = request.Port,
                         Description = request.Description,
-                        DateRegisteredUTC = DateTime.UtcNow,
-                        BackupExpiryAgeInDays = request.BackupExpiryAgeInDays
+                        DateRegisteredUTC = DateTime.UtcNow
                     };
                     bool savedSuccess = _backupDatabasePersistanceService.AddOrUpdate(saveObj);
                     if (!savedSuccess)
@@ -187,7 +184,6 @@ namespace SemanticBackup.API.Controllers
                 savedObj.DatabaseType = request.DatabaseType;
                 savedObj.Port = request.Port;
                 savedObj.Description = request.Description;
-                savedObj.BackupExpiryAgeInDays = request.BackupExpiryAgeInDays;
 
                 bool updatedSuccess = _backupDatabasePersistanceService.Update(savedObj);
                 if (!updatedSuccess)

@@ -33,7 +33,6 @@ namespace SemanticBackup.Core.Models
             }
         }
         public DateTime DateRegisteredUTC { get; set; } = DateTime.UtcNow;
-        public int BackupExpiryAgeInDays { get; set; } = 7; //Default 7 Days
     }
     public enum BackupDatabaseInfoDbType
     {

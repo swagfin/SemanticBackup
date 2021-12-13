@@ -13,5 +13,6 @@ namespace SemanticBackup.Core.Models
         public string TimeZone { get; set; }
         public int MaximumRunningBots { get; set; } = 1;
         public bool CompressBackupFiles { get; set; } = true;
+        public int BackupExpiryAgeInDays { get; set; } = 7;
     }
 }

@@ -61,11 +61,6 @@
                     <label for="Description">Description</label>
                     <input asp-for="backupDatabaseRequest.Description" autocomplete="off" type="text" class="form-control">
                 </div>
-
-                <div class="form-group">
-                    <label for="BackupExpiryAgeInDays">Delete Old Backups After (Days)</label>
-                    <input asp-for="backupDatabaseRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" min="1" value="7" class="form-control" required>
-                </div>
                 <div class="ui info tiny message">
                     <input id="backupDatabaseRequestAutoCreateSchedule" asp-for="backupDatabaseRequest.AutoCreateSchedule" checked="true">
                     <label style="cursor:pointer" for="backupDatabaseRequestAutoCreateSchedule">Auto Create Daily Backup Schedule (24hrs)</label>

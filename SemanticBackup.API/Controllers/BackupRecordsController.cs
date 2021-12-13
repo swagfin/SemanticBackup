@@ -203,7 +203,7 @@ namespace SemanticBackup.API.Controllers
                 //Proceed Otherwise
                 DateTime currentTimeUTC = DateTime.UtcNow;
                 DateTime currentTimeLocal = currentTimeUTC.ConvertFromUTC(resourceGroup?.TimeZone);
-                DateTime RecordExpiryUTC = currentTimeUTC.AddDays(backupDatabaseInfo.BackupExpiryAgeInDays);
+                DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
                 BackupRecord newRecord = new BackupRecord
                 {
                     BackupDatabaseInfoId = backupDatabaseInfo.Id,

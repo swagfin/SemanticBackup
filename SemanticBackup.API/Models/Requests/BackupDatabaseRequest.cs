@@ -16,7 +16,6 @@ namespace SemanticBackup.API.Models.Requests
         [Required]
         public string DatabaseType { get; set; } = BackupDatabaseInfoDbType.SQLSERVER2019.ToString();
         public string Description { get; set; }
-        public int BackupExpiryAgeInDays { get; set; } = 14;
         public bool AutoCreateSchedule { get; set; } = true;
     }
 }

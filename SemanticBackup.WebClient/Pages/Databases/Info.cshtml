@@ -41,15 +41,7 @@
                 <i class="database blue icon"></i>
                 <div class="content">
                     <div class="header">DATABASE TYPE</div>
-                    @Model.DatabaseResponse.DatabaseType
-                </div>
-            </div>
-
-            <div class="item">
-                <i class="clock blue icon"></i>
-                <div class="content">
-                    <div class="header">DELETE OLD BACKUPS AFTER</div>
-                    @(string.Format("{0:N0} DAYS",Model.DatabaseResponse.BackupExpiryAgeInDays))
+                    <span class="ui mini basic @(Model.DatabaseResponse.ColorCode) label">@(Model.DatabaseResponse.DatabaseType)</span>
                 </div>
             </div>
             <div class="item">

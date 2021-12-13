@@ -15,7 +15,6 @@ namespace SemanticBackup.WebClient.Models.Requests
         [Required]
         public string DatabaseType { get; set; }
         public string Description { get; set; }
-        public int BackupExpiryAgeInDays { get; set; } = 14;
         public bool AutoCreateSchedule { get; set; } = true;
     }
 

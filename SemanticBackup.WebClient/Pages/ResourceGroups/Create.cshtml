@@ -35,21 +35,21 @@
                     </div>
 
                     <div class="field">
-                        <label>Maximum Running (Bots)</label>
+                        <label>Maximum Running Worker Bots</label>
                         <select asp-for="ResourceGroupRequest.MaximumRunningBots" class="ui fluid small dropdown threads-dropdown-search" required>
-                            <option value="1">1 Single Bot (Unlimited CPU/Resources)</option>
-                            <option value="2">2 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="3">3 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option selected value="4">4 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="5">5 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="6">6 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="7">7 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="8">8 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="9">9 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="10">10 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="11">11 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="12">12 Concurrent Bots (Unlimited CPU/Resources)</option>
-                            <option value="50">Maximum None-Cluster Bots (Unlimited CPU/Resources)</option>
+                            <option value="1">1 Single Worker Bot (Unlimited CPU/RAM)</option>
+                            <option value="2">2 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="3">3 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option selected value="4">4 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="5">5 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="6">6 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="7">7 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="8">8 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="9">9 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="10">10 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="11">11 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="12">12 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="50">Maximum non-clustered Worker Bots (Unlimited CPU/RAM)</option>
                         </select>
                     </div>
 
@@ -59,6 +59,10 @@
                             <input checked="true" id="ResourceGroupRequest_CompressBackupFiles" asp-for="ResourceGroupRequest.CompressBackupFiles">
                             <label title="Backup Files (.bak) will be Compressed as Zip Files (.zip)" style="cursor:pointer" for="ResourceGroupRequest_CompressBackupFiles">Auto Compress Backup File to .ZIP files</label>
                         </span>
+                    </div>
+                    <div class="field">
+                        <label for="ResourceGroupRequestBackupExpiryAgeInDays">Backup Age Expiry In Days (Max 366 days)</label>
+                        <input asp-for="ResourceGroupRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" min="1" value="7" max="366" required>
                     </div>
                     <p align="center">
                         <button class="ui fluid button blue" type="submit">
