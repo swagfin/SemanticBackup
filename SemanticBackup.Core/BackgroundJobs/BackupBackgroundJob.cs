@@ -5,7 +5,6 @@ using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.Core.ProviderServices;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,35 +13,31 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class BackupBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
-        private readonly PersistanceOptions _persistanceOptions;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
         private readonly IMySQLServerBackupProviderService _mySQLServerBackupProviderService;
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
-        internal readonly List<IBot> BackupsBots;
+        private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
-            PersistanceOptions persistanceOptions,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
             ISQLServerBackupProviderService sQLServerBackupProviderService,
-            IMySQLServerBackupProviderService mySQLServerBackupProviderService, IResourceGroupPersistanceService resourceGroupPersistanceService)
+            IMySQLServerBackupProviderService mySQLServerBackupProviderService, IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
-            this._persistanceOptions = persistanceOptions;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
             this._mySQLServerBackupProviderService = mySQLServerBackupProviderService;
             this._resourceGroupPersistanceService = resourceGroupPersistanceService;
-            this.BackupsBots = new List<IBot>();
+            this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
         public void Initialize()
         {
             _logger.LogInformation("Starting service....");
             SetupBackgroundService();
-            SetupBotsBackgroundService();
             SetupBackgroundRemovedExpiredBackupsService();
             _logger.LogInformation("Service Started");
         }
@@ -79,15 +74,12 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     }
                                     else
                                     {
-                                        //Each Resource Group May have different Bots Running Time
-                                        int runningResourceGrpThreads = this.BackupsBots.Where(x => x.resourceGroupId == resourceGroup.Id).Count(x => x.IsStarted && !x.IsCompleted);
-                                        int availableResourceGrpThreads = resourceGroup.MaximumBackupRunningThreads - runningResourceGrpThreads;
-                                        if (availableResourceGrpThreads > 0)
+                                        if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                         {
                                             if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                                BackupsBots.Add(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                                _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
                                             else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                                BackupsBots.Add(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                                _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
                                             else
                                                 throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
                                             //Finally Update Status
@@ -98,7 +90,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                                 _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
                                         }
                                         else
-                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} has Exceeded its Maximum Allocated Running Threads Count: {resourceGroup.MaximumBackupRunningThreads}");
+                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} has Exceeded its Maximum Allocated Running Threads Count: {resourceGroup.MaximumRunningBots}");
                                     }
 
                                 }
@@ -120,36 +112,6 @@ namespace SemanticBackup.Core.BackgroundJobs
             t.Start();
         }
 
-        private void SetupBotsBackgroundService()
-        {
-            var t = new Thread(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        if (this.BackupsBots != null || this.BackupsBots.Count > 0)
-                        {
-                            //Start and Stop Bacup Bots
-                            List<IBot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).ToList();
-                            if (botsNotStarted != null && botsNotStarted.Count > 0)
-                                foreach (IBot bot in botsNotStarted)
-                                    _ = bot.RunAsync();
-                            //Remove Completed
-                            List<IBot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
-                            if (botsCompleted != null && botsCompleted.Count > 0)
-                                foreach (IBot bot in botsCompleted)
-                                    this.BackupsBots.Remove(bot);
-                        }
-                    }
-                    catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
-                    //Delay
-                    await Task.Delay(5000);
-                }
-            });
-            t.Start();
-        }
-
         private void SetupBackgroundRemovedExpiredBackupsService()
         {
             var t = new Thread(async () =>
@@ -160,7 +122,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     try
                     {
                         List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired();
-                        if (expiredBackups != null || expiredBackups.Count > 0)
+                        if (expiredBackups != null && expiredBackups.Count > 0)
                         {
                             List<string> toDeleteList = new List<string>();
                             foreach (BackupRecord backupRecord in expiredBackups)

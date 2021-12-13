@@ -19,7 +19,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string resourceGroupId => _resourceGroupId;
+        public string ResourceGroupId => _resourceGroupId;
 
         public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {

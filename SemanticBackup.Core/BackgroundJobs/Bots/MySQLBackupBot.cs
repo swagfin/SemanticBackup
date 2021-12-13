@@ -20,7 +20,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string resourceGroupId => _resourceGroup;
+        public string ResourceGroupId => _resourceGroup;
 
         public MySQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IMySQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {

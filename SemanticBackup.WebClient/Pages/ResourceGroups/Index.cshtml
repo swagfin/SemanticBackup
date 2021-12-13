@@ -39,7 +39,7 @@
                                     <div class="ui divider"></div>
                                     <span><b><i class="server icon"></i> Server:</b> @(Model.ApiEndPoint)</span><br />
                                     <span><b><i class="clock icon"></i> Timezone:</b> @(Model.CurrentResourceGroup.TimeZone)</span><br />
-                                    <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", Model.CurrentResourceGroup.MaximumBackupRunningThreads)</span>
+                                    <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", Model.CurrentResourceGroup.MaximumRunningBots)</span>
                                 </div>
                             </div>
                             <div class="extra content">
@@ -63,7 +63,7 @@
                                             <div class="ui divider"></div>
                                             <span><b><i class="server icon"></i> Server:</b> @(Model.ApiEndPoint)</span><br />
                                             <span><b><i class="clock icon"></i> Timezone:</b> @(resourceGrp.TimeZone)</span><br />
-                                            <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", resourceGrp.MaximumBackupRunningThreads)</span>
+                                            <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", resourceGrp.MaximumRunningBots)</span>
                                         </div>
                                     </div>
                                     <div class="extra content">

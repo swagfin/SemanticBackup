@@ -20,7 +20,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string resourceGroupId => _resourceGroup;
+        public string ResourceGroupId => _resourceGroup;
 
         public SQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, ISQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {

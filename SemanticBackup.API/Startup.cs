@@ -55,6 +55,7 @@ namespace SemanticBackup.API
             services.AddSingleton<IProcessorInitializable, SchedulerBackgroundJob>();
             services.AddSingleton<IProcessorInitializable, BackupBackgroundJob>(); //Main Backup Thread Lunching Bots
             services.AddSingleton<IProcessorInitializable, BackupBackgroundZIPJob>(); //Zipper Thread Lunching Bots
+            services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>());
 
             //Notifications
             services.AddSingleton<BackupRecordHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());

@@ -4,7 +4,6 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,25 +15,23 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly PersistanceOptions _persistanceOptions;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
-
-        internal List<IBot> BackupZippingBots { get; private set; }
+        private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupBackgroundZIPJob(ILogger<BackupBackgroundZIPJob> logger,
             PersistanceOptions persistanceOptions,
-            IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService)
+            IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._resourceGroupPersistanceService = resourceGroupPersistanceService;
-            this.BackupZippingBots = new List<IBot>();
+            this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
 
         public void Initialize()
         {
             _logger.LogInformation("Starting service....");
             SetupBackgroundService();
-            SetupBotsZippingBackgroundService();
             _logger.LogInformation("Service Started");
         }
 
@@ -59,13 +56,11 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     if (this._persistanceOptions.CompressBackupFiles)
                                     {
                                         //Check Resource Group Maximum Threads
-                                        int runningResourceGrpThreads = this.BackupZippingBots.Where(x => x.resourceGroupId == resourceGroup.Id).Count(x => x.IsStarted && !x.IsCompleted);
-                                        int availableResourceGrpThreads = resourceGroup.MaximumBackupRunningThreads - runningResourceGrpThreads;
-                                        if (availableResourceGrpThreads > 0)
+                                        if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                         {
                                             _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
                                             //Add to Queue
-                                            BackupZippingBots.Add(new BackupZippingRobot(resourceGroup.Id, backupRecord, _backupRecordPersistanceService, _logger));
+                                            _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _backupRecordPersistanceService, _logger));
                                             bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
                                             if (updated)
                                                 _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
@@ -96,41 +91,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                     }
                     //Delay
                     await Task.Delay(10000);
-                }
-            });
-            t.Start();
-        }
-
-        private void SetupBotsZippingBackgroundService()
-        {
-            var t = new Thread(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        if (this.BackupZippingBots != null || this.BackupZippingBots.Count > 0)
-                        {
-                            //Start and Stop Bacup Bots
-                            int runningThreads = this.BackupZippingBots.Count(x => x.IsStarted && !x.IsCompleted);
-                            int takeCount = _persistanceOptions.MaximumBackupRunningThreads - runningThreads;
-                            if (takeCount > 0)
-                            {
-                                List<IBot> botsNotStarted = this.BackupZippingBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
-                                if (botsNotStarted != null && botsNotStarted.Count > 0)
-                                    foreach (IBot bot in botsNotStarted)
-                                        _ = bot.RunAsync();
-                            }
-                            //Remove Completed
-                            List<IBot> botsCompleted = this.BackupZippingBots.Where(x => x.IsCompleted).ToList();
-                            if (botsCompleted != null && botsCompleted.Count > 0)
-                                foreach (IBot bot in botsCompleted)
-                                    this.BackupZippingBots.Remove(bot);
-                        }
-                    }
-                    catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
-                    //Delay
-                    await Task.Delay(2000);
                 }
             });
             t.Start();

@@ -2,12 +2,11 @@
 
 namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
-    internal interface IBot
+    public interface IBot
     {
         Task RunAsync();
         bool IsCompleted { get; }
         bool IsStarted { get; }
-        string resourceGroupId { get; }
-
+        string ResourceGroupId { get; }
     }
 }

@@ -7,6 +7,6 @@ namespace SemanticBackup.WebClient.Models.Requests
         [Required]
         public string Name { get; set; }
         public string TimeZone { get; set; } = null;
-        public int MaximumBackupRunningThreads { get; set; } = 1;
+        public int MaximumRunningBots { get; set; } = 1;
     }
 }
