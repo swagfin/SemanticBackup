@@ -14,5 +14,6 @@ namespace SemanticBackup.Core.PersistanceServices
         List<ContentDeliveryRecord> GetAllByStatus(string status);
         List<ContentDeliveryRecord> GetAllByBackupRecordId(string id);
         List<ContentDeliveryRecord> GetAllByBackupRecordIdByStatus(string resourceGroupId, string id, string status = "*");
+        ContentDeliveryRecord GetByContentTypeByExecutionMessage(string deliveryType, string executionMessage);
     }
 }

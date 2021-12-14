@@ -148,5 +148,13 @@ namespace SemanticBackup.LiteDbPersistance
                     catch { }
         }
 
+        public ContentDeliveryRecord GetByContentTypeByExecutionMessage(string deliveryType, string executionMessage)
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                db.Pragma("UTC_DATE", true);
+                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage).FirstOrDefault();
+            }
+        }
     }
 }

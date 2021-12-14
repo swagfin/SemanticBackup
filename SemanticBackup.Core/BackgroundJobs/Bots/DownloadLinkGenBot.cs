@@ -45,7 +45,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 stopwatch.Start();
                 string contentLink = 5.GenerateUniqueId();
                 if (settings.DownloadLinkType == "LONG")
-                    contentLink = string.Format("{0}?db={1}&token={2}", 25.GenerateUniqueId(), this._backupRecord.Id, $"{this._backupRecord.Id}|{this._contentDeliveryConfiguration.Id}".ToMD5String());
+                    contentLink = string.Format("{0}?token={1}", 25.GenerateUniqueId(), $"{this._backupRecord.Id}|{this._contentDeliveryConfiguration.Id}".ToMD5String());
                 //Job to Do
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), contentLink, stopwatch.ElapsedMilliseconds);

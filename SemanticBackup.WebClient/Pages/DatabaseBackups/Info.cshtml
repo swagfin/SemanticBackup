@@ -212,8 +212,18 @@
                             count++;
                             <tr id="record_for_@(record.Id)">
                                 <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.DeliveryType</td>
-                                <td class="execution_message_for_@(record.Id)">@record.ExecutionMessage</td>
                                 @{
+                                    if (record.DeliveryType == "DOWNLOAD_LINK")
+                                    {
+                                        <td class="execution_message_for_downloadLink_@(record.Id)">
+                                            <a href="@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)"><i class="download icon"></i> Download Link </a>
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td class="execution_message_for_@(record.Id)">@record.ExecutionMessage</td>
+                                    }
+
                                     if (record.CurrentStatus == "EXECUTING")
                                     {
                                         <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>RUNNING</span> </td>
@@ -240,7 +250,7 @@
                                     else if (record.DeliveryType == "DOWNLOAD_LINK")
                                     {
                                         <td class="event_downloadlink_for_@(record.Id)">
-                                            <a href="/" class="ui teal label"><i class="download icon"></i> Download</a>
+                                            <a href='@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)' class="ui teal label"><i class="download icon"></i> Download</a>
                                         </td>
                                     }
                                     else
@@ -271,7 +281,7 @@
 <script type="text/javascript">
     jQuery(document).ready(function ($) {
                 //Create Main Obersavable
-                 var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+                var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
                 var currentRecordId = @(Html.Raw(Json.Serialize( Model.BackupRecordResponse?.Id)));
                 //Hub For Record Backup Status
                 var huburl = baseUrl + "BackupRecordsNotify";
@@ -348,8 +358,10 @@
               {
                  console.log("Prepending new Record Notification");
                  var newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_'+ key +'">'+ metric.executionMessage + '</td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_rerun_for_'+ key +'"><a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a></td></tr>';
-                 if(metric.deliveryType == "DOWNLOAD_LINK"){
-                  newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_'+ key +'">'+ metric.executionMessage + '</td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_downloadlink_for_'+ key +'"><a href="/" class="ui teal label"><i class="download icon"></i> Download</a></td></tr>';
+                 if(metric.deliveryType == "DOWNLOAD_LINK")
+                 {
+                   var downloadLink = baseUrl + "d/" + metric.executionMessage;
+                   newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_downloadLink_'+ key +'"> <a href="'+ downloadLink +'"><i class="download icon"></i> Download Link </a>  </td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_downloadlink_for_'+ key +'"><a href="'+ downloadLink +'" class="ui teal label"><i class="download icon"></i> Download</a></td></tr>';
                  }
                  $("#records_data_table").prepend(newElement);
               }
