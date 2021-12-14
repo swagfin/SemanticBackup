@@ -10,13 +10,15 @@ namespace SemanticBackup.LiteDbPersistance
     {
         private readonly ConnectionString connString;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
+        private readonly IContentDeliveryConfigPersistanceService _contentDeliveryConfigPersistanceService;
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
 
-        public ResourceGroupPersistanceService(LiteDbPersistanceOptions options, IBackupRecordPersistanceService backupRecordPersistanceService, IBackupSchedulePersistanceService backupSchedulePersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
+        public ResourceGroupPersistanceService(LiteDbPersistanceOptions options, IBackupRecordPersistanceService backupRecordPersistanceService, IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService, IBackupSchedulePersistanceService backupSchedulePersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
         {
             this.connString = options.ConnectionStringLiteDb;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
+            this._contentDeliveryConfigPersistanceService = contentDeliveryConfigPersistanceService;
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
@@ -84,12 +86,22 @@ namespace SemanticBackup.LiteDbPersistance
                         _backupSchedulePersistanceService.Remove(record.Id);
             }
             catch { }
+            //Delete Backup Records
             try
             {
                 var associatedBackupRecords = _backupRecordPersistanceService.GetAll(resourceGroupId);
                 if (associatedBackupRecords != null)
                     foreach (var record in associatedBackupRecords)
                         _backupRecordPersistanceService.Remove(record.Id);
+            }
+            catch { }
+            //Delete Configuration for Dispatch
+            try
+            {
+                var associatedDeliveryConfigs = _contentDeliveryConfigPersistanceService.GetAll(resourceGroupId);
+                if (associatedDeliveryConfigs != null)
+                    foreach (var record in associatedDeliveryConfigs)
+                        _contentDeliveryConfigPersistanceService.Remove(record.Id);
             }
             catch { }
         }

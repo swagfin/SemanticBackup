@@ -152,6 +152,10 @@
                             <label>SMTP From Name</label>
                             <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPDefaultSMTPFromName" autocomplete="off" placeholder="e.g. John Doe">
                         </div>
+                        <div class="field">
+                            <label>Receiving Addresses (Separate with ",")</label>
+                            <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
+                        </div>
                     </div>
 
                     <p align="center">
@@ -169,6 +173,7 @@
 @section Scripts{
 <script type="text/javascript">
     $(".dropdown").dropdown({allowAdditions: false});
+    $(".destinations-dropdown-search").dropdown({allowAdditions: true});
     $('.menu .item').tab();
 </script>
 }

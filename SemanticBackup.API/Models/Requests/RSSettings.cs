@@ -22,5 +22,6 @@
         public string SMTPEmailAddress { get; set; }
         public string SMTPEmailCredentials { get; set; }
         public string SMTPDefaultSMTPFromName { get; set; }
+        public string SMTPDestinations { get; set; }
     }
 }

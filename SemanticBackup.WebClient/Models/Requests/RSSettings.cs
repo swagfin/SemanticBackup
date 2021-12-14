@@ -1,4 +1,6 @@
-﻿namespace SemanticBackup.WebClient.Models.Requests
+﻿using System.Collections.Generic;
+
+namespace SemanticBackup.WebClient.Models.Requests
 {
     public class RSDownloadLinkSetting
     {
@@ -22,5 +24,20 @@
         public string SMTPEmailAddress { get; set; }
         public string SMTPEmailCredentials { get; set; }
         public string SMTPDefaultSMTPFromName { get; set; }
+        public string SMTPDestinations { get; set; }
+        public List<string> ValidSMTPDestinations
+        {
+            get
+            {
+                List<string> allEmails = new List<string>();
+                string[] emailSplits = SMTPDestinations?.Split(',');
+                if (emailSplits.Length < 1)
+                    return allEmails;
+                foreach (string email in emailSplits)
+                    if (!string.IsNullOrEmpty(email))
+                        allEmails.Add(email.Replace(" ", string.Empty).Trim());
+                return allEmails;
+            }
+        }
     }
 }

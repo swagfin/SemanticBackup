@@ -69,7 +69,11 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
                         ErrorResponse = "SMTP Host, SMTP Email Address and SMTP Email Credentials Fields are required If Email SMTP Content Delivery has been Enabled";
                         return false;
                     }
-                //Proceed
+                    else if (string.IsNullOrWhiteSpace(RGRequest.RSEmailSMTPSetting.SMTPDestinations))
+                    {
+                        ErrorResponse = "SMTP Host Destination Address have not been added, at list one destination address required If Email SMTP Content Delivery has been Enabled";
+                        return false;
+                    }
                 return true;
             }
             catch (Exception ex) { _logger.LogWarning(ex.Message); ErrorResponse = ex.Message; return false; }

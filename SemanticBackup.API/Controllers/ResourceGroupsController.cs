@@ -77,7 +77,7 @@ namespace SemanticBackup.API.Controllers
                     TimeZone = request.TimeZone,
                     MaximumRunningBots = request.MaximumRunningBots,
                     CompressBackupFiles = request.CompressBackupFiles,
-                    BackupExpiryAgeInDays = request.BackupExpiryAgeInDays
+                    BackupExpiryAgeInDays = request.BackupExpiryAgeInDays,
                 };
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
