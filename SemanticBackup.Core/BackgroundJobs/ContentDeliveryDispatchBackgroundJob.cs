@@ -81,7 +81,13 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         string statusMsg = "Dispatching Backup Record";
                                         if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DOWNLOAD_LINK.ToString())
                                         {
+                                            //Download Link Generator
                                             _botsManagerBackgroundJob.AddBot(new DownloadLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                        }
+                                        else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.FTP_UPLOAD.ToString())
+                                        {
+                                            //FTP Uploader
+                                            _botsManagerBackgroundJob.AddBot(new FTPUploaderBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else
                                         {

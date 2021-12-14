@@ -5,7 +5,6 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.BackgroundJobs.Bots
@@ -40,8 +39,8 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             try
             {
                 _logger.LogInformation($"Creating Download Link....");
-                RSDownloadLinkSetting settings = GetValidDeserializedSettings();
                 await Task.Delay(new Random().Next(1000));
+                RSDownloadLinkSetting settings = GetValidDeserializedSettings();
                 stopwatch.Start();
                 string contentLink = 5.GenerateUniqueId();
                 if (settings.DownloadLinkType == "LONG")
@@ -65,12 +64,6 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             if (config == null)
                 throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSDownloadLinkSetting)}");
             return config;
-        }
-
-        private void CheckIfFileExistsOrRemove(string path)
-        {
-            if (!File.Exists(path))
-                throw new Exception($"No Database File In Path or May have been deleted, Path: {path}");
         }
 
         private void UpdateBackupFeed(string recordId, string status, string message, long elapsed)
