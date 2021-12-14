@@ -5,7 +5,7 @@ namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IContentDeliveryConfigPersistanceService
     {
-        List<ContentDeliveryConfiguration> GetAll(string resourcegroup);
+        List<ContentDeliveryConfiguration> GetAll(string resourceGroupId);
         ContentDeliveryConfiguration GetById(string id);
         bool Remove(string id);
         bool AddOrUpdate(ContentDeliveryConfiguration record);

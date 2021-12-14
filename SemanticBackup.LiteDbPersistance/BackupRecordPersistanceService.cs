@@ -165,5 +165,33 @@ namespace SemanticBackup.LiteDbPersistance
                     catch { }
         }
 
+        public List<BackupRecord> GetAllReadyAndPendingDelivery()
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                db.Pragma("UTC_DATE", true);
+                return db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordBackupStatus.READY.ToString()).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+            }
+        }
+        public bool UpdateDeliveryRunned(string backupRecordId, bool hasRun, string executedDeliveryRunStatus)
+        {
+            using (var db = new LiteDatabase(connString))
+            {
+                db.Pragma("UTC_DATE", true);
+                var collection = db.GetCollection<BackupRecord>();
+                var objFound = collection.Query().Where(x => x.Id == backupRecordId).FirstOrDefault();
+                if (objFound != null)
+                {
+                    objFound.ExecutedDeliveryRun = hasRun;
+                    objFound.ExecutedDeliveryRunStatus = executedDeliveryRunStatus;
+                    bool updatedSuccess = collection.Update(objFound);
+                    if (updatedSuccess)
+                        this.DispatchUpdatedStatus(objFound, false);
+                    return updatedSuccess;
+                }
+                return false;
+            }
+        }
+
     }
 }

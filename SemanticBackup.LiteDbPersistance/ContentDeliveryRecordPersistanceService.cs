@@ -57,10 +57,25 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 db.Pragma("UTC_DATE", true);
-                bool savedSuccess = db.GetCollection<ContentDeliveryRecord>().Upsert(record);
-                if (savedSuccess)
-                    this.DispatchUpdatedStatus(record, true);
-                return savedSuccess;
+                var collection = db.GetCollection<ContentDeliveryRecord>();
+                var objFound = collection.Query().Where(x => x.Id == record.Id).FirstOrDefault();
+                if (objFound != null)
+                {
+                    objFound.StatusUpdateDateUTC = record.StatusUpdateDateUTC;
+                    objFound.CurrentStatus = record.CurrentStatus;
+                    objFound.ExecutionMessage = record.ExecutionMessage;
+                    bool updatedSuccess = collection.Update(objFound);
+                    if (updatedSuccess)
+                        this.DispatchUpdatedStatus(objFound, false);
+                    return updatedSuccess;
+                }
+                else
+                {
+                    bool savedSuccess = db.GetCollection<ContentDeliveryRecord>().Upsert(record);
+                    if (savedSuccess)
+                        this.DispatchUpdatedStatus(record, true);
+                    return savedSuccess;
+                }
             }
         }
 

@@ -54,9 +54,10 @@ namespace SemanticBackup.API
             services.AddTransient<IMySQLServerBackupProviderService, MySQLServerBackupProviderService>();
 
             //Background Jobs
-            services.AddSingleton<IProcessorInitializable, SchedulerBackgroundJob>();
+            services.AddSingleton<IProcessorInitializable, BackupSchedulerBackgroundJob>();
             services.AddSingleton<IProcessorInitializable, BackupBackgroundJob>(); //Main Backup Thread Lunching Bots
             services.AddSingleton<IProcessorInitializable, BackupBackgroundZIPJob>(); //Zipper Thread Lunching Bots
+            services.AddSingleton<IProcessorInitializable, ContentDeliverySchedulerBackgroundJob>(); //Schedules Backup for Deliveries
             services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
 
             //Notifications

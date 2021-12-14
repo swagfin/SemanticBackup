@@ -11,6 +11,8 @@ namespace SemanticBackup.Core.Models
         [Required]
         public string BackupRecordId { get; set; }
         [Required]
+        public string ContentDeliveryConfigurationId { get; set; }
+        [Required]
         public string DeliveryType { get; set; }
         public string CurrentStatus { get; set; } = ContentDeliveryRecordStatus.QUEUED.ToString();
         public DateTime StatusUpdateDateUTC { get; set; } = DateTime.UtcNow;

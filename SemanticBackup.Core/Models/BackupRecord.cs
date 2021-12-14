@@ -19,6 +19,7 @@ namespace SemanticBackup.Core.Models
         public string ExecutionMessage { get; set; }
         public string ExecutionMilliseconds { get; set; }
         public bool ExecutedDeliveryRun { get; set; } = false;
+        public string ExecutedDeliveryRunStatus { get; set; } = BackupRecordExecutedDeliveryRunStatus.PENDING_EXECUTION.ToString();
         public DateTime RegisteredDateUTC { get; set; } = DateTime.UtcNow;
     }
     public enum BackupRecordBackupStatus
@@ -29,5 +30,11 @@ namespace SemanticBackup.Core.Models
         COMPRESSING,
         READY,
         ERROR
+    }
+    public enum BackupRecordExecutedDeliveryRunStatus
+    {
+        PENDING_EXECUTION,
+        SKIPPED_EXECUTION,
+        SUCCESSFULLY_EXECUTED
     }
 }

@@ -51,7 +51,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     try
                     {
                         List<BackupRecord> queuedBackups = this._backupRecordPersistanceService.GetAllByStatus(BackupRecordBackupStatus.QUEUED.ToString());
-                        if (queuedBackups != null)
+                        if (queuedBackups != null && queuedBackups.Count > 0)
                         {
                             List<string> scheduleToDelete = new List<string>();
                             foreach (BackupRecord backupRecord in queuedBackups)

@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.BackgroundJobs
 {
-    public class SchedulerBackgroundJob : IProcessorInitializable
+    public class BackupSchedulerBackgroundJob : IProcessorInitializable
     {
-        private readonly ILogger<SchedulerBackgroundJob> _logger;
+        private readonly ILogger<BackupSchedulerBackgroundJob> _logger;
         private readonly PersistanceOptions _persistanceOptions;
         private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
 
-        public SchedulerBackgroundJob(ILogger<SchedulerBackgroundJob> logger,
+        public BackupSchedulerBackgroundJob(ILogger<BackupSchedulerBackgroundJob> logger,
             PersistanceOptions persistanceOptions,
             IBackupSchedulePersistanceService backupSchedulePersistanceService,
             IBackupRecordPersistanceService backupRecordPersistanceService,
@@ -48,7 +48,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         DateTime currentTimeUTC = DateTime.UtcNow;
                         List<BackupSchedule> dueSchedules = this._backupSchedulePersistanceService.GetAllDueByDate();
-                        if (dueSchedules != null)
+                        if (dueSchedules != null && dueSchedules.Count > 0)
                         {
                             List<string> scheduleToDelete = new List<string>();
                             foreach (BackupSchedule schedule in dueSchedules)
