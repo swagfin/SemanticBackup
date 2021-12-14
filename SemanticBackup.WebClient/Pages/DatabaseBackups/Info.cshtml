@@ -12,12 +12,12 @@
         <div class="eight wide column">
             @if (Model.BackupRecordResponse.BackupStatus == "ERROR")
             {
-                <a class="ui small blue button right floated can-reque-enabled" href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run?notifify-status-@(Model.BackupRecordResponse.Id.ToLower())"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small blue button right floated can-reque-enabled" href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run/redirect/@(Model.BackupRecordResponse.Id)/record"><i class="refresh icon"></i>Re-run Backup Job</a>
                 <a class="ui small button disabled right floated can-reque-disabled" hidden onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
             }
             else
             {
-                <a class="ui small blue button right floated can-reque-enabled" hidden href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run?notifify-status-@(Model.BackupRecordResponse.Id.ToLower())"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small blue button right floated can-reque-enabled" hidden href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run/redirect/@(Model.BackupRecordResponse.Id)/record"><i class="refresh icon"></i>Re-run Backup Job</a>
                 <a class="ui small button disabled right floated can-reque-disabled" onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
             }
         </div>
@@ -244,7 +244,7 @@
                                     if (record.CurrentStatus == "ERROR")
                                     {
                                         <td class="event_rerun_for_@(record.Id)">
-                                            <a href="#rerun" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>
+                                            <a href="/databasebackups/@(record.Id)/re-run/redirect/@(record.BackupRecordId)/content-delivery" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>
                                         </td>
                                     }
                                     else if (record.DeliveryType == "DOWNLOAD_LINK")
@@ -375,7 +375,7 @@
             $(".execution_message_for_" + key).html(metric?.executionMessage);
             //Update Message Now
             if(status == "ERROR"){
-               $(".event_rerun_for_" + key).html('<a href="#rerun" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>');
+               $(".event_rerun_for_" + key).html('<a href="/databasebackups/'+ key +'/re-run/redirect/'+ metric.backupRecordId +'/content-delivery" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>');
             }
             else{
                $(".event_rerun_for_" + key).html(' <a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a>');

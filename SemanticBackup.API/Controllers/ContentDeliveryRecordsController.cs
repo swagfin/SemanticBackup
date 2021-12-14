@@ -48,5 +48,31 @@ namespace SemanticBackup.API.Controllers
                 return new List<ContentDeliveryRecord>();
             }
         }
+
+        [Route("re-run/{id}")]
+        [HttpGet, HttpPost]
+        public ActionResult GetInitRerun(string id)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                    throw new Exception("Id can't be NULL");
+                var contentDeliveryRecord = _contentDeliveryRecordPersistanceService.GetById(id);
+                if (contentDeliveryRecord == null)
+                    return new NotFoundObjectResult($"No Data Found with Key: {id}");
+                else if (contentDeliveryRecord.CurrentStatus != "ERROR")
+                    return new ConflictObjectResult($"STATUS need to be ERROR, Current Status for this record is: {contentDeliveryRecord.CurrentStatus}");
+                bool rerunSuccess = _contentDeliveryRecordPersistanceService.UpdateStatusFeed(id, ContentDeliveryRecordStatus.QUEUED.ToString(), "Queued for Re-run", 0);
+                if (rerunSuccess)
+                    return Ok(rerunSuccess);
+                else
+                    throw new Exception("Re-run was not initialized");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return new BadRequestObjectResult(ex.Message);
+            }
+        }
     }
 }
