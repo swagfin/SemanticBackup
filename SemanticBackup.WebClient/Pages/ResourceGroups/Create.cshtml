@@ -1,0 +1,179 @@
+﻿@page "/resource-groups/create"
+@model SemanticBackup.WebClient.Pages.ResourceGroups.CreateModel
+@{
+    ViewData["Title"] = "Resource Groups | Create Resource Group";
+    Layout = "_LayoutNoDirectory";
+}
+
+<div class="container pd-x-0">
+
+    <div class="row row-xs">
+
+        <div class="col-lg-8 col-xl-12 mg-t-10">
+            <h2>Create Resource Group</h2>
+            <div class="ui divider"></div>
+            @{
+                if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
+                {
+                    <div class="ui tiny negative message"><b>@(Model.ErrorResponse)</b></div>
+                }
+            }
+
+            <form asp-page="RegisterDatabase" method="post">
+                <div class="ui segment attached form">
+                    <div class="field">
+                        <label>Resource Group Name</label>
+                        <input asp-for="RGRequest.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Group" type="text" required>
+                    </div>
+                    <div class="field">
+                        <label>Resource Group Timezone</label>
+                        <select asp-for="RGRequest.TimeZone" class="ui fluid search small dropdown timezone-dropdown-search" required>
+                            @{
+                                if (Model.TimeZoneCollections != null && Model.TimeZoneCollections.Count > 0)
+                                {
+                                    foreach (var timezone in Model.TimeZoneCollections)
+                                    {
+                                        <option value="@(timezone.Value)">@(timezone.Text)  (@(timezone.Value))</option>
+                                    }
+                                }
+                            }
+                            <option selected value="E. Africa Standard Time">(UTC+03:00) Nairobi (E. Africa Standard Time) (Default)</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>Maximum Running Worker Bots</label>
+                        <select asp-for="RGRequest.MaximumRunningBots" class="ui fluid small dropdown threads-dropdown-search" required>
+                            <option value="1">1 Single Worker Bot (Unlimited CPU/RAM)</option>
+                            <option value="2">2 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="3">3 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option selected value="4">4 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="5">5 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="6">6 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="7">7 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="8">8 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="9">9 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="10">10 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="11">11 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="12">12 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option value="50">Maximum non-clustered Worker Bots (Unlimited CPU/RAM)</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="file archive outline icon"></i>Backup Files Compression</label>
+                        <span>
+                            <input checked="true" id="ResourceGroupRequest_CompressBackupFiles" asp-for="RGRequest.CompressBackupFiles">
+                            <label title="Backup Files (.bak) will be Compressed as Zip Files (.zip)" style="cursor:pointer" for="ResourceGroupRequest_CompressBackupFiles">Auto Compress Backup File to .ZIP files</label>
+                        </span>
+                    </div>
+                    <div class="field">
+                        <label for="ResourceGroupRequestBackupExpiryAgeInDays">Backup Age Expiry In Days (Max 366 days)</label>
+                        <input asp-for="RGRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" min="1" value="7" max="366" required>
+                    </div>
+
+                    <div class="ui divider"></div>
+                    <h4>Backup Content Delivery Settings</h4>
+
+                    <div class="ui top attached tabular primary small menu">
+                        <a class="item active" data-tab="tabdownloadlink">DOWNLOAD LINK</a>
+                        <a class="item" data-tab="tabftp">FTP UPLOAD</a>
+                        <a class="item" data-tab="tabemailsmtp">EMAIL (SMTP)</a>
+                    </div>
+
+                    <!--DOWNLOAD LINK-->
+                    <div class="ui bottom attached tab segment active" data-tab="tabdownloadlink">
+                        <span>
+                            <input checked="true" id="RSDownloadLinkSetting.IsEnabled" asp-for="RGRequest.RSDownloadLinkSetting.IsEnabled">
+                            <label title="Enabled Backup Delivery via Download Link" style="cursor:pointer" for="RSDownloadLinkSetting.IsEnabled">Create Download Link for Each Backup</label>
+                        </span>
+                        <div class="ui mini message"><b>Download Link will Expire if the Backup Record Expires.</b></div>
+                        <div class="field">
+                            <label>Generated Download Link Type</label>
+                            <select asp-for="RGRequest.RSDownloadLinkSetting.DownloadLinkType" class="ui fluid mini dropdown" required>
+                                <option value="SHORT">Shortened Download Url</option>
+                                <option value="LONG">Full Token Based Download Url</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!--FTP CONTENT DELIVERY LINK-->
+                    <div class="ui bottom attached tab segment" data-tab="tabftp">
+                        <span>
+                            <input id="RSFTPSetting.IsEnabled" asp-for="RGRequest.RSFTPSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via FTP" style="cursor:pointer" for="RSFTPSetting.IsEnabled">Enable FTP Backup Content Delivery</label>
+                        </span>
+
+                        <div class="field">
+                            <label>FTP Server</label>
+                            <input asp-for="RGRequest.RSFTPSetting.Server" autocomplete="off" placeholder="xxxxxx">
+                        </div>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>FTP Username</label>
+                                <input asp-for="RGRequest.RSFTPSetting.Username" autocomplete="off" placeholder="xxxxxx">
+                            </div>
+                            <div class="field">
+                                <label>FTP Password</label>
+                                <input asp-for="RGRequest.RSFTPSetting.Password" autocomplete="off" type="password" placeholder="*******">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>FTP Upload Path</label>
+                            <input asp-for="RGRequest.RSFTPSetting.Directory" autocomplete="off" placeholder="e.g. /uploads/" value="/">
+                        </div>
+                    </div>
+
+                    <div class="ui bottom attached tab segment" data-tab="tabemailsmtp">
+                        <span>
+                            <input id="RGRequest.RSEmailSMTPSetting.IsEnabled" asp-for="RGRequest.RSEmailSMTPSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via Email SMTP" style="cursor:pointer" for="RGRequest.RSEmailSMTPSetting.IsEnabled">Enable Email (SMTP) Backup Content Delivery</label>
+                        </span>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>SMTP Host</label>
+                                <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPHost" value="smtp.gmail.com" autocomplete="off" placeholder="SMTP Host Address">
+                            </div>
+                            <div class="field">
+                                <label>SMTP Port</label>
+                                <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPPort" value="587" autocomplete="off" placeholder="SMTP Host Port">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>SMTP Email Address</label>
+                            <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPEmailAddress" autocomplete="off" placeholder="Email credential">
+                        </div>
+                        <div class="field">
+                            <label>SMTP Email Password</label>
+                            <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPEmailCredentials" type="password" autocomplete="off" placeholder="Password credential *******">
+                        </div>
+                        <div class="field">
+                            <label>SMTP From Name</label>
+                            <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPDefaultSMTPFromName" autocomplete="off" placeholder="e.g. John Doe">
+                        </div>
+                        <div class="field">
+                            <label>Receiving Addresses (Separate with ",")</label>
+                            <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
+                        </div>
+                    </div>
+
+                    <p align="center">
+                        <button class="ui fluid button blue" type="submit">
+                            <i class="chart line icon"></i>
+                            Create Resource Group
+                        </button>
+                    </p>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts{
+<script type="text/javascript">
+    $(".dropdown").dropdown({allowAdditions: false});
+    $(".destinations-dropdown-search").dropdown({allowAdditions: true});
+    $('.menu .item').tab();
+</script>
+}

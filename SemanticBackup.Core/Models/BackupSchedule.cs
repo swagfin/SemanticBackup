@@ -7,24 +7,24 @@ namespace SemanticBackup.Core.Models
     {
         [Required, Key]
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
-        public string ActiveDirectoryId { get; set; }
+        public string ResourceGroupId { get; set; }
         [Required]
         public string BackupDatabaseInfoId { get; set; }
         public string Name { get; set; }
         public string ScheduleType { get; set; } = BackupScheduleType.FULLBACKUP.ToString();
         public int EveryHours { get; set; } = 24;
-        public DateTime StartDate { get; set; } = DateTime.Now;
-        public DateTime NextRun
+        public DateTime StartDateUTC { get; set; } = DateTime.UtcNow;
+        public DateTime NextRunUTC
         {
             get
             {
-                if (LastRun == null)
-                    return StartDate;
-                return ((DateTime)LastRun).AddHours(EveryHours);
+                if ((DateTime.UtcNow.Date - LastRunUTC.Date).TotalDays > 1000)
+                    return StartDateUTC;
+                return LastRunUTC.AddHours(EveryHours);
             }
         }
-        public DateTime? LastRun { get; set; } = null;
-        public DateTime CreatedOn { get; set; } = DateTime.Now;
+        public DateTime LastRunUTC { get; set; } = new DateTime(2000, 1, 1).Date;
+        public DateTime CreatedOnUTC { get; set; } = DateTime.UtcNow;
     }
     public enum BackupScheduleType
     {

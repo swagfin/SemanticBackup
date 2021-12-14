@@ -10,9 +10,10 @@ namespace SemanticBackup.WebClient.Models.Response
         public string BackupStatus { get; set; }
         public string Path { get; set; }
         public DateTime StatusUpdateDate { get; set; }
-        public DateTime? ExpiryDate { get; set; } = null;
+        public DateTime ExpiryDate { get; set; }
         public string ExecutionMessage { get; set; }
         public string ExecutionMilliseconds { get; set; }
+        public bool ExecutedDeliveryRun { get; set; } = false;
         public DateTime RegisteredDate { get; set; }
     }
 }

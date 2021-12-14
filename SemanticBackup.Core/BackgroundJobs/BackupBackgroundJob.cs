@@ -1,12 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.Core.ProviderServices;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,37 +13,31 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class BackupBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
-        private readonly SharedTimeZone _sharedTimeZone;
-        private readonly PersistanceOptions _persistanceOptions;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
         private readonly IMySQLServerBackupProviderService _mySQLServerBackupProviderService;
-        internal readonly List<IBot> BackupsBots;
+        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
+        private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
-            SharedTimeZone sharedTimeZone,
-            PersistanceOptions persistanceOptions,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
             ISQLServerBackupProviderService sQLServerBackupProviderService,
-            IMySQLServerBackupProviderService mySQLServerBackupProviderService
-            )
+            IMySQLServerBackupProviderService mySQLServerBackupProviderService, IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
-            this._sharedTimeZone = sharedTimeZone;
-            this._persistanceOptions = persistanceOptions;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
             this._mySQLServerBackupProviderService = mySQLServerBackupProviderService;
-            this.BackupsBots = new List<IBot>();
+            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
+            this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
         public void Initialize()
         {
             _logger.LogInformation("Starting service....");
             SetupBackgroundService();
-            SetupBotsBackgroundService();
             SetupBackgroundRemovedExpiredBackupsService();
             _logger.LogInformation("Service Started");
         }
@@ -56,86 +48,66 @@ namespace SemanticBackup.Core.BackgroundJobs
             {
                 while (true)
                 {
+                    //Await
+                    await Task.Delay(10000);
                     try
                     {
-                        DateTime currentTime = _sharedTimeZone.Now;
                         List<BackupRecord> queuedBackups = this._backupRecordPersistanceService.GetAllByStatus(BackupRecordBackupStatus.QUEUED.ToString());
-                        if (queuedBackups == null)
-                            return;
-                        List<string> scheduleToDelete = new List<string>();
-                        foreach (BackupRecord backupRecord in queuedBackups)
+                        if (queuedBackups != null && queuedBackups.Count > 0)
                         {
-                            _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
-                            BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(backupRecord.BackupDatabaseInfoId);
-                            if (backupDatabaseInfo == null)
+                            List<string> scheduleToDelete = new List<string>();
+                            foreach (BackupRecord backupRecord in queuedBackups)
                             {
-                                _logger.LogWarning($"No Database Info matches with Id: {backupRecord.BackupDatabaseInfoId}, Backup Database Record will be Deleted: {backupRecord.Id}");
-                                scheduleToDelete.Add(backupRecord.Id);
-                            }
-                            else
-                            {
-                                //Add Queue
-                                if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                    BackupsBots.Add(new SQLBackupBot(backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
-                                else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                    BackupsBots.Add(new MySQLBackupBot(backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _sharedTimeZone, _logger));
+                                _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
+                                BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(backupRecord.BackupDatabaseInfoId);
+                                if (backupDatabaseInfo == null)
+                                {
+                                    _logger.LogWarning($"No Database Info matches with Id: {backupRecord.BackupDatabaseInfoId}, Backup Database Record will be Deleted: {backupRecord.Id}");
+                                    scheduleToDelete.Add(backupRecord.Id);
+                                }
                                 else
-                                    throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
-                                //Finally Update Status
-                                bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString(), currentTime);
-                                if (updated)
-                                    _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
-                                else
-                                    _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
-                            }
+                                {
+                                    //Check if valid Resource Group
+                                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                                    if (resourceGroup == null)
+                                    {
+                                        _logger.LogWarning($"The Database Id: {backupRecord.BackupDatabaseInfoId}, doesn't seem to have been assigned to a valid Resource Group Id: {backupDatabaseInfo.ResourceGroupId}, Record will be Deleted");
+                                        scheduleToDelete.Add(backupRecord.Id);
+                                    }
+                                    else
+                                    {
+                                        if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
+                                        {
+                                            if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
+                                                _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                            else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
+                                                _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                            else
+                                                throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
+                                            //Finally Update Status
+                                            bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
+                                            if (updated)
+                                                _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
+                                            else
+                                                _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
+                                        }
+                                        else
+                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} has Exceeded its Maximum Allocated Running Threads Count: {resourceGroup.MaximumRunningBots}");
+                                    }
 
+                                }
+                            }
+                            //Check if Any Delete
+                            if (scheduleToDelete.Count > 0)
+                                foreach (var rm in scheduleToDelete)
+                                    this._backupRecordPersistanceService.Remove(rm);
                         }
-                        //Check if Any Delete
-                        if (scheduleToDelete.Count > 0)
-                            foreach (var rm in scheduleToDelete)
-                                this._backupRecordPersistanceService.Remove(rm);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex.Message);
                     }
-                    //Await
-                    await Task.Delay(10000);
-                }
-            });
-            t.Start();
-        }
 
-        private void SetupBotsBackgroundService()
-        {
-            var t = new Thread(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        if (this.BackupsBots != null || this.BackupsBots.Count > 0)
-                        {
-                            //Start and Stop Bacup Bots
-                            int runningThreads = this.BackupsBots.Count(x => x.IsStarted && !x.IsCompleted);
-                            int takeCount = _persistanceOptions.MaximumBackupRunningThreads - runningThreads;
-                            if (takeCount > 0)
-                            {
-                                List<IBot> botsNotStarted = this.BackupsBots.Where(x => !x.IsStarted).Take(takeCount).ToList();
-                                if (botsNotStarted != null && botsNotStarted.Count > 0)
-                                    foreach (IBot bot in botsNotStarted)
-                                        _ = bot.RunAsync();
-                            }
-                            //Remove Completed
-                            List<IBot> botsCompleted = this.BackupsBots.Where(x => x.IsCompleted).ToList();
-                            if (botsCompleted != null && botsCompleted.Count > 0)
-                                foreach (IBot bot in botsCompleted)
-                                    this.BackupsBots.Remove(bot);
-                        }
-                    }
-                    catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
-                    //Delay
-                    await Task.Delay(5000);
                 }
             });
             t.Start();
@@ -150,9 +122,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(60000); //Runs After 1 Minute
                     try
                     {
-                        DateTime currentTime = _sharedTimeZone.Now;
-                        List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired(currentTime);
-                        if (expiredBackups != null || expiredBackups.Count > 0)
+                        List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired();
+                        if (expiredBackups != null && expiredBackups.Count > 0)
                         {
                             List<string> toDeleteList = new List<string>();
                             foreach (BackupRecord backupRecord in expiredBackups)

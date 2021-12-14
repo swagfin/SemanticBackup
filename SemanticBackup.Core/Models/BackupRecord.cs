@@ -7,18 +7,20 @@ namespace SemanticBackup.Core.Models
     {
         [Required, Key]
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
-        public string ActiveDirectoryId { get; set; }
+        public string ResourceGroupId { get; set; }
         [Required]
         public string BackupDatabaseInfoId { get; set; }
         public string Name { get; set; }
         public string BackupStatus { get; set; } = BackupRecordBackupStatus.QUEUED.ToString();
         [Required]
         public string Path { get; set; }
-        public DateTime StatusUpdateDate { get; set; } = DateTime.Now;
-        public DateTime? ExpiryDate { get; set; } = null;
+        public DateTime StatusUpdateDateUTC { get; set; } = DateTime.UtcNow;
+        public DateTime ExpiryDateUTC { get; set; } = DateTime.UtcNow.AddDays(7);
         public string ExecutionMessage { get; set; }
         public string ExecutionMilliseconds { get; set; }
-        public DateTime RegisteredDate { get; set; } = DateTime.Now;
+        public bool ExecutedDeliveryRun { get; set; } = false;
+        public string ExecutedDeliveryRunStatus { get; set; } = BackupRecordExecutedDeliveryRunStatus.PENDING_EXECUTION.ToString();
+        public DateTime RegisteredDateUTC { get; set; } = DateTime.UtcNow;
     }
     public enum BackupRecordBackupStatus
     {
@@ -28,5 +30,11 @@ namespace SemanticBackup.Core.Models
         COMPRESSING,
         READY,
         ERROR
+    }
+    public enum BackupRecordExecutedDeliveryRunStatus
+    {
+        PENDING_EXECUTION,
+        SKIPPED_EXECUTION,
+        SUCCESSFULLY_EXECUTED
     }
 }

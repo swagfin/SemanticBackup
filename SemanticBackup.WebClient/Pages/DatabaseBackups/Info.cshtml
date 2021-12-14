@@ -3,11 +3,6 @@
 @{
     ViewData["Title"] = $"Database Record | Info #{Model.BackupRecordResponse?.Name}";
 }
-@{
-    <script type="text/javascript">
-        var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-    </script>
-}
 <div class="container">
     <section class="ui two wide column grid">
         <div class="eight wide column">
@@ -17,12 +12,12 @@
         <div class="eight wide column">
             @if (Model.BackupRecordResponse.BackupStatus == "ERROR")
             {
-                <a class="ui small blue button right floated can-reque-enabled" href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run?notifify-status-@(Model.BackupRecordResponse.Id.ToLower())"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small blue button right floated can-reque-enabled" href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run/redirect/@(Model.BackupRecordResponse.Id)/record"><i class="refresh icon"></i>Re-run Backup Job</a>
                 <a class="ui small button disabled right floated can-reque-disabled" hidden onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
             }
             else
             {
-                <a class="ui small blue button right floated can-reque-enabled" hidden href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run?notifify-status-@(Model.BackupRecordResponse.Id.ToLower())"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small blue button right floated can-reque-enabled" hidden href="/databasebackups/@(Model.BackupRecordResponse.Id)/re-run/redirect/@(Model.BackupRecordResponse.Id)/record"><i class="refresh icon"></i>Re-run Backup Job</a>
                 <a class="ui small button disabled right floated can-reque-disabled" onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
             }
         </div>
@@ -39,7 +34,7 @@
                         <div class="header">
                             Re-run has been scheduled successfully
                         </div>
-                        <p>Re-run will be executed in a few seconds, hold on tight as we prepare</p>       
+                        <p>Re-run will be executed in a few seconds, hold on tight as we prepare</p>
                     </div>
                 </div>
             }
@@ -49,7 +44,7 @@
                     <i class="refresh icon"></i>
                     <div class="content">
                         <div class="header">
-                          Oops! Unable to initiate Re-run
+                            Oops! Unable to initiate Re-run
                         </div>
                         <p>Re-run initialization failed, Reason Phrase <b>[@(Model.RerunStatusReason)]</b>, Please Try Again later</p>
                     </div>
@@ -64,7 +59,7 @@
         <div class="ui stackable five column grid" style="font-size:12px;color:gray;font-weight:bold">
             <div class="wide column">
                 <div>
-                    <span>Date: <span>@string.Format("{0:yyyy-MM-dd hh:mm tt}", Model.BackupRecordResponse.RegisteredDate)</span></span>
+                    <span>Date: <span>@string.Format("{0:yyyy-MM-dd HH:mm}", Model.BackupRecordResponse.RegisteredDate)</span></span>
                 </div>
                 <div style="padding:5px;font-weight:bold"><i class="database icon"></i><a href="/databases/@(Model.BackupRecordResponse.BackupDatabaseInfoId)">@(Model.BackupRecordResponse.Name)</a></div>
             </div>
@@ -104,7 +99,7 @@
                     <span>Last Status Update</span>
                 </div>
                 <div style="padding:5px;font-weight:bold;color:teal">
-                    <div class="last_status_update_for_@(Model.BackupRecordResponse.Id) use-time-ago" use-time-ago-value="@(Model.BackupRecordResponse.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd hh:mm tt}", Model.BackupRecordResponse.StatusUpdateDate)</div>
+                    <div class="last_status_update_for_@(Model.BackupRecordResponse.Id) use-time-ago" use-time-ago-value="@(Model.BackupRecordResponse.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", Model.BackupRecordResponse.StatusUpdateDate)</div>
                 </div>
             </div>
             <div class="wide column">
@@ -159,7 +154,7 @@
                     }
                     else
                     {
-                        <span style="color:darkorange">@string.Format("{0:yyyy-MM-dd hh:mm tt}", Model.BackupRecordResponse.ExpiryDate)</span> <span style="margin-left:7px;color:red"> @string.Format("{0:N0} Day(s) left", ((DateTime)Model.BackupRecordResponse.ExpiryDate - DateTime.Now).TotalDays)</span>
+                        <span style="color:darkorange">@string.Format("{0:yyyy-MM-dd HH:mm}", Model.BackupRecordResponse.ExpiryDate)</span> <span style="margin-left:7px;color:red"> @string.Format("{0:N0} Day(s) left", ((DateTime)Model.BackupRecordResponse.ExpiryDate - DateTime.Now).TotalDays)</span>
                     }
                 </div>
             </div>
@@ -194,7 +189,90 @@
             </div>
 
         </div>
+    </section>
 
+    <section class="ui secondary segment container">
+
+        <div class="ui header bold">Backup Records Delivery</div>
+        <table class="ui table">
+            <thead>
+                <tr>
+                    <td>Delivery Type</td>
+                    <td>Delivery Message</td>
+                    <td>Delivery Status</td>
+                    <td>Operation</td>
+                </tr>
+            </thead>
+            <tbody id="records_data_table">
+                @{
+                    int count = 0;
+                    if (Model.ContentDeliveryRecordsResponse != null && Model.ContentDeliveryRecordsResponse.Count > 0)
+                        foreach (var record in Model.ContentDeliveryRecordsResponse)
+                        {
+                            count++;
+                            <tr id="record_for_@(record.Id)">
+                                <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.DeliveryType</td>
+                                @{
+                                    if (record.DeliveryType == "DOWNLOAD_LINK")
+                                    {
+                                        <td class="execution_message_for_downloadLink_@(record.Id)">
+                                            <a href="@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)"><i class="download icon"></i> Download Link </a>
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td class="execution_message_for_@(record.Id)">@record.ExecutionMessage</td>
+                                    }
+
+                                    if (record.CurrentStatus == "EXECUTING")
+                                    {
+                                        <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>RUNNING</span> </td>
+                                    }
+                                    else if (record.CurrentStatus == "READY")
+                                    {
+                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>EXECUTED</span>  </td>
+                                    }
+                                    else if (record.CurrentStatus == "ERROR")
+                                    {
+                                        <td class="event_status_for_@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.CurrentStatus</span>  </td>
+                                    }
+                                    else
+                                    {
+                                        <td class="event_status_for_@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.CurrentStatus</span>  </td>
+                                    }
+
+                                    if (record.CurrentStatus == "ERROR")
+                                    {
+                                        <td class="event_rerun_for_@(record.Id)">
+                                            <a href="/databasebackups/@(record.Id)/re-run/redirect/@(record.BackupRecordId)/content-delivery" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>
+                                        </td>
+                                    }
+                                    else if (record.DeliveryType == "DOWNLOAD_LINK")
+                                    {
+                                        <td class="event_downloadlink_for_@(record.Id)">
+                                            <a href='@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)' class="ui teal label"><i class="download icon"></i> Download</a>
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td class="event_rerun_for_@(record.Id)">
+                                            <a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a>
+                                        </td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" style="text-align:center">
+                                <div class="ui message small warning"><div>No Available Conent Delivery Records</div></div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
     </section>
 </div>
 @section Scripts{
@@ -202,45 +280,112 @@
 <script type="text/javascript" src="~/assets/js/signalr-subscriber.js"></script>
 <script type="text/javascript">
     jQuery(document).ready(function ($) {
-        //Create Main Obersavable
-        var currentRecordId = @(Html.Raw(Json.Serialize( Model.BackupRecordResponse?.Id)));
-        _ = getListenerAsync(baseUrl + "BackupRecordsNotify", currentRecordId, "ReceiveNotification", function (response) {
-            console.log("Received Database Backup Status Update");
+                //Create Main Obersavable
+                var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+                var currentRecordId = @(Html.Raw(Json.Serialize( Model.BackupRecordResponse?.Id)));
+                //Hub For Record Backup Status
+                var huburl = baseUrl + "BackupRecordsNotify";
+                var connection = new signalR.HubConnectionBuilder().withUrl(huburl).build();
+
+
+                    //Invoke Connection
+                async function startConnection() {
+                    try {
+                        await connection.start();
+                        connection.invoke("JoinGroup", currentRecordId).then(function ()
+                        {
+                              console.log("joined group: #" + currentRecordId);
+                        })
+                        .catch(function (err)
+                        {
+                              return console.error(err.toString());
+                        });
+                    } catch (err) {
+                        console.log(err);
+                        //reconnect after 5sec
+                        setTimeout(() => startConnection(), 5000);
+                    }
+                };
+
+                //Notify Receive Notifications
+            connection.on("ReceiveNotification", function (response) {
+                    console.log("Received Database Backup Status Update");
+                    //console.log(response);
+                    var metric = response.metric;
+                    var key = metric.id;
+                    var status = metric.backupStatus;
+                    //Skip >> new Checks
+                    //Update Status
+                    console.log("Updating UI Key: " + key + ", Status: " + status);
+                    if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>' + status + '</span>'); }
+                    else if (status == "COMPLETED") { $(".event_status_for_" + key).html('<span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
+                    else if (status == "COMPRESSING") { $(".event_status_for_" + key).html('<span class="ui label small basic olive"><i class="notched circle loading icon"></i>' + status + '</span>'); }
+                    else if (status == "READY") { $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>'); }
+                    else if (status == "ERROR") { $(".event_status_for_" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }
+                    else { $(".event_status_for_" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
+                    //Update Others
+                    $(".execution_milliseconds_for_" + key).html(metric.executionMilliseconds);
+                    $(".last_status_update_for_" + key).html("Just now");
+                    $(".last_status_update_for_" + key).attr("use-time-ago-value", metric.statusUpdateDate);
+                    //Update Message Now
+                    if(status == "ERROR"){
+                       $(".execution_message_for_" + key).html('<div class="ui small negative message"><p><i class="exclamation circle icon"></i>'+ metric?.executionMessage +'</p>');
+                       $(".can-reque-enabled").removeAttr("hidden");
+                       $(".can-reque-disabled").attr("hidden", true);
+                    }
+                    else if(status =="READY"){
+                        $(".execution_message_for_" + key).html('<div class="ui small positive message"><p><i class="checkmark icon"></i>'+ metric?.executionMessage +'</p>');
+                        $(".can-reque-enabled").attr("hidden", true);
+                        $(".can-reque-disabled").removeAttr("hidden");
+                    }
+                    else{
+                        $(".execution_message_for_" + key).html('<div class="ui small message"><p><i class="notched circle loading icon"></i>Executing job, this will take some few minutes...</p>');
+                        $(".can-reque-enabled").attr("hidden", true);
+                        $(".can-reque-disabled").removeAttr("hidden");
+                    }
+                    console.log("Updated UI Success");
+                });
+
+
+            connection.on("ReceiveContentDeliveryNotification", function (response){
+            console.log("Received ReceiveContentDeliveryNotification Status Update");
             //console.log(response);
             var metric = response.metric;
             var key = metric.id;
-            var status = metric.backupStatus;
-            //Skip >> new Checks
+            var status = metric.currentStatus;
+             //Check if Not Exists
+            if(response.isNewMetric && $("#record_for_" + key).length == 0)
+              {
+                 console.log("Prepending new Record Notification");
+                 var newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_'+ key +'">'+ metric.executionMessage + '</td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_rerun_for_'+ key +'"><a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a></td></tr>';
+                 if(metric.deliveryType == "DOWNLOAD_LINK")
+                 {
+                   var downloadLink = baseUrl + "d/" + metric.executionMessage;
+                   newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_downloadLink_'+ key +'"> <a href="'+ downloadLink +'"><i class="download icon"></i> Download Link </a>  </td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_downloadlink_for_'+ key +'"><a href="'+ downloadLink +'" class="ui teal label"><i class="download icon"></i> Download</a></td></tr>';
+                 }
+                 $("#records_data_table").appendChild(newElement);
+              }
             //Update Status
             console.log("Updating UI Key: " + key + ", Status: " + status);
-            if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>' + status + '</span>'); }
-            else if (status == "COMPLETED") { $(".event_status_for_" + key).html('<span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
-            else if (status == "COMPRESSING") { $(".event_status_for_" + key).html('<span class="ui label small basic olive"><i class="notched circle loading icon"></i>' + status + '</span>'); }
-            else if (status == "READY") { $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>'); }
+            if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>RUNNING</span>'); }
+            else if (status == "READY") { $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>EXECUTED</span>'); }
             else if (status == "ERROR") { $(".event_status_for_" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }
             else { $(".event_status_for_" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
             //Update Others
-            $(".execution_milliseconds_for_" + key).html(metric.executionMilliseconds);
-            $(".last_status_update_for_" + key).html("Just now");
-            $(".last_status_update_for_" + key).attr("use-time-ago-value", metric.statusUpdateDate);
+            $(".execution_message_for_" + key).html(metric?.executionMessage);
             //Update Message Now
             if(status == "ERROR"){
-               $(".execution_message_for_" + key).html('<div class="ui small negative message"><p><i class="exclamation circle icon"></i>'+ metric?.executionMessage +'</p>');
-               $(".can-reque-enabled").removeAttr("hidden");
-               $(".can-reque-disabled").attr("hidden", true);
-            }
-            else if(status =="READY"){
-                $(".execution_message_for_" + key).html('<div class="ui small positive message"><p><i class="checkmark icon"></i>'+ metric?.executionMessage +'</p>');
-                $(".can-reque-enabled").attr("hidden", true);
-                $(".can-reque-disabled").removeAttr("hidden");
+               $(".event_rerun_for_" + key).html('<a href="/databasebackups/'+ key +'/re-run/redirect/'+ metric.backupRecordId +'/content-delivery" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>');
             }
             else{
-                $(".execution_message_for_" + key).html('<div class="ui small message"><p><i class="notched circle loading icon"></i>Executing job, this will take some few minutes...</p>');
-                $(".can-reque-enabled").attr("hidden", true);
-                $(".can-reque-disabled").removeAttr("hidden");
+               $(".event_rerun_for_" + key).html(' <a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a>');
             }
             console.log("Updated UI Success");
-        });
-    });
+           });
+
+                //Connection Started
+               startConnection();
+
+            });
 </script>
 }

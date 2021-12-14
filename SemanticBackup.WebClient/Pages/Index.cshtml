@@ -118,10 +118,10 @@
 <!-- container -->
 @section Scripts{
 <script src="~/lib/signalr/dist/browser/signalr.js"></script>
-<script type="text/javascript" src=~/assets/js/dashboard-two_v2.js></script>
+<script type="text/javascript" src=~/assets/js/dashboard-two_v3.js></script>
 <script type="text/javascript">
     var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-    var directoryId = @Html.Raw(Json.Serialize(Directories.CurrentDirectory?.Id));
+    var resourcegroupId = @Html.Raw(Json.Serialize(WebClient.ResourceGroups.CurrentResourceGroup?.Id));
 </script>
 }
 

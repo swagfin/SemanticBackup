@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.API.Core;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core.Models;
@@ -14,7 +13,7 @@ using System.Threading.Tasks;
 namespace SemanticBackup.API.Controllers
 {
     [ApiController]
-    [Route("{directory}/api/[controller]")]
+    [Route("{resourcegroup}/api/[controller]")]
     public class BackupDatabasesController : ControllerBase
     {
         private readonly ILogger<BackupDatabasesController> _logger;
@@ -22,29 +21,26 @@ namespace SemanticBackup.API.Controllers
         private readonly IBackupSchedulePersistanceService _schedulePersistanceService;
         private readonly IMySQLServerBackupProviderService _mySQLServerBackupProviderService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
-        private readonly SharedTimeZone _sharedTimeZone;
 
-        public BackupDatabasesController(ILogger<BackupDatabasesController> logger, IDatabaseInfoPersistanceService databaseInfoPersistanceService, IBackupSchedulePersistanceService schedulePersistanceService, IMySQLServerBackupProviderService mySQLServerBackupProviderService, ISQLServerBackupProviderService sQLServerBackupProviderService, SharedTimeZone sharedTimeZone)
+        public BackupDatabasesController(ILogger<BackupDatabasesController> logger, IDatabaseInfoPersistanceService databaseInfoPersistanceService, IBackupSchedulePersistanceService schedulePersistanceService, IMySQLServerBackupProviderService mySQLServerBackupProviderService, ISQLServerBackupProviderService sQLServerBackupProviderService)
         {
             _logger = logger;
             this._backupDatabasePersistanceService = databaseInfoPersistanceService;
             this._schedulePersistanceService = schedulePersistanceService;
             this._mySQLServerBackupProviderService = mySQLServerBackupProviderService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
-            this._sharedTimeZone = sharedTimeZone;
         }
 
         [HttpGet]
-        public ActionResult<List<BackupDatabaseInfoResponse>> Get(string directory)
+        public ActionResult<List<BackupDatabaseInfoResponse>> Get(string resourcegroup)
         {
             try
             {
-                var records = _backupDatabasePersistanceService.GetAll(directory);
+                var records = _backupDatabasePersistanceService.GetAll(resourcegroup);
                 if (records == null)
                     return new List<BackupDatabaseInfoResponse>();
                 return records.ToList().Select(x => new BackupDatabaseInfoResponse
                 {
-                    BackupExpiryAgeInDays = x.BackupExpiryAgeInDays,
                     DatabaseName = x.DatabaseName,
                     DatabaseType = x.DatabaseType,
                     Description = x.Description,
@@ -74,7 +70,6 @@ namespace SemanticBackup.API.Controllers
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 return new BackupDatabaseInfoResponse
                 {
-                    BackupExpiryAgeInDays = x.BackupExpiryAgeInDays,
                     DatabaseName = x.DatabaseName,
                     DatabaseType = x.DatabaseType,
                     Description = x.Description,
@@ -108,7 +103,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] BackupDatabaseRequest request, string directory)
+        public ActionResult Post([FromBody] BackupDatabaseRequest request, string resourcegroup)
         {
             try
             {
@@ -116,13 +111,12 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Object value can't be NULL");
                 if (string.IsNullOrWhiteSpace(request.DatabaseName))
                     return new BadRequestObjectResult("No Databases Provided");
-                DateTime currentTime = _sharedTimeZone.Now;
                 List<string> databases = request.DatabaseName.Split(',').ToList();
                 foreach (var database in databases)
                 {
                     BackupDatabaseInfo saveObj = new BackupDatabaseInfo
                     {
-                        ActiveDirectoryId = directory,
+                        ResourceGroupId = resourcegroup,
                         Server = request.Server,
                         DatabaseName = database,
                         Username = request.Username,
@@ -130,8 +124,7 @@ namespace SemanticBackup.API.Controllers
                         DatabaseType = request.DatabaseType,
                         Port = request.Port,
                         Description = request.Description,
-                        DateRegistered = currentTime,
-                        BackupExpiryAgeInDays = request.BackupExpiryAgeInDays
+                        DateRegisteredUTC = DateTime.UtcNow
                     };
                     bool savedSuccess = _backupDatabasePersistanceService.AddOrUpdate(saveObj);
                     if (!savedSuccess)
@@ -152,17 +145,16 @@ namespace SemanticBackup.API.Controllers
         {
             try
             {
-                DateTime currentTime = _sharedTimeZone.Now;
+                DateTime currentTimeUTC = DateTime.UtcNow;
                 BackupSchedule saveObj = new BackupSchedule
                 {
                     BackupDatabaseInfoId = databaseInfo.Id,
-                    ActiveDirectoryId = databaseInfo.ActiveDirectoryId,
+                    ResourceGroupId = databaseInfo.ResourceGroupId,
                     ScheduleType = BackupScheduleType.FULLBACKUP.ToString(),
                     EveryHours = 24,
-                    StartDate = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day + 1),
-                    CreatedOn = currentTime,
-                    Name = databaseInfo.Name,
-                    LastRun = null
+                    StartDateUTC = new DateTime(currentTimeUTC.Year, currentTimeUTC.Month, currentTimeUTC.Day + 1),
+                    CreatedOnUTC = currentTimeUTC,
+                    Name = databaseInfo.Name
                 };
                 bool savedSuccess = _schedulePersistanceService.AddOrUpdate(saveObj);
                 if (!savedSuccess)
@@ -192,12 +184,11 @@ namespace SemanticBackup.API.Controllers
                 savedObj.DatabaseType = request.DatabaseType;
                 savedObj.Port = request.Port;
                 savedObj.Description = request.Description;
-                savedObj.BackupExpiryAgeInDays = request.BackupExpiryAgeInDays;
 
                 bool updatedSuccess = _backupDatabasePersistanceService.Update(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
-                return Ok(savedObj);
+                return Ok();
             }
             catch (Exception ex)
             {

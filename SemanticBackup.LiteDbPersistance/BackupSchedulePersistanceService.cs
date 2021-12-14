@@ -15,31 +15,35 @@ namespace SemanticBackup.LiteDbPersistance
             this.connString = options.ConnectionStringLiteDb;
         }
 
-        public List<BackupSchedule> GetAll(string directory)
+        public List<BackupSchedule> GetAll(string resourcegroup)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.ActiveDirectoryId == directory).ToList();
+                db.Pragma("UTC_DATE", true);
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).ToList();
             }
         }
-        public List<BackupSchedule> GetAllDueByDate(DateTime dateTime)
+        public List<BackupSchedule> GetAllDueByDate()
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRun <= dateTime && !string.IsNullOrWhiteSpace(x.ActiveDirectoryId)).OrderBy(x => x.NextRun).ToList();
+                db.Pragma("UTC_DATE", true);
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRunUTC <= DateTime.UtcNow && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRunUTC).ToList();
             }
         }
         public List<BackupSchedule> GetAllByDatabaseId(string id)
         {
             using (var db = new LiteDatabase(connString))
             {
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ActiveDirectoryId)).ToList();
+                db.Pragma("UTC_DATE", true);
+                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).ToList();
             }
         }
         public bool AddOrUpdate(BackupSchedule record)
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Upsert(record);
             }
         }
@@ -48,6 +52,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Query().Where(x => x.Id == id).FirstOrDefault();
             }
         }
@@ -56,6 +61,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 var collection = db.GetCollection<BackupSchedule>();
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
@@ -68,6 +74,7 @@ namespace SemanticBackup.LiteDbPersistance
         {
             using (var db = new LiteDatabase(connString))
             {
+                db.Pragma("UTC_DATE", true);
                 return db.GetCollection<BackupSchedule>().Update(record);
             }
         }

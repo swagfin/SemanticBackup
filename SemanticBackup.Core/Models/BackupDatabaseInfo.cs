@@ -7,7 +7,7 @@ namespace SemanticBackup.Core.Models
     {
         [Required, Key]
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
-        public string ActiveDirectoryId { get; set; }
+        public string ResourceGroupId { get; set; }
         public string Name { get { return $"{DatabaseName} on {Server}"; } }
         public string Description { get; set; }
         [Required]
@@ -32,8 +32,7 @@ namespace SemanticBackup.Core.Models
                     return null;
             }
         }
-        public DateTime DateRegistered { get; set; } = DateTime.Now;
-        public int BackupExpiryAgeInDays { get; set; } = 7; //Default 7 Days
+        public DateTime DateRegisteredUTC { get; set; } = DateTime.UtcNow;
     }
     public enum BackupDatabaseInfoDbType
     {

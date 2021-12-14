@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using SemanticBackup.WebClient.Models.Response;
 using SemanticBackup.WebClient.Services;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.DatabaseBackups
@@ -18,6 +19,7 @@ namespace SemanticBackup.WebClient.Pages.DatabaseBackups
         public BackupRecordResponse BackupRecordResponse { get; private set; }
         public string RerunStatus { get; private set; }
         public string RerunStatusReason { get; private set; }
+        public List<ContentDeliveryRecordResponse> ContentDeliveryRecordsResponse { get; private set; }
 
         public InfoModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
         {
@@ -34,6 +36,7 @@ namespace SemanticBackup.WebClient.Pages.DatabaseBackups
                 BackupRecordResponse = await _httpService.GetAsync<BackupRecordResponse>(url);
                 if (BackupRecordResponse == null)
                     return RedirectToPage("Index");
+                await GetContentDeliveryRecordsAsync(id);
                 if (Request.Query.ContainsKey("re-run"))
                 {
                     this.RerunStatus = Request.Query["re-run"];
@@ -47,6 +50,16 @@ namespace SemanticBackup.WebClient.Pages.DatabaseBackups
                 return RedirectToPage("Index");
             }
             return Page();
+        }
+
+        private async Task GetContentDeliveryRecordsAsync(string id)
+        {
+            try
+            {
+                var url = $"api/ContentDeliveryRecords/ByBackupRecordId/{id}";
+                ContentDeliveryRecordsResponse = await _httpService.GetAsync<List<ContentDeliveryRecordResponse>>(url);
+            }
+            catch (Exception ex) { this._logger.LogWarning(ex.Message); }
         }
     }
 }
