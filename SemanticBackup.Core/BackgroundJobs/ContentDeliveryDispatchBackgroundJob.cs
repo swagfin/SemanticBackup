@@ -81,7 +81,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         string statusMsg = "Dispatching Backup Record";
                                         if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DOWNLOAD_LINK.ToString())
                                         {
-                                            _botsManagerBackgroundJob.AddBot(new DownloadLinkGenBot(resourceGroup.Id, contentDeliveryRecord, backupRecordInfo, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new DownloadLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else
                                         {
