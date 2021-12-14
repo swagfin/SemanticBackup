@@ -41,6 +41,8 @@ namespace SemanticBackup.Core.BackgroundJobs
             {
                 while (true)
                 {
+                    //Delay
+                    await Task.Delay(10000);
                     try
                     {
                         List<BackupRecord> queuedBackups = this._backupRecordPersistanceService.GetAllByStatus(BackupRecordBackupStatus.COMPLETED.ToString());
@@ -89,8 +91,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         _logger.LogError(ex.Message);
                     }
-                    //Delay
-                    await Task.Delay(10000);
+
                 }
             });
             t.Start();

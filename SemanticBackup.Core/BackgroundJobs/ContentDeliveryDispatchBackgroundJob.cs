@@ -89,6 +89,11 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             //FTP Uploader
                                             _botsManagerBackgroundJob.AddBot(new FTPUploaderBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
+                                        else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.EMAIL_SMTP.ToString())
+                                        {
+                                            //Email Send and Uploader
+                                            _botsManagerBackgroundJob.AddBot(new EmailUploaderBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                        }
                                         else
                                         {
                                             status = ContentDeliveryRecordStatus.ERROR.ToString();

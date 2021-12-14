@@ -44,6 +44,8 @@ namespace SemanticBackup.Core.BackgroundJobs
             {
                 while (true)
                 {
+                    //Await
+                    await Task.Delay(10000);
                     try
                     {
                         DateTime currentTimeUTC = DateTime.UtcNow;
@@ -114,8 +116,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                         _logger.LogError(ex.Message);
                     }
 
-                    //Await
-                    await Task.Delay(10000);
                 }
             });
             t.Start();
