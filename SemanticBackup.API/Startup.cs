@@ -60,8 +60,8 @@ namespace SemanticBackup.API
             services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
 
             //Notifications
-            services.AddSingleton<BackupRecordHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
-            services.AddSingleton<IRecordStatusChangedNotifier>(svc => svc.GetRequiredService<BackupRecordHubDispatcher>());
+            services.AddSingleton<RecordStatusChangedHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
+            services.AddSingleton<IRecordStatusChangedNotifier>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
 
             //DASHBOARD SIGNAL DISPATCH
             services.AddSingleton<DashboardRefreshHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());
@@ -110,7 +110,7 @@ namespace SemanticBackup.API
             {
                 endpoints.MapControllers();
                 endpoints.MapDefaultControllerRoute();
-                endpoints.MapHub<BackupRecordHubDispatcher>("/BackupRecordsNotify");
+                endpoints.MapHub<RecordStatusChangedHubDispatcher>("/BackupRecordsNotify");
                 endpoints.MapHub<DashboardRefreshHubDispatcher>("/DasbhoardStatistics");
             });
         }

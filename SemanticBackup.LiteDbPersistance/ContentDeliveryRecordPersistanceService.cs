@@ -128,7 +128,7 @@ namespace SemanticBackup.LiteDbPersistance
                 foreach (var notifier in _backupRecordStatusChangedNotifiers)
                     try
                     {
-                        notifier.DispatchUpdatedStatus(record, isNewRecord);
+                        notifier.DispatchContentDeliveryUpdatedStatus(record, isNewRecord);
                     }
                     catch { }
         }

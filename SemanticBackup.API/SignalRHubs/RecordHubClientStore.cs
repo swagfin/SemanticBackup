@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace SemanticBackup.API.SignalRHubs
 {
-    public class BackupRecordHubClientStore
+    public class RecordHubClientStore
     {
 
         public static class BackupRecordHubClientStorage

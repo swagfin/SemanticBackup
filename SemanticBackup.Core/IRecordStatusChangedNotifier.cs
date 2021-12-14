@@ -4,7 +4,7 @@ namespace SemanticBackup.Core
 {
     public interface IRecordStatusChangedNotifier
     {
-        void DispatchUpdatedStatus(BackupRecord backupRecord, bool isNewRecord = false);
-        void DispatchUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord = false);
+        void DispatchBackupRecordUpdatedStatus(BackupRecord backupRecord, bool isNewRecord = false);
+        void DispatchContentDeliveryUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord = false);
     }
 }

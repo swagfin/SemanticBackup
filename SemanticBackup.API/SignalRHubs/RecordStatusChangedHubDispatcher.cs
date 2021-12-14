@@ -7,21 +7,23 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static SemanticBackup.API.SignalRHubs.BackupRecordHubClientStore;
+using static SemanticBackup.API.SignalRHubs.RecordHubClientStore;
 
 namespace SemanticBackup.API.SignalRHubs
 {
-    public class BackupRecordHubDispatcher : Hub, IRecordStatusChangedNotifier, IProcessorInitializable
+    public class RecordStatusChangedHubDispatcher : Hub, IRecordStatusChangedNotifier, IProcessorInitializable
     {
-        private readonly ILogger<BackupRecordHubDispatcher> _logger;
-        private readonly IHubContext<BackupRecordHubDispatcher> hub;
+        private readonly ILogger<RecordStatusChangedHubDispatcher> _logger;
+        private readonly IHubContext<RecordStatusChangedHubDispatcher> hub;
         private ConcurrentQueue<BackupRecordMetric> BackupRecordsQueue = new ConcurrentQueue<BackupRecordMetric>();
+        private ConcurrentQueue<ContentDeliveryRecordMetric> ContentDeliveryRecordsQueue = new ConcurrentQueue<ContentDeliveryRecordMetric>();
 
-        public BackupRecordHubDispatcher(ILogger<BackupRecordHubDispatcher> logger, IHubContext<BackupRecordHubDispatcher> hub)
+        public RecordStatusChangedHubDispatcher(ILogger<RecordStatusChangedHubDispatcher> logger, IHubContext<RecordStatusChangedHubDispatcher> hub)
         {
             this._logger = logger;
             this.hub = hub;
             BackupRecordsQueue = new ConcurrentQueue<BackupRecordMetric>();
+            ContentDeliveryRecordsQueue = new ConcurrentQueue<ContentDeliveryRecordMetric>();
         }
 
         public void Initialize()
@@ -43,7 +45,7 @@ namespace SemanticBackup.API.SignalRHubs
             _logger.LogInformation($"Adding client: {Context.ConnectionId}");
             return base.OnConnectedAsync();
         }
-        public void DispatchUpdatedStatus(BackupRecord backupRecord, bool isNewRecord)
+        public void DispatchBackupRecordUpdatedStatus(BackupRecord backupRecord, bool isNewRecord)
         {
             try
             {
@@ -52,6 +54,19 @@ namespace SemanticBackup.API.SignalRHubs
                     Metric = backupRecord,
                     IsNewMetric = isNewRecord,
 
+                });
+            }
+            catch { }
+        }
+
+        public void DispatchContentDeliveryUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord)
+        {
+            try
+            {
+                ContentDeliveryRecordsQueue.Enqueue(new ContentDeliveryRecordMetric
+                {
+                    Metric = record,
+                    IsNewMetric = isNewRecord,
                 });
             }
             catch { }
@@ -80,7 +95,7 @@ namespace SemanticBackup.API.SignalRHubs
                 {
                     while (true)
                     {
-
+                        #region Dequeue and Dispatch BackupRecord Status Changed
                         try
                         {
                             if (BackupRecordsQueue.TryDequeue(out BackupRecordMetric backupMetricRecord) && backupMetricRecord != null)
@@ -105,8 +120,31 @@ namespace SemanticBackup.API.SignalRHubs
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex.ToString());
+                            _logger.LogError($"Dequeue and Dispatch Backup Records Error: {ex.Message}");
                         }
+                        #endregion
+
+                        #region Dequeue and Dispatch Content Delivery Status Changed
+                        try
+                        {
+                            if (ContentDeliveryRecordsQueue.TryDequeue(out ContentDeliveryRecordMetric contentDeliveryRecord) && contentDeliveryRecord != null)
+                            {
+                                //Specific Group By BackupRecord ID
+                                ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == contentDeliveryRecord.Metric.BackupRecordId);
+                                if (clientGrp != null)
+                                    SendNotification(clientGrp, contentDeliveryRecord);
+                            }
+                            else
+                            {
+                                Thread.Sleep(500);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Dequeue and Dispatch Backup Records Error: {ex.Message}");
+                        }
+                        #endregion
+
                         //Default Sleep
                         Thread.Sleep(1000);
                     }
@@ -114,18 +152,18 @@ namespace SemanticBackup.API.SignalRHubs
             t.Start();
         }
 
-        private void SendNotification(ClientGroup clientGrp, BackupRecordMetric backupRecordMetric)
+        private void SendNotification(ClientGroup clientGrp, ContentDeliveryRecordMetric contentDeliveryRecord)
         {
             try
             {
 
-                _logger.LogInformation("Sending Metrics to Connected: {group}", clientGrp.Name);
+                _logger.LogInformation("Sending Content Delivery Notification to Connected: {group}", clientGrp.Name);
                 //Set Last Update Time
                 clientGrp.LastRefreshUTC = DateTime.UtcNow;
-                backupRecordMetric.LastSyncDateUTC = DateTime.UtcNow;
-                backupRecordMetric.Subscription = clientGrp.Name;
-                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecordMetric); ;
-                _logger.LogInformation("Successfully sent Metrics for Group: {group}", clientGrp.Name);
+                contentDeliveryRecord.LastSyncDateUTC = DateTime.UtcNow;
+                contentDeliveryRecord.Subscription = clientGrp.Name;
+                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveContentDeliveryNotification", contentDeliveryRecord); ;
+                _logger.LogInformation("Successfully sent Content Delivery Notification for Group: {group}", clientGrp.Name);
             }
             catch (Exception ex)
             {
@@ -134,15 +172,38 @@ namespace SemanticBackup.API.SignalRHubs
             }
         }
 
-        public void DispatchUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord)
+        private void SendNotification(ClientGroup clientGrp, BackupRecordMetric backupRecordMetric)
         {
-            throw new NotImplementedException();
+            try
+            {
+
+                _logger.LogInformation("Sending Backup Record Notification to Connected: {group}", clientGrp.Name);
+                //Set Last Update Time
+                clientGrp.LastRefreshUTC = DateTime.UtcNow;
+                backupRecordMetric.LastSyncDateUTC = DateTime.UtcNow;
+                backupRecordMetric.Subscription = clientGrp.Name;
+                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecordMetric); ;
+                _logger.LogInformation("Successfully sent Backup Record Notification for Group: {group}", clientGrp.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                //throw;
+            }
         }
+
     }
     public class BackupRecordMetric
     {
         public string Subscription { get; set; }
         public BackupRecord Metric { get; set; } = null;
+        public DateTime LastSyncDateUTC { get; set; } = DateTime.UtcNow;
+        public bool IsNewMetric { get; set; } = false;
+    }
+    public class ContentDeliveryRecordMetric
+    {
+        public string Subscription { get; set; }
+        public ContentDeliveryRecord Metric { get; set; } = null;
         public DateTime LastSyncDateUTC { get; set; } = DateTime.UtcNow;
         public bool IsNewMetric { get; set; } = false;
     }
