@@ -75,7 +75,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 }
                                 else
                                 {
-                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
+                                    //Override Maximum Running Threads// This is because of currently being used exception
+                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, 1))
                                     {
                                         string status = ContentDeliveryRecordStatus.EXECUTING.ToString();
                                         string statusMsg = "Dispatching Backup Record";
