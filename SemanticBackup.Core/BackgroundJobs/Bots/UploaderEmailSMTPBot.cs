@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
-    internal class EmailUploaderBot : IBot
+    internal class UploaderEmailSMTPBot : IBot
     {
         private readonly string _resourceGroupId;
         private readonly ContentDeliveryRecord _contentDeliveryRecord;
@@ -24,7 +24,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
 
-        public EmailUploaderBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
+        public UploaderEmailSMTPBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;

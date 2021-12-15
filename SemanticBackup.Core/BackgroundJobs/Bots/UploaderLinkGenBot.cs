@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
-    internal class DownloadLinkGenBot : IBot
+    internal class UploaderLinkGenBot : IBot
     {
         private readonly string _resourceGroupId;
         private readonly ContentDeliveryRecord _contentDeliveryRecord;
@@ -22,7 +22,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
 
-        public DownloadLinkGenBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
+        public UploaderLinkGenBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
@@ -44,7 +44,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 stopwatch.Start();
                 string contentLink = 5.GenerateUniqueId();
                 if (settings.DownloadLinkType == "LONG")
-                    contentLink = string.Format("{0}?token={1}", 25.GenerateUniqueId(), $"{this._backupRecord.Id}|{this._contentDeliveryConfiguration.Id}".ToMD5String());
+                    contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{this._backupRecord.Id}|{this._contentDeliveryConfiguration.Id}".ToMD5String());
                 //Job to Do
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), contentLink, stopwatch.ElapsedMilliseconds);

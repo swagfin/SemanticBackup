@@ -196,7 +196,7 @@ namespace SemanticBackup.API.Controllers
                     configs.Add(new ContentDeliveryConfiguration
                     {
                         IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.DOWNLOAD_LINK.ToString(),
+                        DeliveryType = ContentDeliveryType.DIRECT_LINK.ToString(),
                         ResourceGroupId = resourceGroupId,
                         Configuration = JsonConvert.SerializeObject(request.RSDownloadLinkSetting)
                     });
@@ -217,6 +217,15 @@ namespace SemanticBackup.API.Controllers
                         DeliveryType = ContentDeliveryType.EMAIL_SMTP.ToString(),
                         ResourceGroupId = resourceGroupId,
                         Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting)
+                    });
+                //Dropbox
+                if (request.RSDropBoxSetting != null && request.RSDropBoxSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.DROPBOX.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSDropBoxSetting)
                     });
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }

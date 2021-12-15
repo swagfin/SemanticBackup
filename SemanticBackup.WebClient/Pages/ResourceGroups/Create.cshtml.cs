@@ -74,6 +74,19 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
                         ErrorResponse = "SMTP Host Destination Address have not been added, at list one destination address required If Email SMTP Content Delivery has been Enabled";
                         return false;
                     }
+
+                if (RGRequest.RSDropBoxSetting != null && RGRequest.RSDropBoxSetting.IsEnabled)
+                    if (string.IsNullOrEmpty(RGRequest.RSDropBoxSetting.AccessToken) || string.IsNullOrEmpty(RGRequest.RSDropBoxSetting.Directory))
+                    {
+                        ErrorResponse = "Dropbox API Token and Directory field are required If Dropbox Content Delivery has been Enabled";
+                        return false;
+                    }
+                    else
+                    if (RGRequest.RSDropBoxSetting.AccessToken.Length < 16)
+                    {
+                        ErrorResponse = "Dropbox API Token provided is Invalid";
+                        return false;
+                    }
                 return true;
             }
             catch (Exception ex) { _logger.LogWarning(ex.Message); ErrorResponse = ex.Message; return false; }

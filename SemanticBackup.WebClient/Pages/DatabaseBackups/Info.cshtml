@@ -213,7 +213,7 @@
                             <tr id="record_for_@(record.Id)">
                                 <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.DeliveryType</td>
                                 @{
-                                    if (record.DeliveryType == "DOWNLOAD_LINK")
+                                    if (record.DeliveryType == "DIRECT_LINK")
                                     {
                                         <td class="execution_message_for_downloadLink_@(record.Id)">
                                             <a href="@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)"><i class="download icon"></i> Download Link </a>
@@ -247,7 +247,7 @@
                                             <a href="/databasebackups/@(record.Id)/re-run/redirect/@(record.BackupRecordId)/content-delivery" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>
                                         </td>
                                     }
-                                    else if (record.DeliveryType == "DOWNLOAD_LINK")
+                                    else if (record.DeliveryType == "DIRECT_LINK")
                                     {
                                         <td class="event_downloadlink_for_@(record.Id)">
                                             <a href='@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)' class="ui teal label"><i class="download icon"></i> Download</a>
@@ -264,9 +264,9 @@
                         }
                     else
                     {
-                        <tr>
+                        <tr class="no-delivery-record">
                             <td colspan="4" style="text-align:center">
-                                <div class="ui message small warning"><div>No Available Conent Delivery Records</div></div>
+                                <div class="ui message small warning"><div>No Available Delivery Records</div></div>
                             </td>
                         </tr>
                     }
@@ -354,16 +354,18 @@
             var key = metric.id;
             var status = metric.currentStatus;
              //Check if Not Exists
+            $(".no-delivery-record").remove();
+            
             if(response.isNewMetric && $("#record_for_" + key).length == 0)
               {
                  console.log("Prepending new Record Notification");
                  var newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_'+ key +'">'+ metric.executionMessage + '</td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_rerun_for_'+ key +'"><a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a></td></tr>';
-                 if(metric.deliveryType == "DOWNLOAD_LINK")
+                 if(metric.deliveryType == "DIRECT_LINK")
                  {
                    var downloadLink = baseUrl + "d/" + metric.executionMessage;
                    newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_downloadLink_'+ key +'"> <a href="'+ downloadLink +'"><i class="download icon"></i> Download Link </a>  </td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_downloadlink_for_'+ key +'"><a href="'+ downloadLink +'" class="ui teal label"><i class="download icon"></i> Download</a></td></tr>';
                  }
-                 $("#records_data_table").appendChild(newElement);
+                 $("#records_data_table").prepend(newElement);
               }
             //Update Status
             console.log("Updating UI Key: " + key + ", Status: " + status);

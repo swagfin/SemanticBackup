@@ -30,6 +30,8 @@ namespace SemanticBackup.WebClient.Models.Requests
             get
             {
                 List<string> allEmails = new List<string>();
+                if (SMTPDestinations == null)
+                    return allEmails;
                 string[] emailSplits = SMTPDestinations?.Split(',');
                 if (emailSplits.Length < 1)
                     return allEmails;
@@ -39,5 +41,11 @@ namespace SemanticBackup.WebClient.Models.Requests
                 return allEmails;
             }
         }
+    }
+    public class RSDropBoxSettings
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string AccessToken { get; set; }
+        public string Directory { get; set; } = "/";
     }
 }

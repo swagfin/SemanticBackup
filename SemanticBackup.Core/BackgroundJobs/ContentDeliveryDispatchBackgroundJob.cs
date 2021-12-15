@@ -79,20 +79,25 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     {
                                         string status = ContentDeliveryRecordStatus.EXECUTING.ToString();
                                         string statusMsg = "Dispatching Backup Record";
-                                        if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DOWNLOAD_LINK.ToString())
+                                        if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DIRECT_LINK.ToString())
                                         {
                                             //Download Link Generator
-                                            _botsManagerBackgroundJob.AddBot(new DownloadLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.FTP_UPLOAD.ToString())
                                         {
                                             //FTP Uploader
-                                            _botsManagerBackgroundJob.AddBot(new FTPUploaderBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.EMAIL_SMTP.ToString())
                                         {
                                             //Email Send and Uploader
-                                            _botsManagerBackgroundJob.AddBot(new EmailUploaderBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                        }
+                                        else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
+                                        {
+                                            //Email Send and Uploader
+                                            _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else
                                         {

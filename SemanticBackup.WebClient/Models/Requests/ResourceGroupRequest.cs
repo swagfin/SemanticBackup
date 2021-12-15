@@ -13,5 +13,6 @@ namespace SemanticBackup.WebClient.Models.Requests
         public RSDownloadLinkSetting RSDownloadLinkSetting { get; set; } = null;
         public RSFTPSetting RSFTPSetting { get; set; } = null;
         public RSEmailSMTPSetting RSEmailSMTPSetting { get; set; } = null;
+        public RSDropBoxSettings RSDropBoxSetting { get; set; } = null;
     }
 }

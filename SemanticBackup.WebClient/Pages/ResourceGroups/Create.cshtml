@@ -76,9 +76,10 @@
                     <h4>Backup Content Delivery Settings</h4>
 
                     <div class="ui top attached tabular primary small menu">
-                        <a class="item active" data-tab="tabdownloadlink">DOWNLOAD LINK</a>
-                        <a class="item" data-tab="tabftp">FTP UPLOAD</a>
-                        <a class="item" data-tab="tabemailsmtp">EMAIL (SMTP)</a>
+                        <a class="item active" data-tab="tabdownloadlink">Direct Link</a>
+                        <a class="item" data-tab="tabftp">FTP Upload</a>
+                        <a class="item" data-tab="tabemailsmtp">Email (SMTP)</a>
+                        <a class="item" data-tab="tabdropbox">Dropbox</a>
                     </div>
 
                     <!--DOWNLOAD LINK-->
@@ -121,7 +122,7 @@
                         </div>
                         <div class="field">
                             <label>FTP Upload Path</label>
-                            <input asp-for="RGRequest.RSFTPSetting.Directory" autocomplete="off" placeholder="e.g. /uploads/" value="/">
+                            <input asp-for="RGRequest.RSFTPSetting.Directory" autocomplete="off" value="/backups/" placeholder="e.g. /backups/" value="/">
                         </div>
                     </div>
 
@@ -155,6 +156,25 @@
                         <div class="field">
                             <label>Receiving Addresses (Separate with ",")</label>
                             <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
+                        </div>
+                    </div>
+
+
+                    
+                    <!--DROPBOX CONTENT DELIVERY LINK-->
+                    <div class="ui bottom attached tab segment" data-tab="tabdropbox">
+                        <span>
+                            <input id="RSDropBoxSetting.IsEnabled" asp-for="RGRequest.RSDropBoxSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via Dropbox Storage" style="cursor:pointer" for="RSDropBoxSetting.IsEnabled">Enable Dropbox Content Delivery</label>
+                        </span>
+
+                        <div class="field">
+                            <label>API Access Token (Create App <a href="https://www.dropbox.com/developers/apps/create" target="_blank">Create DropBox App</a>)</label>
+                            <input asp-for="RGRequest.RSDropBoxSetting.AccessToken" autocomplete="off" placeholder="xxxxxx">
+                        </div>
+                        <div class="field">
+                            <label>Upload Directory</label>
+                            <input asp-for="RGRequest.RSDropBoxSetting.Directory" autocomplete="off" value="/backups/" placeholder="e.g. /backups/">
                         </div>
                     </div>
 

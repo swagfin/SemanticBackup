@@ -24,4 +24,10 @@
         public string SMTPDefaultSMTPFromName { get; set; }
         public string SMTPDestinations { get; set; }
     }
+    public class RSDropBoxSettings
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string AccessToken { get; set; }
+        public string Directory { get; set; } = "/";
+    }
 }
