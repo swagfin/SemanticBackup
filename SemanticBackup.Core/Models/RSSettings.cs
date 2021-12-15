@@ -42,17 +42,23 @@ namespace SemanticBackup.Core.Models
             }
         }
     }
-
-    public class RSDropBoxSettings
+    public class RSDropBoxSetting
     {
         public bool IsEnabled { get; set; } = false;
         public string AccessToken { get; set; }
         public string Directory { get; set; } = "/";
     }
-    public class RSAzureBlobStorageSettings
+    public class RSAzureBlobStorageSetting
     {
         public bool IsEnabled { get; set; } = false;
         public string ConnectionString { get; set; }
         public string BlobContainer { get; set; }
+    }
+    public class RSMegaNxSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string RemoteFolder { get; set; }
     }
 }

@@ -21,6 +21,7 @@ namespace SemanticBackup.Core.Models
         FTP_UPLOAD,
         EMAIL_SMTP,
         DROPBOX,
-        AZURE_BLOB_STORAGE
+        AZURE_BLOB_STORAGE,
+        MEGA_STORAGE
     }
 }

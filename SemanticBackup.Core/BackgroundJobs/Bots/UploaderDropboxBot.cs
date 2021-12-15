@@ -42,7 +42,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 _logger.LogInformation($"Uploading Backup File via DropBox....");
                 await Task.Delay(new Random().Next(1000));
-                RSDropBoxSettings settings = GetValidDeserializedSettings();
+                RSDropBoxSetting settings = GetValidDeserializedSettings();
                 stopwatch.Start();
                 //Upload FTP
                 CheckIfFileExistsOrRemove(this._backupRecord.Path);
@@ -76,11 +76,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             }
         }
 
-        private RSDropBoxSettings GetValidDeserializedSettings()
+        private RSDropBoxSetting GetValidDeserializedSettings()
         {
-            var config = JsonConvert.DeserializeObject<RSDropBoxSettings>(this._contentDeliveryConfiguration.Configuration);
+            var config = JsonConvert.DeserializeObject<RSDropBoxSetting>(this._contentDeliveryConfiguration.Configuration);
             if (config == null)
-                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSDropBoxSettings)}");
+                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSDropBoxSetting)}");
             return config;
         }
 

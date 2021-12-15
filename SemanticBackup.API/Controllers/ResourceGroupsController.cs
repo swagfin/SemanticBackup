@@ -218,6 +218,16 @@ namespace SemanticBackup.API.Controllers
                         ResourceGroupId = resourceGroupId,
                         Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting)
                     });
+                //Mega Storage
+                if (request.RSMegaNxSetting != null && request.RSMegaNxSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.MEGA_STORAGE.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSMegaNxSetting)
+                    });
+
                 //Dropbox
                 if (request.RSDropBoxSetting != null && request.RSDropBoxSetting.IsEnabled)
                     configs.Add(new ContentDeliveryConfiguration

@@ -93,6 +93,12 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
                         ErrorResponse = "Azure Blob Storage Connection String and Blob Container fields are required If Azure Blob Storage Content Delivery has been Enabled";
                         return false;
                     }
+                if (RGRequest.RSMegaNxSetting != null && RGRequest.RSMegaNxSetting.IsEnabled)
+                    if (string.IsNullOrEmpty(RGRequest.RSMegaNxSetting.Username) || string.IsNullOrEmpty(RGRequest.RSMegaNxSetting.Password))
+                    {
+                        ErrorResponse = "Mega Storage Username and Password fields are required If Mega Storage Nz Content Delivery has been Enabled";
+                        return false;
+                    }
                 return true;
             }
             catch (Exception ex) { _logger.LogWarning(ex.Message); ErrorResponse = ex.Message; return false; }

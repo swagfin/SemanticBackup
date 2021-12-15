@@ -1,17 +1,18 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+﻿using CG.Web.MegaApiClient;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
-    internal class UploaderAzureStorageBot : IBot
+    internal class UploaderMegaNxBot : IBot
     {
         private readonly string _resourceGroupId;
         private readonly ContentDeliveryRecord _contentDeliveryRecord;
@@ -24,7 +25,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
 
-        public UploaderAzureStorageBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
+        public UploaderMegaNxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
@@ -40,41 +41,28 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             Stopwatch stopwatch = new Stopwatch();
             try
             {
-                _logger.LogInformation($"Uploading Backup File via Azure Blob Storage....");
+                _logger.LogInformation($"Uploading Backup File via MEGA nz....");
                 await Task.Delay(new Random().Next(1000));
-                RSAzureBlobStorageSetting settings = GetValidDeserializedSettings();
+                RSMegaNxSetting settings = GetValidDeserializedSettings();
                 stopwatch.Start();
                 //Upload FTP
                 CheckIfFileExistsOrRemove(this._backupRecord.Path);
                 //FTP Upload
-                string executionMessage = "Azure Blob Storage Uploading...";
-                //Container
-                string validContainer = (string.IsNullOrWhiteSpace(settings.BlobContainer)) ? "backups" : settings.BlobContainer;
-                //Filename
-                string fileName = Path.GetFileName(this._backupRecord.Path);
-                //Proceed
-                if (string.IsNullOrWhiteSpace(settings.ConnectionString))
-                    throw new Exception("Invalid Connection String");
-
-                using (FileStream stream = File.Open(this._backupRecord.Path, FileMode.Open))
-                {
-                    // Initialise client in a different place if you like
-                    //string storageConnectionString = "DefaultEndpointsProtocol=https;"
-                    //        + "AccountName=[ACCOUNT]"
-                    //        + ";AccountKey=[KEY]"
-                    //        + ";EndpointSuffix=core.windows.net";
-                    CloudStorageAccount account = CloudStorageAccount.Parse(settings.ConnectionString);
-                    var blobClient = account.CreateCloudBlobClient();
-                    // Make sure container is there
-                    var blobContainer = blobClient.GetContainerReference(validContainer);
-                    await blobContainer.CreateIfNotExistsAsync();
-                    CloudBlockBlob blockBlob = blobContainer.GetBlockBlobReference(fileName);
-                    await blockBlob.UploadFromStreamAsync(stream);
-                    executionMessage = $"Uploaded Container: {validContainer}";
-                }
+                string executionMessage = "MEGA nz Uploading...";
+                //Directory
+                string validDirectory = (string.IsNullOrWhiteSpace(settings.RemoteFolder)) ? "backups" : settings.RemoteFolder;
+                validDirectory = validDirectory.Replace(" ", "_").Replace("/", "-");
+                MegaApiClient client = new MegaApiClient();
+                client.Login(settings.Username, settings.Password);
+                IEnumerable<INode> nodes = client.GetNodes();
+                INode root = nodes.Single(x => x.Type == NodeType.Root);
+                INode myFolder = client.CreateFolder(validDirectory, root);
+                INode myFile = client.UploadFile(this._backupRecord.Path, myFolder);
+                executionMessage = $"Uploaded to: {validDirectory}";
+                client.Logout();
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
-                _logger.LogInformation($"Uploading Backup File via Azure Blob Storage: {_backupRecord.Path}... SUCCESS");
+                _logger.LogInformation($"Uploading Backup File MEGA nz: {_backupRecord.Path}... SUCCESS");
             }
             catch (Exception ex)
             {
@@ -84,11 +72,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             }
         }
 
-        private RSAzureBlobStorageSetting GetValidDeserializedSettings()
+        private RSMegaNxSetting GetValidDeserializedSettings()
         {
-            var config = JsonConvert.DeserializeObject<RSAzureBlobStorageSetting>(this._contentDeliveryConfiguration.Configuration);
+            var config = JsonConvert.DeserializeObject<RSMegaNxSetting>(this._contentDeliveryConfiguration.Configuration);
             if (config == null)
-                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSAzureBlobStorageSetting)}");
+                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSMegaNxSetting)}");
             return config;
         }
 
