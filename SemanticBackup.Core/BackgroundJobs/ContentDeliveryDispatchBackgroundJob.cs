@@ -54,9 +54,9 @@ namespace SemanticBackup.Core.BackgroundJobs
                             foreach (ContentDeliveryRecord contentDeliveryRecord in contentDeliveryRecords)
                             {
                                 _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
-                                BackupRecord backupRecordInfo = this._backupRecordPersistanceService.GetById(contentDeliveryRecord.BackupRecordId);
-                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecordInfo.ResourceGroupId);
-                                ContentDeliveryConfiguration contentDeliveryConfiguration = this._contentDeliveryConfigPersistanceService.GetById(contentDeliveryRecord.ContentDeliveryConfigurationId);
+                                BackupRecord backupRecordInfo = this._backupRecordPersistanceService.GetById(contentDeliveryRecord?.BackupRecordId);
+                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecordInfo?.ResourceGroupId);
+                                ContentDeliveryConfiguration contentDeliveryConfiguration = this._contentDeliveryConfigPersistanceService.GetById(contentDeliveryRecord?.ContentDeliveryConfigurationId);
 
                                 if (backupRecordInfo == null)
                                 {

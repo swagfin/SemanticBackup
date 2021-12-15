@@ -92,7 +92,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
                         //Finally Send
                         await Task.Run(() => Smtp_Server.Send(e_mail));
-                        executionMessage = $"Sent To: {settings.SMTPDestinations}";
+                        executionMessage = $"Sent to: {settings.SMTPDestinations}";
                     }
                 }
                 stopwatch.Stop();
