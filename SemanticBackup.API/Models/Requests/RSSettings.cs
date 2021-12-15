@@ -1,4 +1,6 @@
-﻿namespace SemanticBackup.API.Models.Requests
+﻿using System.Collections.Generic;
+
+namespace SemanticBackup.API.Models.Requests
 {
     public class RSDownloadLinkSetting
     {
@@ -23,5 +25,40 @@
         public string SMTPEmailCredentials { get; set; }
         public string SMTPDefaultSMTPFromName { get; set; }
         public string SMTPDestinations { get; set; }
+        public List<string> ValidSMTPDestinations
+        {
+            get
+            {
+                List<string> allEmails = new List<string>();
+                if (SMTPDestinations == null)
+                    return allEmails;
+                string[] emailSplits = SMTPDestinations?.Split(',');
+                if (emailSplits.Length < 1)
+                    return allEmails;
+                foreach (string email in emailSplits)
+                    if (!string.IsNullOrEmpty(email))
+                        allEmails.Add(email.Replace(" ", string.Empty).Trim());
+                return allEmails;
+            }
+        }
+    }
+    public class RSDropBoxSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string AccessToken { get; set; }
+        public string Directory { get; set; } = "/";
+    }
+    public class RSAzureBlobStorageSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string ConnectionString { get; set; }
+        public string BlobContainer { get; set; }
+    }
+    public class RSMegaNxSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string RemoteFolder { get; set; }
     }
 }

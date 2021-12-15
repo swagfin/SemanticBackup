@@ -4,6 +4,8 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 
 namespace SemanticBackup.LiteDbPersistance
 {
@@ -139,7 +141,11 @@ namespace SemanticBackup.LiteDbPersistance
                 var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
                 if (objFound != null)
                 {
-                    return collection.Delete(new BsonValue(objFound.Id));
+                    string pathToRemove = objFound.Path;
+                    bool removedSuccess = collection.Delete(new BsonValue(objFound.Id));
+                    if (removedSuccess)
+                        TryDeleteOldFile(pathToRemove);
+                    return removedSuccess;
                 }
                 return false;
             }
@@ -191,6 +197,36 @@ namespace SemanticBackup.LiteDbPersistance
                 }
                 return false;
             }
+        }
+
+        private void TryDeleteOldFile(string path)
+        {
+            try
+            {
+                bool success = false;
+                int attempts = 0;
+                do
+                {
+                    try
+                    {
+                        attempts++;
+                        if (File.Exists(path))
+                            File.Delete(path);
+                        success = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (attempts >= 10)
+                        {
+                            Thread.Sleep(2000);
+                            throw new Exception($"Maximum Deletion Attempts, Error: {ex.Message}");
+                        }
+                    }
+                }
+                while (!success);
+
+            }
+            catch (Exception) { }
         }
 
     }

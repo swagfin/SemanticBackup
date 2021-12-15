@@ -17,8 +17,11 @@ namespace SemanticBackup.Core.Models
 
     public enum ContentDeliveryType
     {
-        DOWNLOAD_LINK,
+        DIRECT_LINK,
         FTP_UPLOAD,
-        EMAIL_SMTP
+        EMAIL_SMTP,
+        DROPBOX,
+        AZURE_BLOB_STORAGE,
+        MEGA_STORAGE
     }
 }

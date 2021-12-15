@@ -25,21 +25,13 @@ namespace SemanticBackup.Core.BackgroundJobs
 
         public void AddBot(IBot bot) => Bots.Add(bot);
         public void AddBot(List<IBot> bots) => Bots.AddRange(bots);
-        public int GetRunningBotsCount(string resourceGroupId) => this.Bots.Where(x => x.ResourceGroupId == resourceGroupId).Count(x => x.IsStarted && !x.IsCompleted);
-        public int GetDistinctResourceGroupsCount() => this.Bots.Select(x => x.ResourceGroupId).Distinct().Count();
-        public int GetRunningBotsCount() => this.Bots.Count(x => x.IsStarted && !x.IsCompleted);
-
-        public int GetAvailableResourceGroupBotsCount(string resourceGroupId, int maximumThreads = 1)
-        {
-            int runningResourceGrpThreads = GetRunningBotsCount(resourceGroupId);
-            int availableResourceGrpThreads = maximumThreads - runningResourceGrpThreads;
-            return availableResourceGrpThreads;
-        }
         public bool HasAvailableResourceGroupBotsCount(string resourceGroupId, int maximumThreads = 1)
         {
-            return GetAvailableResourceGroupBotsCount(resourceGroupId, maximumThreads) > 0;
+            int resourceBots = this.Bots.Where(x => x.ResourceGroupId == resourceGroupId).Count();
+            int runningResourceGrpThreads = resourceBots;
+            int availableResourceGrpThreads = maximumThreads - runningResourceGrpThreads;
+            return availableResourceGrpThreads > 0;
         }
-
         private void SetupBotsBackgroundService()
         {
             var t = new Thread(async () =>
@@ -61,8 +53,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 foreach (IBot bot in botsCompleted)
                                     this.Bots.Remove(bot);
                         }
-                        //Console Notify
-                        _logger.LogInformation("############### RUNNING BOTS: {0:N0} | RESOURCE GROUPS: {1:N0} ###############", GetRunningBotsCount(), GetDistinctResourceGroupsCount());
                     }
                     catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
                     //Delay

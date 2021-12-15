@@ -30,6 +30,8 @@ namespace SemanticBackup.Core.Models
             get
             {
                 List<string> allEmails = new List<string>();
+                if (SMTPDestinations == null)
+                    return allEmails;
                 string[] emailSplits = SMTPDestinations?.Split(',');
                 if (emailSplits.Length < 1)
                     return allEmails;
@@ -39,5 +41,24 @@ namespace SemanticBackup.Core.Models
                 return allEmails;
             }
         }
+    }
+    public class RSDropBoxSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string AccessToken { get; set; }
+        public string Directory { get; set; } = "/";
+    }
+    public class RSAzureBlobStorageSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string ConnectionString { get; set; }
+        public string BlobContainer { get; set; }
+    }
+    public class RSMegaNxSetting
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string RemoteFolder { get; set; }
     }
 }

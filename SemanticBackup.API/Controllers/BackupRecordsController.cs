@@ -156,6 +156,27 @@ namespace SemanticBackup.API.Controllers
                 return new BadRequestObjectResult(ex.Message);
             }
         }
+
+        [HttpDelete("{id}")]
+        public ActionResult Delete(string id)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                    throw new Exception("Id can't be NULL");
+                bool removedSuccess = _backupRecordPersistanceService.Remove(id);
+                if (!removedSuccess)
+                    return new NotFoundObjectResult($"No Data Found with Key: {id}");
+                else
+                    return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return new BadRequestObjectResult(ex.Message);
+            }
+        }
+
         [Route("re-run/{id}")]
         [HttpGet, HttpPost]
         public ActionResult GetInitRerun(string id)

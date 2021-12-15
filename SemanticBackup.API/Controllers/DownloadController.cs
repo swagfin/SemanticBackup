@@ -28,8 +28,8 @@ namespace SemanticBackup.API.Controllers
         {
             try
             {
-                string _key = string.IsNullOrWhiteSpace(token) ? id : $"{id}?&token={token}";
-                ContentDeliveryRecord contentDeliveryRecord = _contentDeliveryRecordPersistanceService.GetByContentTypeByExecutionMessage(ContentDeliveryType.DOWNLOAD_LINK.ToString(), _key);
+                string _key = string.IsNullOrWhiteSpace(token) ? id : $"{id}?token={token}";
+                ContentDeliveryRecord contentDeliveryRecord = _contentDeliveryRecordPersistanceService.GetByContentTypeByExecutionMessage(ContentDeliveryType.DIRECT_LINK.ToString(), _key);
                 if (contentDeliveryRecord == null)
                     return new NotFoundObjectResult("No Download File with the Link Provided");
                 BackupRecord backupRecord = _backupRecordPersistanceService.GetById(contentDeliveryRecord.BackupRecordId);

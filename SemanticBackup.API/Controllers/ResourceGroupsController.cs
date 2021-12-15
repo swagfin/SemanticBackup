@@ -196,7 +196,7 @@ namespace SemanticBackup.API.Controllers
                     configs.Add(new ContentDeliveryConfiguration
                     {
                         IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.DOWNLOAD_LINK.ToString(),
+                        DeliveryType = ContentDeliveryType.DIRECT_LINK.ToString(),
                         ResourceGroupId = resourceGroupId,
                         Configuration = JsonConvert.SerializeObject(request.RSDownloadLinkSetting)
                     });
@@ -217,6 +217,34 @@ namespace SemanticBackup.API.Controllers
                         DeliveryType = ContentDeliveryType.EMAIL_SMTP.ToString(),
                         ResourceGroupId = resourceGroupId,
                         Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting)
+                    });
+                //Mega Storage
+                if (request.RSMegaNxSetting != null && request.RSMegaNxSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.MEGA_STORAGE.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSMegaNxSetting)
+                    });
+
+                //Dropbox
+                if (request.RSDropBoxSetting != null && request.RSDropBoxSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.DROPBOX.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSDropBoxSetting)
+                    });
+                //Azure Blob Storage
+                if (request.RSAzureBlobStorageSetting != null && request.RSAzureBlobStorageSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.AZURE_BLOB_STORAGE.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSAzureBlobStorageSetting)
                     });
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }

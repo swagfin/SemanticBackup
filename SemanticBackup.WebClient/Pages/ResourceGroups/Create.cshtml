@@ -76,9 +76,12 @@
                     <h4>Backup Content Delivery Settings</h4>
 
                     <div class="ui top attached tabular primary small menu">
-                        <a class="item active" data-tab="tabdownloadlink">DOWNLOAD LINK</a>
-                        <a class="item" data-tab="tabftp">FTP UPLOAD</a>
-                        <a class="item" data-tab="tabemailsmtp">EMAIL (SMTP)</a>
+                        <a class="item active" data-tab="tabdownloadlink"><i class="linkify icon"></i> Direct Link</a>
+                        <a class="item" data-tab="tabftp"><i class="server icon"></i> FTP Upload</a>
+                        <a class="item" data-tab="tabemailsmtp"><i class="envelope icon"></i> Email (SMTP)</a>
+                        <a class="item" data-tab="tabmegastorage"><i class="cloud upload icon"></i> Mega Storage</a>
+                        <a class="item" data-tab="tabdropbox"><i class="dropbox icon"></i> Dropbox Storage</a>
+                        <a class="item" data-tab="tabazureblobstorage"><i class="box icon"></i> Azure Blob Storage</a>
                     </div>
 
                     <!--DOWNLOAD LINK-->
@@ -121,7 +124,7 @@
                         </div>
                         <div class="field">
                             <label>FTP Upload Path</label>
-                            <input asp-for="RGRequest.RSFTPSetting.Directory" autocomplete="off" placeholder="e.g. /uploads/" value="/">
+                            <input asp-for="RGRequest.RSFTPSetting.Directory" autocomplete="off" value="/backups/" placeholder="e.g. /backups/" value="/">
                         </div>
                     </div>
 
@@ -157,6 +160,71 @@
                             <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
                         </div>
                     </div>
+
+
+                    
+                    <!--MEGA BLOB STORAGE-->
+                    <div class="ui bottom attached tab segment" data-tab="tabmegastorage">
+                        <span>
+                            <input id="RSMegaNxSetting.IsEnabled" asp-for="RGRequest.RSMegaNxSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via Dropbox Storage" style="cursor:pointer" for="RSMegaNxSetting.IsEnabled">Enable Mega Storage Content Delivery</label>
+                        </span>
+                        <p>Create <a href="https://mega.nz/register/" target="_blank">Mega Storage Account</a> to get 50GB free Storage</p>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Username</label>
+                                <input asp-for="RGRequest.RSMegaNxSetting.Username" autocomplete="off" placeholder="e.g. username@domain.com">
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <input asp-for="RGRequest.RSMegaNxSetting.Password" autocomplete="off" type="password" placeholder="xxxxxxxxxxxx">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Remote Folder</label>
+                            <input asp-for="RGRequest.RSMegaNxSetting.RemoteFolder" autocomplete="off" value="backups" placeholder="e.g. backups">
+                        </div>
+                    </div>
+
+
+                    <!--DROPBOX CONTENT DELIVERY LINK-->
+                    <div class="ui bottom attached tab segment" data-tab="tabdropbox">
+                        <span>
+                            <input id="RSDropBoxSetting.IsEnabled" asp-for="RGRequest.RSDropBoxSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via Dropbox Storage" style="cursor:pointer" for="RSDropBoxSetting.IsEnabled">Enable Dropbox Content Delivery</label>
+                        </span>
+
+                        <div class="field">
+                            <label>API Access Token (Create App <a href="https://www.dropbox.com/developers/apps/create" target="_blank">Create DropBox App</a>)</label>
+                            <input asp-for="RGRequest.RSDropBoxSetting.AccessToken" autocomplete="off" placeholder="xxxxxx">
+                        </div>
+                        <div class="field">
+                            <label>Upload Directory</label>
+                            <input asp-for="RGRequest.RSDropBoxSetting.Directory" autocomplete="off" value="/backups/" placeholder="e.g. /backups/">
+                        </div>
+                    </div>
+
+
+
+                    <!--AZURE BLOB STORAGE-->
+                    <div class="ui bottom attached tab segment" data-tab="tabazureblobstorage">
+                        <span>
+                            <input id="RSAzureBlobStorageSetting.IsEnabled" asp-for="RGRequest.RSAzureBlobStorageSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via Azure Blob Storag" style="cursor:pointer" for="RSAzureBlobStorageSetting.IsEnabled">Enable Azure Blob Storage Content Delivery</label>
+                        </span>
+
+                        <div class="field">
+                            <label>Storage Connection String</label>
+                            <input asp-for="RGRequest.RSAzureBlobStorageSetting.ConnectionString" autocomplete="off" placeholder="e.g. UseDevelopmentStorage=true">
+                        </div>
+                        <div class="field">
+                            <label>Blob Container</label>
+                            <input asp-for="RGRequest.RSAzureBlobStorageSetting.BlobContainer" autocomplete="off" value="backups" placeholder="e.g. backups">
+                        </div>
+                    </div>
+
+
+
 
                     <p align="center">
                         <button class="ui fluid button blue" type="submit">

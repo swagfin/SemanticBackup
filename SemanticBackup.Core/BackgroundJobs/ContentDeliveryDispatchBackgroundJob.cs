@@ -54,9 +54,9 @@ namespace SemanticBackup.Core.BackgroundJobs
                             foreach (ContentDeliveryRecord contentDeliveryRecord in contentDeliveryRecords)
                             {
                                 _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
-                                BackupRecord backupRecordInfo = this._backupRecordPersistanceService.GetById(contentDeliveryRecord.BackupRecordId);
-                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecordInfo.ResourceGroupId);
-                                ContentDeliveryConfiguration contentDeliveryConfiguration = this._contentDeliveryConfigPersistanceService.GetById(contentDeliveryRecord.ContentDeliveryConfigurationId);
+                                BackupRecord backupRecordInfo = this._backupRecordPersistanceService.GetById(contentDeliveryRecord?.BackupRecordId);
+                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecordInfo?.ResourceGroupId);
+                                ContentDeliveryConfiguration contentDeliveryConfiguration = this._contentDeliveryConfigPersistanceService.GetById(contentDeliveryRecord?.ContentDeliveryConfigurationId);
 
                                 if (backupRecordInfo == null)
                                 {
@@ -75,24 +75,40 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 }
                                 else
                                 {
-                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
+                                    //Override Maximum Running Threads// This is because of currently being used exception
+                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, 1))
                                     {
                                         string status = ContentDeliveryRecordStatus.EXECUTING.ToString();
                                         string statusMsg = "Dispatching Backup Record";
-                                        if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DOWNLOAD_LINK.ToString())
+                                        if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DIRECT_LINK.ToString())
                                         {
                                             //Download Link Generator
-                                            _botsManagerBackgroundJob.AddBot(new DownloadLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.FTP_UPLOAD.ToString())
                                         {
                                             //FTP Uploader
-                                            _botsManagerBackgroundJob.AddBot(new FTPUploaderBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.EMAIL_SMTP.ToString())
                                         {
                                             //Email Send and Uploader
-                                            _botsManagerBackgroundJob.AddBot(new EmailUploaderBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                        }
+                                        else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.MEGA_STORAGE.ToString())
+                                        {
+                                            //Mega Nz Storage
+                                            _botsManagerBackgroundJob.AddBot(new UploaderMegaNxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                        }
+                                        else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
+                                        {
+                                            //Email Send and Uploader
+                                            _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                        }
+                                        else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
+                                        {
+                                            //Azure Blob Storage
+                                            _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
                                         else
                                         {
