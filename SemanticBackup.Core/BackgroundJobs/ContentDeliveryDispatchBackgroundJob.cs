@@ -99,6 +99,11 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             //Email Send and Uploader
                                             _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
                                         }
+                                        else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
+                                        {
+                                            //Azure Blob Storage
+                                            _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                        }
                                         else
                                         {
                                             status = ContentDeliveryRecordStatus.ERROR.ToString();

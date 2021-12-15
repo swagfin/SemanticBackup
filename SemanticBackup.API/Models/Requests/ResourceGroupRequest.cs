@@ -16,5 +16,6 @@ namespace SemanticBackup.API.Models.Requests
         public RSFTPSetting RSFTPSetting { get; set; } = null;
         public RSEmailSMTPSetting RSEmailSMTPSetting { get; set; } = null;
         public RSDropBoxSettings RSDropBoxSetting { get; set; } = null;
+        public RSAzureBlobStorageSettings RSAzureBlobStorageSetting { get; set; } = null;
     }
 }

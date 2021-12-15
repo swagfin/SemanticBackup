@@ -80,6 +80,7 @@
                         <a class="item" data-tab="tabftp">FTP Upload</a>
                         <a class="item" data-tab="tabemailsmtp">Email (SMTP)</a>
                         <a class="item" data-tab="tabdropbox">Dropbox</a>
+                        <a class="item" data-tab="tabazureblobstorage">Azure Blob Storage</a>
                     </div>
 
                     <!--DOWNLOAD LINK-->
@@ -177,6 +178,27 @@
                             <input asp-for="RGRequest.RSDropBoxSetting.Directory" autocomplete="off" value="/backups/" placeholder="e.g. /backups/">
                         </div>
                     </div>
+                       
+                    
+                    <!--AZURE BLOB STORAGE-->
+                    <div class="ui bottom attached tab segment" data-tab="tabazureblobstorage">
+                        <span>
+                            <input id="RSAzureBlobStorageSetting.IsEnabled" asp-for="RGRequest.RSAzureBlobStorageSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via Dropbox Storage" style="cursor:pointer" for="RSAzureBlobStorageSetting.IsEnabled">Enable Azure Blob Storage Content Delivery</label>
+                        </span>
+
+                        <div class="field">
+                            <label>Storage Connection String</label>
+                            <input asp-for="RGRequest.RSAzureBlobStorageSetting.ConnectionString" autocomplete="off" placeholder="e.g. UseDevelopmentStorage=true">
+                        </div>
+                        <div class="field">
+                            <label>Blob Container</label>
+                            <input asp-for="RGRequest.RSAzureBlobStorageSetting.BlobContainer" autocomplete="off" value="backups" placeholder="e.g. backups">
+                        </div>
+                    </div>
+
+
+
 
                     <p align="center">
                         <button class="ui fluid button blue" type="submit">

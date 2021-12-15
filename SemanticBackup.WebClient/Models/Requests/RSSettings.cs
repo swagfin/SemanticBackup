@@ -48,4 +48,10 @@ namespace SemanticBackup.WebClient.Models.Requests
         public string AccessToken { get; set; }
         public string Directory { get; set; } = "/";
     }
+    public class RSAzureBlobStorageSettings
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string ConnectionString { get; set; }
+        public string BlobContainer { get; set; }
+    }
 }

@@ -227,6 +227,15 @@ namespace SemanticBackup.API.Controllers
                         ResourceGroupId = resourceGroupId,
                         Configuration = JsonConvert.SerializeObject(request.RSDropBoxSetting)
                     });
+                //Azure Blob Storage
+                if (request.RSAzureBlobStorageSetting != null && request.RSAzureBlobStorageSetting.IsEnabled)
+                    configs.Add(new ContentDeliveryConfiguration
+                    {
+                        IsEnabled = true,
+                        DeliveryType = ContentDeliveryType.AZURE_BLOB_STORAGE.ToString(),
+                        ResourceGroupId = resourceGroupId,
+                        Configuration = JsonConvert.SerializeObject(request.RSAzureBlobStorageSetting)
+                    });
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }
             return configs;

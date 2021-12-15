@@ -87,6 +87,12 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
                         ErrorResponse = "Dropbox API Token provided is Invalid";
                         return false;
                     }
+                if (RGRequest.RSAzureBlobStorageSetting != null && RGRequest.RSAzureBlobStorageSetting.IsEnabled)
+                    if (string.IsNullOrEmpty(RGRequest.RSAzureBlobStorageSetting.ConnectionString) || string.IsNullOrEmpty(RGRequest.RSAzureBlobStorageSetting.BlobContainer))
+                    {
+                        ErrorResponse = "Azure Blob Storage Connection String and Blob Container fields are required If Azure Blob Storage Content Delivery has been Enabled";
+                        return false;
+                    }
                 return true;
             }
             catch (Exception ex) { _logger.LogWarning(ex.Message); ErrorResponse = ex.Message; return false; }
