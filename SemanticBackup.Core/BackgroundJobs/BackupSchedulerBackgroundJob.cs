@@ -133,26 +133,27 @@ namespace SemanticBackup.Core.BackgroundJobs
             var t = new Thread(async () =>
             {
                 List<string> statusChecks = new List<string> { BackupRecordBackupStatus.EXECUTING.ToString(), BackupRecordBackupStatus.COMPRESSING.ToString(), ContentDeliveryRecordStatus.EXECUTING.ToString() };
+                int executionTimeoutInMinutes = _persistanceOptions.ExecutionTimeoutInMinutes < 1 ? 1 : _persistanceOptions.ExecutionTimeoutInMinutes;
                 while (true)
                 {
                     try
                     {
                         List<string> botsToRemove = new List<string>();
                         //REMOVE BACKUP RECORDS
-                        List<string> recordsIds = this._backupRecordPersistanceService.GetAllNoneResponsiveIds(statusChecks, 10);
+                        List<string> recordsIds = this._backupRecordPersistanceService.GetAllNoneResponsiveIds(statusChecks, executionTimeoutInMinutes);
                         if (recordsIds != null && recordsIds.Count > 0)
                             foreach (string id in recordsIds)
                             {
-                                this._backupRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", 10);
+                                this._backupRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
                                 botsToRemove.Add(id);
                             }
 
                         //REMOVE CONTENT DELIVERY RECORDS
-                        List<string> deliveryRecordIds = this._contentDeliveryRecordPersistanceService.GetAllNoneResponsive(statusChecks, 10);
+                        List<string> deliveryRecordIds = this._contentDeliveryRecordPersistanceService.GetAllNoneResponsive(statusChecks, executionTimeoutInMinutes);
                         if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
                             foreach (string id in deliveryRecordIds)
                             {
-                                this._contentDeliveryRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", 10);
+                                this._contentDeliveryRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
                                 botsToRemove.Add(id);
                             }
 
@@ -162,7 +163,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     }
                     catch (Exception ex) { _logger.LogWarning($"Stopping Non Responsive Services Error: {ex.Message}"); }
                     //Delay
-                    await Task.Delay(TimeSpan.FromMinutes(5));
+                    await Task.Delay(TimeSpan.FromMinutes(1));
                 }
             });
             t.Start();
