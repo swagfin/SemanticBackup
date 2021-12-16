@@ -27,7 +27,7 @@ namespace SemanticBackup.API.Controllers
             this._persistanceOptions = persistanceOptions;
         }
         [HttpGet]
-        public ActionResult<List<ResourceGroup>> GetDirectories()
+        public ActionResult<List<ResourceGroup>> GetResourceGroups()
         {
             try
             {
@@ -78,6 +78,9 @@ namespace SemanticBackup.API.Controllers
                     MaximumRunningBots = request.MaximumRunningBots,
                     CompressBackupFiles = request.CompressBackupFiles,
                     BackupExpiryAgeInDays = request.BackupExpiryAgeInDays,
+                    NotifyEmailDestinations = request.NotifyEmailDestinations,
+                    NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery,
+                    NotifyOnErrorBackups = request.NotifyOnErrorBackups,
                 };
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
@@ -121,6 +124,9 @@ namespace SemanticBackup.API.Controllers
                 savedObj.MaximumRunningBots = request.MaximumRunningBots;
                 savedObj.CompressBackupFiles = request.CompressBackupFiles;
                 savedObj.BackupExpiryAgeInDays = request.BackupExpiryAgeInDays;
+                savedObj.NotifyOnErrorBackups = request.NotifyOnErrorBackups;
+                savedObj.NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery;
+                savedObj.NotifyEmailDestinations = request.NotifyEmailDestinations;
                 //Update
                 bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
                 if (!updatedSuccess)
@@ -198,7 +204,8 @@ namespace SemanticBackup.API.Controllers
                         IsEnabled = true,
                         DeliveryType = ContentDeliveryType.DIRECT_LINK.ToString(),
                         ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSDownloadLinkSetting)
+                        Configuration = JsonConvert.SerializeObject(request.RSDownloadLinkSetting),
+                        PriorityIndex = 0
                     });
                 //FTP Configs
                 if (request.RSFTPSetting != null && request.RSFTPSetting.IsEnabled)
@@ -207,7 +214,8 @@ namespace SemanticBackup.API.Controllers
                         IsEnabled = true,
                         DeliveryType = ContentDeliveryType.FTP_UPLOAD.ToString(),
                         ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSFTPSetting)
+                        Configuration = JsonConvert.SerializeObject(request.RSFTPSetting),
+                        PriorityIndex = 1
                     });
                 //Email SMTP
                 if (request.RSEmailSMTPSetting != null && request.RSEmailSMTPSetting.IsEnabled)
@@ -216,7 +224,8 @@ namespace SemanticBackup.API.Controllers
                         IsEnabled = true,
                         DeliveryType = ContentDeliveryType.EMAIL_SMTP.ToString(),
                         ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting)
+                        Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting),
+                        PriorityIndex = 2
                     });
                 //Mega Storage
                 if (request.RSMegaNxSetting != null && request.RSMegaNxSetting.IsEnabled)
@@ -225,7 +234,8 @@ namespace SemanticBackup.API.Controllers
                         IsEnabled = true,
                         DeliveryType = ContentDeliveryType.MEGA_STORAGE.ToString(),
                         ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSMegaNxSetting)
+                        Configuration = JsonConvert.SerializeObject(request.RSMegaNxSetting),
+                        PriorityIndex = 3
                     });
 
                 //Dropbox
@@ -235,7 +245,8 @@ namespace SemanticBackup.API.Controllers
                         IsEnabled = true,
                         DeliveryType = ContentDeliveryType.DROPBOX.ToString(),
                         ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSDropBoxSetting)
+                        Configuration = JsonConvert.SerializeObject(request.RSDropBoxSetting),
+                        PriorityIndex = 4
                     });
                 //Azure Blob Storage
                 if (request.RSAzureBlobStorageSetting != null && request.RSAzureBlobStorageSetting.IsEnabled)
@@ -244,7 +255,8 @@ namespace SemanticBackup.API.Controllers
                         IsEnabled = true,
                         DeliveryType = ContentDeliveryType.AZURE_BLOB_STORAGE.ToString(),
                         ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSAzureBlobStorageSetting)
+                        Configuration = JsonConvert.SerializeObject(request.RSAzureBlobStorageSetting),
+                        PriorityIndex = 5
                     });
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }

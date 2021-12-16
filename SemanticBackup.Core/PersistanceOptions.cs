@@ -6,5 +6,6 @@
         public string DefaultBackupDirectory { get; set; } = "c:\\backups\\";
         public bool EnsureDefaultBackupDirectoryExists { get; set; } = true;
         public string BackupFileSaveFormat { get; set; } = "{{database}}\\{{database}}-{{datetime}}.{{databasetype}}.bak";
+        public int ExecutionTimeoutInMinutes { get; set; } = 10;
     }
 }

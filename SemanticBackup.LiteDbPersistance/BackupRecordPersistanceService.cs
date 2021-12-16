@@ -5,6 +5,7 @@ using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace SemanticBackup.LiteDbPersistance
@@ -81,7 +82,16 @@ namespace SemanticBackup.LiteDbPersistance
                 return db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToList();
             }
         }
-
+        public List<string> GetAllNoneResponsiveIds(List<string> statusChecks, int minuteDifference)
+        {
+            if (statusChecks == null || statusChecks.Count == 0)
+                return null;
+            using (var db = new LiteDatabase(connString))
+            {
+                db.Pragma("UTC_DATE", true);
+                return db.GetCollection<BackupRecord>().Query().Where(x => statusChecks.Contains(x.BackupStatus)).Select(x => new { x.Id, x.BackupStatus, x.StatusUpdateDateUTC, x.RegisteredDateUTC }).ToList().Where(x => (DateTime.UtcNow - x.StatusUpdateDateUTC).TotalMinutes >= minuteDifference).Select(x => x.Id).ToList();
+            }
+        }
         public bool AddOrUpdate(BackupRecord record)
         {
             using (var db = new LiteDatabase(connString))
@@ -176,7 +186,7 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 db.Pragma("UTC_DATE", true);
-                return db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordBackupStatus.READY.ToString()).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                return db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordBackupStatus.READY.ToString()).OrderBy(x => x.RegisteredDateUTC).ToList();
             }
         }
         public bool UpdateDeliveryRunned(string backupRecordId, bool hasRun, string executedDeliveryRunStatus)

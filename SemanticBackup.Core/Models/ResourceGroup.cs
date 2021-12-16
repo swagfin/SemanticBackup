@@ -14,5 +14,8 @@ namespace SemanticBackup.Core.Models
         public int MaximumRunningBots { get; set; } = 1;
         public bool CompressBackupFiles { get; set; } = true;
         public int BackupExpiryAgeInDays { get; set; } = 7;
+        public bool NotifyOnErrorBackups { get; set; } = false;
+        public bool NotifyOnErrorBackupDelivery { get; set; } = false;
+        public string NotifyEmailDestinations { get; set; } = null;
     }
 }

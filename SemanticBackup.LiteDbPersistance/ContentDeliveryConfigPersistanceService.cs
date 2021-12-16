@@ -19,7 +19,7 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryConfiguration>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderBy(x => x.DeliveryType).ToList();
+                return db.GetCollection<ContentDeliveryConfiguration>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderBy(x => x.PriorityIndex).ToList();
             }
         }
         public bool AddOrUpdate(ContentDeliveryConfiguration record)

@@ -9,5 +9,8 @@
         public int MaximumRunningBots { get; set; }
         public bool CompressBackupFiles { get; set; }
         public int BackupExpiryAgeInDays { get; set; }
+        public bool NotifyOnErrorBackups { get; set; } = false;
+        public bool NotifyOnErrorBackupDelivery { get; set; } = false;
+        public string NotifyEmailDestinations { get; set; } = null;
     }
 }

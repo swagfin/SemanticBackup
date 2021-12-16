@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SemanticBackup.API.Extensions;
+using SemanticBackup.API.Services;
 using SemanticBackup.API.SignalRHubs;
 using SemanticBackup.Core;
 using SemanticBackup.Core.BackgroundJobs;
@@ -27,6 +28,9 @@ namespace SemanticBackup.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            //Configure API Options
+            services.Configure<ApiConfigOptions>(Configuration.GetSection(nameof(ApiConfigOptions)));
 
             LiteDbPersistanceOptions liteDbConfig = new LiteDbPersistanceOptions();
             Configuration.GetSection(nameof(LiteDbPersistanceOptions)).Bind(liteDbConfig);
@@ -64,6 +68,8 @@ namespace SemanticBackup.API
             //Notifications
             services.AddSingleton<RecordStatusChangedHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
             services.AddSingleton<IRecordStatusChangedNotifier>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
+            //Email Notify
+            services.AddSingleton<IRecordStatusChangedNotifier, StatusNotificationService>();
 
             //DASHBOARD SIGNAL DISPATCH
             services.AddSingleton<DashboardRefreshHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());

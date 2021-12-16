@@ -4,6 +4,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SemanticBackup.LiteDbPersistance
 {
@@ -31,7 +32,7 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.CurrentStatus == status).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.CurrentStatus == status).OrderBy(x => x.RegisteredDateUTC).ToList();
             }
         }
         public List<ContentDeliveryRecord> GetAllByBackupRecordIdByStatus(string resourceGroupId, string id, string status = "*")
@@ -39,8 +40,8 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 if (status == "*")
-                    return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.BackupRecordId == id).OrderByDescending(x => x.RegisteredDateUTC).ToList();
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.CurrentStatus == status && x.BackupRecordId == id).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                    return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToList();
+                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.CurrentStatus == status && x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToList();
             }
         }
         public List<ContentDeliveryRecord> GetAllByBackupRecordId(string id)
@@ -48,7 +49,7 @@ namespace SemanticBackup.LiteDbPersistance
             using (var db = new LiteDatabase(connString))
             {
                 db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.BackupRecordId == id).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToList();
             }
         }
 
@@ -154,6 +155,17 @@ namespace SemanticBackup.LiteDbPersistance
             {
                 db.Pragma("UTC_DATE", true);
                 return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage).FirstOrDefault();
+            }
+        }
+
+        public List<string> GetAllNoneResponsive(List<string> statusChecks, int minuteDifference)
+        {
+            if (statusChecks == null || statusChecks.Count == 0)
+                return null;
+            using (var db = new LiteDatabase(connString))
+            {
+                db.Pragma("UTC_DATE", true);
+                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => statusChecks.Contains(x.CurrentStatus)).OrderBy(x => x.RegisteredDateUTC).Select(x => new { x.Id, x.CurrentStatus, x.StatusUpdateDateUTC, x.RegisteredDateUTC }).ToList().Where(x => (DateTime.UtcNow - x.StatusUpdateDateUTC).TotalMinutes >= minuteDifference).Select(x => x.Id).ToList();
             }
         }
     }

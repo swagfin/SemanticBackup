@@ -21,6 +21,8 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
 
+        public string BotId => _backupRecord.Id;
+
         public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {
             this._resourceGroupId = resourceGroupId;

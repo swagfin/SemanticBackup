@@ -25,6 +25,15 @@ namespace SemanticBackup.Core.BackgroundJobs
 
         public void AddBot(IBot bot) => Bots.Add(bot);
         public void AddBot(List<IBot> bots) => Bots.AddRange(bots);
+        public void TerminateBots(List<string> botIds)
+        {
+            if (botIds != null && botIds.Count > 0)
+            {
+                List<IBot> botsToRemove = this.Bots.Where(x => botIds.Contains(x.BotId)).ToList();
+                foreach (IBot bot in botsToRemove)
+                    this.Bots.Remove(bot);
+            }
+        }
         public bool HasAvailableResourceGroupBotsCount(string resourceGroupId, int maximumThreads = 1)
         {
             int resourceBots = this.Bots.Where(x => x.ResourceGroupId == resourceGroupId).Count();

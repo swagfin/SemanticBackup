@@ -215,9 +215,19 @@
                                 @{
                                     if (record.DeliveryType == "DIRECT_LINK")
                                     {
-                                        <td class="execution_message_for_downloadLink_@(record.Id)">
-                                            <a href="@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)"><i class="download icon"></i> Download Link </a>
-                                        </td>
+                                        if (record.CurrentStatus == "READY")
+                                        {
+                                            <td class="execution_message_for_downloadLink_@(record.Id)">
+                                                <a href="@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)"><i class="download icon"></i> Download Link </a>
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td class="execution_message_for_downloadLink_@(record.Id)">
+                                                <i>Generating Link...</i>
+                                            </td>
+                                        }
+
                                     }
                                     else
                                     {
@@ -249,9 +259,18 @@
                                     }
                                     else if (record.DeliveryType == "DIRECT_LINK")
                                     {
-                                        <td class="event_downloadlink_for_@(record.Id)">
-                                            <a href='@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)' class="ui teal label"><i class="download icon"></i> Download</a>
-                                        </td>
+                                        if (record.CurrentStatus == "READY")
+                                        {
+                                            <td class="event_downloadlink_for_@(record.Id)">
+                                                <a href='@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)' class="ui teal label"><i class="download icon"></i> Download</a>
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td class="event_downloadlink_for_@(record.Id)">
+                                                <a style="cursor:not-allowed" class="ui disabled small label"><i class="download icon"></i> Download</a>
+                                            </td>
+                                        }
                                     }
                                     else
                                     {
@@ -355,22 +374,31 @@
             var status = metric.currentStatus;
              //Check if Not Exists
             $(".no-delivery-record").remove();
-            
+
             if(response.isNewMetric && $("#record_for_" + key).length == 0)
               {
                  console.log("Prepending new Record Notification");
                  var newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_'+ key +'">'+ metric.executionMessage + '</td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_rerun_for_'+ key +'"><a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a></td></tr>';
                  if(metric.deliveryType == "DIRECT_LINK")
                  {
-                   var downloadLink = baseUrl + "d/" + metric.executionMessage;
-                   newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_downloadLink_'+ key +'"> <a href="'+ downloadLink +'"><i class="download icon"></i> Download Link </a>  </td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_downloadlink_for_'+ key +'"><a href="'+ downloadLink +'" class="ui teal label"><i class="download icon"></i> Download</a></td></tr>';
+                   newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_downloadLink_'+ key +'"><i>Generating Link...</i></td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_downloadlink_for_'+ key +'"> <a style="cursor:not-allowed" class="ui disabled small label"><i class="download icon"></i> Download</a></td></tr>';
                  }
                  $("#records_data_table").prepend(newElement);
               }
             //Update Status
             console.log("Updating UI Key: " + key + ", Status: " + status);
-            if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>RUNNING</span>'); }
-            else if (status == "READY") { $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>EXECUTED</span>'); }
+            if (status == "READY")
+            {
+                $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>EXECUTED</span>');
+                //Check Download LINK
+                 if(metric.deliveryType == "DIRECT_LINK")
+                 {
+                     var downloadLink = baseUrl + "d/" + metric.executionMessage;
+                     $(".execution_message_for_downloadLink_" + key).html('<a href="'+ downloadLink +'"><i class="download icon"></i> Download Link </a>');
+                     $(".event_downloadlink_for_" + key).html('<a href="'+ downloadLink +'" class="ui teal label"><i class="download icon"></i> Download</a>');
+                 }
+            }
+            else if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>RUNNING</span>'); }
             else if (status == "ERROR") { $(".event_status_for_" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }
             else { $(".event_status_for_" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
             //Update Others

@@ -21,7 +21,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroupId;
-
+        public string BotId => _contentDeliveryRecord.Id;
         public UploaderLinkGenBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
@@ -46,6 +46,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 if (settings.DownloadLinkType == "LONG")
                     contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{this._backupRecord.Id}|{this._contentDeliveryConfiguration.Id}".ToMD5String());
                 //Job to Do
+                await Task.Delay(new Random().Next(2000, 3000));
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), contentLink, stopwatch.ElapsedMilliseconds);
                 _logger.LogInformation($"Creating Download Link: {_backupRecord.Path}... SUCCESS");

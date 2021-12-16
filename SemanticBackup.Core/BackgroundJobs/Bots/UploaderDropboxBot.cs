@@ -23,7 +23,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroupId;
-
+        public string BotId => _contentDeliveryRecord.Id;
         public UploaderDropboxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;

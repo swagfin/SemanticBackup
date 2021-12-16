@@ -21,7 +21,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroup;
-
+        public string BotId => _backupRecord.Id;
         public SQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, ISQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, ILogger logger)
         {
             this._resourceGroup = resourceGroupId;
