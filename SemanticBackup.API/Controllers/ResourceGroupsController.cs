@@ -27,7 +27,7 @@ namespace SemanticBackup.API.Controllers
             this._persistanceOptions = persistanceOptions;
         }
         [HttpGet]
-        public ActionResult<List<ResourceGroup>> GetDirectories()
+        public ActionResult<List<ResourceGroup>> GetResourceGroups()
         {
             try
             {
@@ -78,6 +78,9 @@ namespace SemanticBackup.API.Controllers
                     MaximumRunningBots = request.MaximumRunningBots,
                     CompressBackupFiles = request.CompressBackupFiles,
                     BackupExpiryAgeInDays = request.BackupExpiryAgeInDays,
+                    NotifyEmailDestinations = request.NotifyEmailDestinations,
+                    NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery,
+                    NotifyOnErrorBackups = request.NotifyOnErrorBackups,
                 };
                 bool savedSuccess = _activeResourcegroupService.Add(saveObj);
                 if (!savedSuccess)
@@ -121,6 +124,9 @@ namespace SemanticBackup.API.Controllers
                 savedObj.MaximumRunningBots = request.MaximumRunningBots;
                 savedObj.CompressBackupFiles = request.CompressBackupFiles;
                 savedObj.BackupExpiryAgeInDays = request.BackupExpiryAgeInDays;
+                savedObj.NotifyOnErrorBackups = request.NotifyOnErrorBackups;
+                savedObj.NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery;
+                savedObj.NotifyEmailDestinations = request.NotifyEmailDestinations;
                 //Update
                 bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
                 if (!updatedSuccess)

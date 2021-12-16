@@ -20,7 +20,10 @@
             }
 
             <form asp-page="RegisterDatabase" method="post">
-                <div class="ui segment attached form">
+
+                <h4 class="ui primary header">Backup Resource Hosting</h4>
+
+                <section class="ui segment attached form">
                     <div class="field">
                         <label>Resource Group Name</label>
                         <input asp-for="RGRequest.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Group" type="text" required>
@@ -59,7 +62,12 @@
                             <option value="50">Maximum non-clustered Worker Bots (Unlimited CPU/RAM)</option>
                         </select>
                     </div>
+                </section>
 
+                <div class="ui divider"></div>
+                <h4 class="ui primary header">Backup Preference</h4>
+
+                <section class="ui segment attached form">
                     <div class="field">
                         <label><i class="file archive outline icon"></i>Backup Files Compression</label>
                         <span>
@@ -71,9 +79,11 @@
                         <label for="ResourceGroupRequestBackupExpiryAgeInDays">Backup Age Expiry In Days (Max 366 days)</label>
                         <input asp-for="RGRequest.BackupExpiryAgeInDays" autocomplete="off" type="number" min="1" value="7" max="366" required>
                     </div>
+                </section>
 
-                    <div class="ui divider"></div>
-                    <h4>Backup Content Delivery Settings</h4>
+                <div class="ui divider"></div>
+                <h4 class="ui primary header">Backup Content Delivery Settings</h4>
+                <section class="ui attached form">
 
                     <div class="ui top attached tabular primary small menu">
                         <a class="item active" data-tab="tabdownloadlink"><i class="linkify icon"></i> Direct Link</a>
@@ -128,6 +138,7 @@
                         </div>
                     </div>
 
+                    <!--SMTP EMAIL CONTENT DELIVERY LINK-->
                     <div class="ui bottom attached tab segment" data-tab="tabemailsmtp">
                         <span>
                             <input id="RGRequest.RSEmailSMTPSetting.IsEnabled" asp-for="RGRequest.RSEmailSMTPSetting.IsEnabled">
@@ -218,14 +229,43 @@
                         </div>
                     </div>
 
-                    <p align="center">
-                        <button class="ui fluid button blue" type="submit">
-                            <i class="chart line icon"></i>
-                            Create Resource Group
-                        </button>
-                    </p>
+                </section>
 
-                </div>
+                <div class="ui divider"></div>
+                <h4 class="ui primary header">Notification Alerts</h4>
+                <section class="ui segment attached form">
+                    <div class="two fields">
+                        <div class="field">
+                            <label></label>
+                            <span>
+                                <input id="NotifyOnErrorBackups" asp-for="RGRequest.NotifyOnErrorBackups">
+                                <label title="Notify addresses on Backup Execution Run Error" style="cursor:pointer" for="NotifyOnErrorBackups">Notify On Backup Execution Failure</label>
+                            </span>
+                        </div>
+                        <div class="field">
+                            <label></label>
+                            <span>
+                                <input id="NotifyOnErrorBackupDelivery" asp-for="RGRequest.NotifyOnErrorBackupDelivery">
+                                <label title="Notify addresses on Backup Content Delivery Run Error" style="cursor:pointer" for="NotifyOnErrorBackupDelivery">Notify On Backup Delivery Failure</label>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Notification Addresses (Separate with ",")</label>
+                        <input asp-for="RGRequest.NotifyEmailDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
+                        <span style="color:gray;margin:7px">The above Emails will receive the notifications if any execution or delivery cContent Run Fails</span>
+                    </div>
+
+                </section>
+
+                <div class="ui divider"></div>
+                <p align="center">
+                    <button class="ui fluid button blue" type="submit">
+                        <i class="chart line icon"></i>
+                        Create Resource Group
+                    </button>
+                </p>
+
             </form>
         </div>
     </div>

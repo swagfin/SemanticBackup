@@ -5,6 +5,7 @@ using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Mail;
 using System.Threading.Tasks;
@@ -42,8 +43,6 @@ namespace SemanticBackup.API.Services
                 _logger.LogInformation("Received BackupRecordUpdated Notification....");
                 if (backupRecord.BackupStatus != BackupRecordBackupStatus.ERROR.ToString())
                     return;
-                if (!_options.NotifyOnErrorBackups)
-                    return;
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
@@ -51,10 +50,13 @@ namespace SemanticBackup.API.Services
                     ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecord.ResourceGroupId);
                     if (resourceGroup == null)
                         return; //No Valid Resource Group
+                    if (!resourceGroup.NotifyOnErrorBackups)
+                        return; //Disabled
                     DateTime resourceLocalTime = backupRecord.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone);
                     string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] Database Backup Failed";
                     string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] Backup Run</h3> <br/> <p> <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date: </b> {resourceLocalTime:yyyy-MM-dd HH:mm:ss} <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{backupRecord.BackupStatus}</span> <br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{backupRecord.Id}</span> </p> <p> Execution Message: <b><i>{backupRecord.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
-                    await SendEmailAsync(subject, emailBody);
+                    List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
+                    await SendEmailAsync(subject, emailBody, destinations);
                 }
 
             }
@@ -71,8 +73,6 @@ namespace SemanticBackup.API.Services
                 _logger.LogInformation("Received BackupRecordUpdated Notification....");
                 if (record.CurrentStatus != BackupRecordBackupStatus.ERROR.ToString())
                     return;
-                if (!_options.NotifyOnErrorBackups)
-                    return;
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
@@ -81,14 +81,16 @@ namespace SemanticBackup.API.Services
                     ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(record.ResourceGroupId);
                     if (resourceGroup == null)
                         return; //No Valid Resource Group
+                    if (!resourceGroup.NotifyOnErrorBackupDelivery)
+                        return; //Disabled
                     BackupRecord backupRecord = _backupRecordPersistanceService.GetById(record.BackupRecordId);
                     if (backupRecord == null)
                         return; //No Valid Backup File
-
                     DateTime resourceLocalTime = backupRecord.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone);
                     string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed";
                     string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed</h3> <br/> <p> <b>DELIVERY TYPE: </b> {record.DeliveryType} <br/>   <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date: </b> {resourceLocalTime:yyyy-MM-dd HH:mm:ss} <br/>  <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{record.CurrentStatus}</span> <br/><br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{record.Id}</span> <br/> </p> <p> Execution Message: <b><i>{record.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
-                    await SendEmailAsync(subject, emailBody);
+                    List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
+                    await SendEmailAsync(subject, emailBody, destinations);
                 }
 
             }
@@ -98,9 +100,9 @@ namespace SemanticBackup.API.Services
             }
         }
 
-        private async Task SendEmailAsync(string subject, string messageBody)
+        private async Task SendEmailAsync(string subject, string messageBody, List<string> destinations)
         {
-            if (_options.SMTPDestinations.Length == 0)
+            if (destinations == null || destinations.Count == 0)
                 return;
             if (string.IsNullOrWhiteSpace(_options.SMTPEmailAddress) || string.IsNullOrWhiteSpace(_options.SMTPEmailCredentials) || string.IsNullOrWhiteSpace(_options.SMTPHost))
                 return;
@@ -126,12 +128,12 @@ namespace SemanticBackup.API.Services
                         e_mail.Body = messageBody;
 
                         //Add Default
-                        e_mail.To.Add(_options.SMTPDestinations[0]);
+                        e_mail.To.Add(destinations[0]);
 
-                        if (_options.SMTPDestinations.Length > 1)
+                        if (destinations.Count > 1)
                         {
                             int addIndex = 0;
-                            foreach (string dest in _options.SMTPDestinations)
+                            foreach (string dest in destinations)
                             {
                                 //Skip the First
                                 if (addIndex != 0)
@@ -141,7 +143,7 @@ namespace SemanticBackup.API.Services
                         }
                         //Finally Send
                         await Task.Run(() => Smtp_Server.Send(e_mail));
-                        _logger.LogInformation($"Sent Notification");
+                        _logger.LogInformation($"Sent Notifications to Resource Group addresses");
                     }
                 }
                 stopwatch.Stop();
@@ -157,5 +159,18 @@ namespace SemanticBackup.API.Services
             }
         }
 
+        private List<string> GetValidDestinations(string destinations)
+        {
+            List<string> allEmails = new List<string>();
+            if (destinations == null)
+                return allEmails;
+            string[] emailSplits = destinations?.Split(',');
+            if (emailSplits.Length < 1)
+                return allEmails;
+            foreach (string email in emailSplits)
+                if (!string.IsNullOrEmpty(email))
+                    allEmails.Add(email.Replace(" ", string.Empty).Trim());
+            return allEmails;
+        }
     }
 }

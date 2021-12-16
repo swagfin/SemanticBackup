@@ -60,25 +60,25 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
                 if (RGRequest.RSFTPSetting != null && RGRequest.RSFTPSetting.IsEnabled)
                     if (string.IsNullOrEmpty(RGRequest.RSFTPSetting.Password) || string.IsNullOrEmpty(RGRequest.RSFTPSetting.Username) || string.IsNullOrEmpty(RGRequest.RSFTPSetting.Server))
                     {
-                        ErrorResponse = "Server, Username and Password Fields are required for FTP Content Delivery is been Enabled";
+                        ErrorResponse = "Server, Username and Password Fields are required for[ FTP Content Delivery] is been Enabled";
                         return false;
                     }
                 if (RGRequest.RSEmailSMTPSetting != null && RGRequest.RSEmailSMTPSetting.IsEnabled)
                     if (string.IsNullOrEmpty(RGRequest.RSEmailSMTPSetting.SMTPHost) || string.IsNullOrEmpty(RGRequest.RSEmailSMTPSetting.SMTPEmailAddress) || string.IsNullOrEmpty(RGRequest.RSEmailSMTPSetting.SMTPEmailCredentials))
                     {
-                        ErrorResponse = "SMTP Host, SMTP Email Address and SMTP Email Credentials Fields are required If Email SMTP Content Delivery has been Enabled";
+                        ErrorResponse = "SMTP Host, SMTP Email Address and SMTP Email Credentials Fields are required If [Email SMTP Content Delivery] has been Enabled";
                         return false;
                     }
                     else if (string.IsNullOrWhiteSpace(RGRequest.RSEmailSMTPSetting.SMTPDestinations))
                     {
-                        ErrorResponse = "SMTP Host Destination Address have not been added, at list one destination address required If Email SMTP Content Delivery has been Enabled";
+                        ErrorResponse = "SMTP Host Destination Address have not been added, at list one destination address required If [Email SMTP Content Delivery] has been Enabled";
                         return false;
                     }
 
                 if (RGRequest.RSDropBoxSetting != null && RGRequest.RSDropBoxSetting.IsEnabled)
                     if (string.IsNullOrEmpty(RGRequest.RSDropBoxSetting.AccessToken) || string.IsNullOrEmpty(RGRequest.RSDropBoxSetting.Directory))
                     {
-                        ErrorResponse = "Dropbox API Token and Directory field are required If Dropbox Content Delivery has been Enabled";
+                        ErrorResponse = "Dropbox API Token and Directory field are required If [Dropbox Content Delivery] has been Enabled";
                         return false;
                     }
                     else
@@ -90,13 +90,20 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
                 if (RGRequest.RSAzureBlobStorageSetting != null && RGRequest.RSAzureBlobStorageSetting.IsEnabled)
                     if (string.IsNullOrEmpty(RGRequest.RSAzureBlobStorageSetting.ConnectionString) || string.IsNullOrEmpty(RGRequest.RSAzureBlobStorageSetting.BlobContainer))
                     {
-                        ErrorResponse = "Azure Blob Storage Connection String and Blob Container fields are required If Azure Blob Storage Content Delivery has been Enabled";
+                        ErrorResponse = "Azure Blob Storage Connection String and Blob Container fields are required If [Azure Blob Storage Content Delivery] has been Enabled";
                         return false;
                     }
                 if (RGRequest.RSMegaNxSetting != null && RGRequest.RSMegaNxSetting.IsEnabled)
                     if (string.IsNullOrEmpty(RGRequest.RSMegaNxSetting.Username) || string.IsNullOrEmpty(RGRequest.RSMegaNxSetting.Password))
                     {
-                        ErrorResponse = "Mega Storage Username and Password fields are required If Mega Storage Nz Content Delivery has been Enabled";
+                        ErrorResponse = "Mega Storage Username and Password fields are required If [Mega Storage Nz Content Delivery] has been Enabled";
+                        return false;
+                    }
+                //Notifications
+                if (RGRequest.NotifyOnErrorBackups || RGRequest.NotifyOnErrorBackupDelivery)
+                    if (string.IsNullOrWhiteSpace(RGRequest.NotifyEmailDestinations))
+                    {
+                        ErrorResponse = "Notification Address must be set if [Notification of Execution Run Failure] is Enabled";
                         return false;
                     }
                 return true;
