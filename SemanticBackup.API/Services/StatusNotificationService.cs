@@ -1,0 +1,161 @@
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SemanticBackup.Core;
+using SemanticBackup.Core.Models;
+using SemanticBackup.Core.PersistanceServices;
+using System;
+using System.Diagnostics;
+using System.Net.Mail;
+using System.Threading.Tasks;
+
+namespace SemanticBackup.API.Services
+{
+    public class StatusNotificationService : IRecordStatusChangedNotifier
+    {
+        private readonly ILogger<StatusNotificationService> _logger;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ApiConfigOptions _options;
+        public StatusNotificationService(ILogger<StatusNotificationService> logger, IOptions<ApiConfigOptions> options, IServiceScopeFactory scopeFactory)
+        {
+            this._logger = logger;
+            this._scopeFactory = scopeFactory;
+            this._options = options.Value;
+        }
+
+        public void DispatchBackupRecordUpdatedStatus(BackupRecord backupRecord, bool isNewRecord = false)
+        {
+            _logger.LogInformation("Received BackupRecordUpdated Notification....");
+            _ = SendBackupRecordEmailNotificationAsync(backupRecord);
+        }
+
+        public void DispatchContentDeliveryUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord = false)
+        {
+            _logger.LogInformation("Received ContentDeliveryUpdate Notification....");
+            _ = SendContentDeliveryNotificationAsync(record);
+        }
+
+        private async Task SendBackupRecordEmailNotificationAsync(BackupRecord backupRecord)
+        {
+            try
+            {
+                _logger.LogInformation("Received BackupRecordUpdated Notification....");
+                if (backupRecord.BackupStatus != BackupRecordBackupStatus.ERROR.ToString())
+                    return;
+                if (!_options.NotifyOnErrorBackups)
+                    return;
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                    //Info On Resource Group
+                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecord.ResourceGroupId);
+                    if (resourceGroup == null)
+                        return; //No Valid Resource Group
+                    DateTime resourceLocalTime = backupRecord.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone);
+                    string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] Database Backup Failed";
+                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] Backup Run</h3> <br/> <p> <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date: </b> {resourceLocalTime:yyyy-MM-dd HH:mm:ss} <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{backupRecord.BackupStatus}</span> <br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{backupRecord.Id}</span> </p> <p> Execution Message: <b><i>{backupRecord.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
+                    await SendEmailAsync(subject, emailBody);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+        }
+
+        private async Task SendContentDeliveryNotificationAsync(ContentDeliveryRecord record)
+        {
+            try
+            {
+                _logger.LogInformation("Received BackupRecordUpdated Notification....");
+                if (record.CurrentStatus != BackupRecordBackupStatus.ERROR.ToString())
+                    return;
+                if (!_options.NotifyOnErrorBackups)
+                    return;
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                    IBackupRecordPersistanceService _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                    //Info On Resource Group
+                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(record.ResourceGroupId);
+                    if (resourceGroup == null)
+                        return; //No Valid Resource Group
+                    BackupRecord backupRecord = _backupRecordPersistanceService.GetById(record.BackupRecordId);
+                    if (backupRecord == null)
+                        return; //No Valid Backup File
+
+                    DateTime resourceLocalTime = backupRecord.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone);
+                    string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed";
+                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed</h3> <br/> <p> <b>DELIVERY TYPE: </b> {record.DeliveryType} <br/>   <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date: </b> {resourceLocalTime:yyyy-MM-dd HH:mm:ss} <br/>  <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{record.CurrentStatus}</span> <br/><br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{record.Id}</span> <br/> </p> <p> Execution Message: <b><i>{record.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
+                    await SendEmailAsync(subject, emailBody);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+        }
+
+        private async Task SendEmailAsync(string subject, string messageBody)
+        {
+            if (_options.SMTPDestinations.Length == 0)
+                return;
+            if (string.IsNullOrWhiteSpace(_options.SMTPEmailAddress) || string.IsNullOrWhiteSpace(_options.SMTPEmailCredentials) || string.IsNullOrWhiteSpace(_options.SMTPHost))
+                return;
+            Stopwatch stopwatch = new Stopwatch();
+            try
+            {
+                stopwatch.Start();
+                using (MailMessage e_mail = new MailMessage())
+                {
+                    using (SmtpClient Smtp_Server = new SmtpClient())
+                    {
+                        //Configs
+                        Smtp_Server.UseDefaultCredentials = false;
+                        Smtp_Server.Credentials = new System.Net.NetworkCredential(_options.SMTPEmailAddress, _options.SMTPEmailCredentials);
+                        Smtp_Server.Port = _options.SMTPPort; //Use 587
+                        Smtp_Server.EnableSsl = _options.SMTPEnableSSL;
+                        Smtp_Server.Host = _options.SMTPHost;
+                        //Other Configs
+                        e_mail.From = new MailAddress(_options.SMTPEmailAddress, _options.SMTPDefaultSMTPFromName);
+                        //This Configs Should be Placed here
+                        e_mail.Subject = subject;
+                        e_mail.IsBodyHtml = true;
+                        e_mail.Body = messageBody;
+
+                        //Add Default
+                        e_mail.To.Add(_options.SMTPDestinations[0]);
+
+                        if (_options.SMTPDestinations.Length > 1)
+                        {
+                            int addIndex = 0;
+                            foreach (string dest in _options.SMTPDestinations)
+                            {
+                                //Skip the First
+                                if (addIndex != 0)
+                                    e_mail.Bcc.Add(dest);
+                                addIndex++;
+                            }
+                        }
+                        //Finally Send
+                        await Task.Run(() => Smtp_Server.Send(e_mail));
+                        _logger.LogInformation($"Sent Notification");
+                    }
+                }
+                stopwatch.Stop();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Error Sending Notification to address", ex.Message);
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _logger.LogInformation($"Completed in {stopwatch.ElapsedMilliseconds:N0} Milliseconds");
+            }
+        }
+
+    }
+}
