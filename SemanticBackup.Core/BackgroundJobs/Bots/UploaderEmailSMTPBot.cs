@@ -74,7 +74,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                         //This Configs Should be Placed here
                         e_mail.Subject = $"DATABASE BACKUP | {fileName}";
                         e_mail.IsBodyHtml = true;
-                        e_mail.Body = $"Find Attached Database Backup Record: <br /> <b>File:</b> {fileName} <br/> <br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@cursofttechnologies.com</span>";
+                        e_mail.Body = $"Find Attached Database Backup Record: <br /> <b>File:</b> {fileName} <br/> <br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
 
                         //Add Default
                         e_mail.To.Add(settings.ValidSMTPDestinations[0]);

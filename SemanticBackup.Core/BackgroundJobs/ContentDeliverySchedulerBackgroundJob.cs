@@ -79,7 +79,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 else
                                 {
                                     _logger.LogWarning($"Resource Group Id: {backupRecord.Id}, doesn't have any content delivery config, Skipped Backup Record Content Delivery");
-                                    this._backupRecordPersistanceService.UpdateDeliveryRunned(backupRecord.ResourceGroupId, true, BackupRecordExecutedDeliveryRunStatus.PENDING_EXECUTION.ToString());
+                                    this._backupRecordPersistanceService.UpdateDeliveryRunned(backupRecord.ResourceGroupId, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
                                 }
 
                             }
