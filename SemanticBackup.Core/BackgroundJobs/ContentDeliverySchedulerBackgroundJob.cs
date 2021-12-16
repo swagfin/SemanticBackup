@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using SemanticBackup.Core.Extensions;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -97,33 +96,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                 }
             });
             t.Start();
-        }
-
-        private void QueueDeliveryForDownloadLink(BackupRecord backupRecord, ContentDeliveryConfiguration config, List<string> scheduleToDelete)
-        {
-            try
-            {
-                RSDownloadLinkSetting configuration = null;
-                try { configuration = JsonConvert.DeserializeObject<RSDownloadLinkSetting>(config.Configuration); } catch { scheduleToDelete.Add(config.Id); }
-                //Proceed
-                if (configuration == null || !configuration.IsEnabled)
-                    return;
-                string linkToken = 5.GenerateUniqueId();
-                if (configuration.DownloadLinkType == "LONG")
-                    linkToken = string.Format("{0}?token={1}", 25.GenerateUniqueId(), Guid.NewGuid().ToString());
-                //Queue Backup Record
-                this._contentDeliveryRecordPersistanceService.AddOrUpdate(new ContentDeliveryRecord
-                {
-                    BackupRecordId = backupRecord.Id,
-                    ResourceGroupId = backupRecord.ResourceGroupId,
-
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning($"Unable to Queue Download Link Delivery: {ex.Message}");
-            }
-
         }
     }
 }

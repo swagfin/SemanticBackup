@@ -17,12 +17,16 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
+        private readonly IContentDeliveryRecordPersistanceService _contentDeliveryRecordPersistanceService;
+        private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupSchedulerBackgroundJob(ILogger<BackupSchedulerBackgroundJob> logger,
             PersistanceOptions persistanceOptions,
             IBackupSchedulePersistanceService backupSchedulePersistanceService,
             IBackupRecordPersistanceService backupRecordPersistanceService,
-            IDatabaseInfoPersistanceService databaseInfoPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService)
+            IDatabaseInfoPersistanceService databaseInfoPersistanceService,
+            IResourceGroupPersistanceService resourceGroupPersistanceService,
+            IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;
@@ -30,11 +34,14 @@ namespace SemanticBackup.Core.BackgroundJobs
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._resourceGroupPersistanceService = resourceGroupPersistanceService;
+            this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
+            this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
         public void Initialize()
         {
             _logger.LogInformation("Starting service....");
             SetupBackgroundService();
+            SetupBackgroundNonResponsiveStopService();
             _logger.LogInformation("Service Started");
         }
 
@@ -121,5 +128,44 @@ namespace SemanticBackup.Core.BackgroundJobs
             t.Start();
         }
 
+        private void SetupBackgroundNonResponsiveStopService()
+        {
+            var t = new Thread(async () =>
+            {
+                List<string> statusChecks = new List<string> { BackupRecordBackupStatus.EXECUTING.ToString(), BackupRecordBackupStatus.COMPRESSING.ToString(), ContentDeliveryRecordStatus.EXECUTING.ToString() };
+                while (true)
+                {
+                    try
+                    {
+                        List<string> botsToRemove = new List<string>();
+                        //REMOVE BACKUP RECORDS
+                        List<string> recordsIds = this._backupRecordPersistanceService.GetAllNoneResponsiveIds(statusChecks, 10);
+                        if (recordsIds != null && recordsIds.Count > 0)
+                            foreach (string id in recordsIds)
+                            {
+                                this._backupRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", 10);
+                                botsToRemove.Add(id);
+                            }
+
+                        //REMOVE CONTENT DELIVERY RECORDS
+                        List<string> deliveryRecordIds = this._contentDeliveryRecordPersistanceService.GetAllNoneResponsive(statusChecks, 10);
+                        if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
+                            foreach (string id in deliveryRecordIds)
+                            {
+                                this._contentDeliveryRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", 10);
+                                botsToRemove.Add(id);
+                            }
+
+                        //Finally Try And Stop
+                        if (botsToRemove.Count > 0)
+                            _botsManagerBackgroundJob.TerminateBots(botsToRemove);
+                    }
+                    catch (Exception ex) { _logger.LogWarning($"Stopping Non Responsive Services Error: {ex.Message}"); }
+                    //Delay
+                    await Task.Delay(TimeSpan.FromMinutes(5));
+                }
+            });
+            t.Start();
+        }
     }
 }

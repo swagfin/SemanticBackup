@@ -20,5 +20,6 @@ namespace SemanticBackup.Core.PersistanceServices
         List<BackupRecord> GetAllByDatabaseIdByStatus(string resourceGroupId, string id, string status = "*");
         List<BackupRecord> GetAllReadyAndPendingDelivery();
         bool UpdateDeliveryRunned(string backupRecordId, bool hasRun, string executedDeliveryRunStatus);
+        List<string> GetAllNoneResponsiveIds(List<string> statusChecks, int minuteDifference);
     }
 }

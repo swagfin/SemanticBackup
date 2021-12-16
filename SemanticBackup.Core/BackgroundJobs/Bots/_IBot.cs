@@ -8,5 +8,6 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         bool IsCompleted { get; }
         bool IsStarted { get; }
         string ResourceGroupId { get; }
+        string BotId { get; }
     }
 }

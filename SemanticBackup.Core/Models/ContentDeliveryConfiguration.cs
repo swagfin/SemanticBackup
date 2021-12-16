@@ -13,6 +13,7 @@ namespace SemanticBackup.Core.Models
         public string DeliveryType { get; set; }
         public bool IsEnabled { get; set; } = true;
         public string Configuration { get; set; } = "[]";
+        public int PriorityIndex { get; set; } = 0;
     }
 
     public enum ContentDeliveryType
