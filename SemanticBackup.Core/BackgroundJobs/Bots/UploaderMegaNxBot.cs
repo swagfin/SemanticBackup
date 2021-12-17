@@ -57,7 +57,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 client.Login(settings.Username, settings.Password);
                 IEnumerable<INode> nodes = client.GetNodes();
                 INode root = nodes.Single(x => x.Type == NodeType.Root);
-                INode myFolder = client.CreateFolder(validDirectory, root);
+                //Check if Folder Exists
+                INode myFolder = client.GetNodes(root).FirstOrDefault(n => n.Type == NodeType.Directory && n.Name == validDirectory);
+                if (myFolder == null)
+                    myFolder = client.CreateFolder(validDirectory, root);
+                //Proceed
                 INode myFile = client.UploadFile(this._backupRecord.Path, myFolder);
                 executionMessage = $"Uploaded to: {validDirectory}";
                 stopwatch.Stop();
