@@ -218,7 +218,7 @@
                                         if (record.CurrentStatus == "READY")
                                         {
                                             <td class="execution_message_for_downloadLink_@(record.Id)">
-                                                <a href="@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)"><i class="download icon"></i> Download Link </a>
+                                                <a href="@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)" target="_blank"><i class="download icon"></i> Download Link </a>
                                             </td>
                                         }
                                         else
@@ -262,7 +262,7 @@
                                         if (record.CurrentStatus == "READY")
                                         {
                                             <td class="event_downloadlink_for_@(record.Id)">
-                                                <a href='@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)' class="ui teal label"><i class="download icon"></i> Download</a>
+                                                <a href='@string.Format("{0}d/{1}", Model.ApiEndPoint, record.ExecutionMessage)' target="_blank" class="ui teal label"><i class="download icon"></i> Download</a>
                                             </td>
                                         }
                                         else
@@ -394,8 +394,8 @@
                  if(metric.deliveryType == "DIRECT_LINK")
                  {
                      var downloadLink = baseUrl + "d/" + metric.executionMessage;
-                     $(".execution_message_for_downloadLink_" + key).html('<a href="'+ downloadLink +'"><i class="download icon"></i> Download Link </a>');
-                     $(".event_downloadlink_for_" + key).html('<a href="'+ downloadLink +'" class="ui teal label"><i class="download icon"></i> Download</a>');
+                     $(".execution_message_for_downloadLink_" + key).html('<a href="'+ downloadLink +'" target="_blank"><i class="download icon"></i> Download Link </a>');
+                     $(".event_downloadlink_for_" + key).html('<a href="'+ downloadLink +'" target="_blank" class="ui teal label"><i class="download icon"></i> Download</a>');
                  }
             }
             else if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>RUNNING</span>'); }
