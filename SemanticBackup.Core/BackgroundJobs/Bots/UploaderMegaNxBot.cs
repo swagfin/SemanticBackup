@@ -40,6 +40,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             this.IsStarted = true;
             this.IsCompleted = false;
             Stopwatch stopwatch = new Stopwatch();
+            MegaApiClient client = new MegaApiClient();
             try
             {
                 _logger.LogInformation($"Uploading Backup File via MEGA nz....");
@@ -53,14 +54,12 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 //Directory
                 string validDirectory = (string.IsNullOrWhiteSpace(settings.RemoteFolder)) ? "backups" : settings.RemoteFolder;
                 validDirectory = validDirectory.Replace(" ", "_").Replace("/", "-");
-                MegaApiClient client = new MegaApiClient();
                 client.Login(settings.Username, settings.Password);
                 IEnumerable<INode> nodes = client.GetNodes();
                 INode root = nodes.Single(x => x.Type == NodeType.Root);
                 INode myFolder = client.CreateFolder(validDirectory, root);
                 INode myFile = client.UploadFile(this._backupRecord.Path, myFolder);
                 executionMessage = $"Uploaded to: {validDirectory}";
-                client.Logout();
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
                 _logger.LogInformation($"Uploading Backup File MEGA nz: {_backupRecord.Path}... SUCCESS");
@@ -70,6 +69,10 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 this._logger.LogError(ex.Message);
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), (ex.InnerException != null) ? $"Error Uploading: {ex.InnerException.Message}" : ex.Message, stopwatch.ElapsedMilliseconds);
+            }
+            finally
+            {
+                try { if (client.IsLoggedIn) client.Logout(); client = new MegaApiClient(); } catch { }
             }
         }
 
