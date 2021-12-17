@@ -377,13 +377,13 @@
 
             if(response.isNewMetric && $("#record_for_" + key).length == 0)
               {
-                 console.log("Prepending new Record Notification");
+                 console.log("Appending new Record Notification");
                  var newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_'+ key +'">'+ metric.executionMessage + '</td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_rerun_for_'+ key +'"><a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a></td></tr>';
                  if(metric.deliveryType == "DIRECT_LINK")
                  {
                    newElement = '<tr id="record_for_'+ key +'"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> '+ metric.deliveryType +'</td><td class="execution_message_for_downloadLink_'+ key +'"><i>Generating Link...</i></td><td class="event_status_for_'+ key +'"><span class="ui label small basic"><i class="info icon"></i>'+ metric.currentStatus +'</span></td><td class="event_downloadlink_for_'+ key +'"> <a style="cursor:not-allowed" class="ui disabled small label"><i class="download icon"></i> Download</a></td></tr>';
                  }
-                 $("#records_data_table").prepend(newElement);
+                 $("#records_data_table").append(newElement);
               }
             //Update Status
             console.log("Updating UI Key: " + key + ", Status: " + status);
