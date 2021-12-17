@@ -59,7 +59,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                     throw new Exception("Access Token is NULL");
                 //Proceed
                 using (DropboxClient dbx = new DropboxClient(settings.AccessToken.Trim()))
-                using (var mem = new MemoryStream(File.ReadAllBytes(this._backupRecord.Path)))
+                using (var mem = new MemoryStream(await File.ReadAllBytesAsync(this._backupRecord.Path)))
                 {
                     var updated = await dbx.Files.UploadAsync(string.Format("{0}{1}", validDirectory, fileName), WriteMode.Overwrite.Instance, body: mem);
                     executionMessage = $"Uploaded to: {validDirectory}";

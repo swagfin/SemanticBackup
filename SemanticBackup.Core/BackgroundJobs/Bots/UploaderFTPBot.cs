@@ -67,14 +67,14 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                     byte[] fileContents;
                     using (StreamReader sourceStream = new StreamReader(this._backupRecord.Path))
                     {
-                        fileContents = Encoding.UTF8.GetBytes(sourceStream.ReadToEnd());
+                        fileContents = Encoding.UTF8.GetBytes(await sourceStream.ReadToEndAsync());
                     }
                     request.ContentLength = fileContents.Length;
-                    using (Stream requestStream = request.GetRequestStream())
+                    using (Stream requestStream = await request.GetRequestStreamAsync())
                     {
-                        requestStream.Write(fileContents, 0, fileContents.Length);
+                        await requestStream.WriteAsync(fileContents, 0, fileContents.Length);
                     }
-                    using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
+                    using (FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync())
                     {
                         executionMessage = $"Uploaded to Server: {settings.Server}";
                     }

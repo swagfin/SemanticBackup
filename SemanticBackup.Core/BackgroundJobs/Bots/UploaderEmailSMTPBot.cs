@@ -65,7 +65,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                         //Attachment
                         byte[] fileContents;
                         using (StreamReader sourceStream = new StreamReader(this._backupRecord.Path))
-                            fileContents = Encoding.UTF8.GetBytes(sourceStream.ReadToEnd());
+                            fileContents = Encoding.UTF8.GetBytes(await sourceStream.ReadToEndAsync());
                         MemoryStream strm = new MemoryStream(fileContents);
                         Attachment AttachData = new Attachment(strm, fileName);
                         e_mail.Attachments.Add(AttachData);
@@ -92,7 +92,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                         }
 
                         //Finally Send
-                        await Task.Run(() => Smtp_Server.Send(e_mail));
+                        await Smtp_Server.SendMailAsync(e_mail);
                         executionMessage = $"Sent to: {settings.SMTPDestinations}";
                     }
                 }

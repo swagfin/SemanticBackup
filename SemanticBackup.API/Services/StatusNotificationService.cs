@@ -142,7 +142,7 @@ namespace SemanticBackup.API.Services
                             }
                         }
                         //Finally Send
-                        await Task.Run(() => Smtp_Server.Send(e_mail));
+                        await Smtp_Server.SendMailAsync(e_mail);
                         _logger.LogInformation($"Sent Notifications to Resource Group addresses");
                     }
                 }
