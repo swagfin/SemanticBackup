@@ -1,4 +1,5 @@
 ﻿using CG.Web.MegaApiClient;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SemanticBackup.Core.Models;
@@ -18,7 +19,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly ContentDeliveryRecord _contentDeliveryRecord;
         private readonly BackupRecord _backupRecord;
         private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
-        private readonly IContentDeliveryRecordPersistanceService _persistanceService;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
@@ -26,13 +27,13 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
 
-        public UploaderMegaNxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
+        public UploaderMegaNxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
             this._backupRecord = backupRecord;
             this._contentDeliveryConfiguration = contentDeliveryConfiguration;
-            this._persistanceService = persistanceService;
+            this._scopeFactory = scopeFactory;
             this._logger = logger;
         }
         public async Task RunAsync()
@@ -54,15 +55,15 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 //Directory
                 string validDirectory = (string.IsNullOrWhiteSpace(settings.RemoteFolder)) ? "backups" : settings.RemoteFolder;
                 validDirectory = validDirectory.Replace(" ", "_").Replace("/", "-");
-                client.Login(settings.Username, settings.Password);
-                IEnumerable<INode> nodes = client.GetNodes();
+                await client.LoginAsync(settings.Username, settings.Password);
+                IEnumerable<INode> nodes = await client.GetNodesAsync();
                 INode root = nodes.Single(x => x.Type == NodeType.Root);
                 //Check if Folder Exists
                 INode myFolder = client.GetNodes(root).FirstOrDefault(n => n.Type == NodeType.Directory && n.Name == validDirectory);
                 if (myFolder == null)
-                    myFolder = client.CreateFolder(validDirectory, root);
-                //Proceed
-                INode myFile = client.UploadFile(this._backupRecord.Path, myFolder);
+                    myFolder = await client.CreateFolderAsync(validDirectory, root);
+                //Upload File
+                INode myFile = await client.UploadFileAsync(this._backupRecord.Path, myFolder);
                 executionMessage = $"Uploaded to: {validDirectory}";
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
@@ -76,7 +77,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             }
             finally
             {
-                try { if (client.IsLoggedIn) client.Logout(); client = new MegaApiClient(); } catch { }
+                try { if (client.IsLoggedIn) await client.LogoutAsync(); client = new MegaApiClient(); } catch { }
             }
         }
 
@@ -98,7 +99,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         {
             try
             {
-                _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed);
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IContentDeliveryRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
+                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
+                }
             }
             catch (Exception ex)
             {

@@ -41,20 +41,20 @@ namespace SemanticBackup.Core.BackgroundJobs
                 {
                     try
                     {
-                        List<BackupRecord> pendingExecutionRecords = this._backupRecordPersistanceService.GetAllReadyAndPendingDelivery();
+                        List<BackupRecord> pendingExecutionRecords = await this._backupRecordPersistanceService.GetAllReadyAndPendingDeliveryAsync();
                         if (pendingExecutionRecords != null && pendingExecutionRecords.Count > 0)
                         {
                             foreach (BackupRecord backupRecord in pendingExecutionRecords)
                             {
                                 _logger.LogInformation($"Queueing Content Delivery for Backup Record Id: {backupRecord.Id}...");
                                 //Has Valid Resource Group
-                                List<ContentDeliveryConfiguration> resourceGroupContentDeliveryConfigs = this._contentDeliveryConfigPersistanceService.GetAll(backupRecord.ResourceGroupId);
+                                List<ContentDeliveryConfiguration> resourceGroupContentDeliveryConfigs = await this._contentDeliveryConfigPersistanceService.GetAllAsync(backupRecord.ResourceGroupId);
                                 if (resourceGroupContentDeliveryConfigs != null && resourceGroupContentDeliveryConfigs.Count > 0)
                                 {
                                     List<string> scheduleToDelete = new List<string>();
                                     foreach (ContentDeliveryConfiguration config in resourceGroupContentDeliveryConfigs)
                                     {
-                                        bool queuedSuccess = this._contentDeliveryRecordPersistanceService.AddOrUpdate(new ContentDeliveryRecord
+                                        bool queuedSuccess = await this._contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new ContentDeliveryRecord
                                         {
                                             Id = $"{backupRecord.Id}|{config.Id}|{config.ResourceGroupId}".ToMD5String().ToUpper(), //Unique Identification
                                             BackupRecordId = backupRecord.Id,
@@ -70,16 +70,16 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             _logger.LogWarning($"Unable to Queue Content Delivery Record of Type: {config.Id}, of Backup Record: {backupRecord.Id}");
                                     }
                                     //Update Execution
-                                    bool savedSuccess = this._backupRecordPersistanceService.UpdateDeliveryRunned(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SUCCESSFULLY_EXECUTED.ToString());
+                                    bool savedSuccess = await this._backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SUCCESSFULLY_EXECUTED.ToString());
                                     //Scheduled to Remove
                                     if (scheduleToDelete.Count > 0)
                                         foreach (var id in scheduleToDelete)
-                                            this._contentDeliveryConfigPersistanceService.Remove(id);
+                                            await this._contentDeliveryConfigPersistanceService.RemoveAsync(id);
                                 }
                                 else
                                 {
                                     _logger.LogWarning($"Resource Group Id: {backupRecord.Id}, doesn't have any content delivery config, Skipped Backup Record Content Delivery");
-                                    this._backupRecordPersistanceService.UpdateDeliveryRunned(backupRecord.ResourceGroupId, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
+                                    await this._backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.ResourceGroupId, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
                                 }
 
                             }

@@ -8,6 +8,7 @@ using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
@@ -28,21 +29,21 @@ namespace SemanticBackup.API.Controllers
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
 
-        private BackupDatabaseInfo VerifyDatabaseExistsById(string backupDatabaseInfoId)
+        private async Task<BackupDatabaseInfo> VerifyDatabaseExistsByIdAsync(string backupDatabaseInfoId)
         {
-            var databaseRecord = this._databaseInfoPersistanceService.GetById(backupDatabaseInfoId);
+            var databaseRecord = await this._databaseInfoPersistanceService.GetByIdAsync(backupDatabaseInfoId);
             if (databaseRecord == null)
                 throw new Exception($"No Such Device with ID: {backupDatabaseInfoId}");
             return databaseRecord;
         }
 
         [HttpGet]
-        public ActionResult<List<BackupScheduleResponse>> Get(string resourcegroup)
+        public async Task<ActionResult<List<BackupScheduleResponse>>> GetAsync(string resourcegroup)
         {
             try
             {
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
-                var records = _backupSchedulePersistanceService.GetAll(resourcegroup);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
+                var records = await _backupSchedulePersistanceService.GetAllAsync(resourcegroup);
                 return records.Select(x => new BackupScheduleResponse
                 {
                     Id = x.Id,
@@ -63,12 +64,12 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet("CurrentDue")]
-        public ActionResult<List<BackupScheduleResponse>> GetCurrentDue(string resourcegroup)
+        public async Task<ActionResult<List<BackupScheduleResponse>>> GetCurrentDueAsync(string resourcegroup)
         {
             try
             {
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
-                var records = _backupSchedulePersistanceService.GetAllDueByDate();
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
+                var records = await _backupSchedulePersistanceService.GetAllDueByDateAsync();
                 return records.Select(x => new BackupScheduleResponse
                 {
                     Id = x.Id,
@@ -89,18 +90,18 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet("ByDatabaseId/{id}")]
-        public ActionResult<List<BackupScheduleResponse>> GetByDatabaseId(string id)
+        public async Task<ActionResult<List<BackupScheduleResponse>>> GetByDatabaseIdAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     return new BadRequestObjectResult("Database Id can't be Null or Empty");
-                var backupDatabaseInfo = _databaseInfoPersistanceService.GetById(id);
+                var backupDatabaseInfo = await _databaseInfoPersistanceService.GetByIdAsync(id);
                 if (backupDatabaseInfo == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
-                var records = _backupSchedulePersistanceService.GetAllByDatabaseId(id);
+                var records = await _backupSchedulePersistanceService.GetAllByDatabaseIdAsync(id);
                 //GET Db Resource Group
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
                 return records.Select(x => new BackupScheduleResponse
                 {
                     Id = x.Id,
@@ -121,15 +122,15 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] BackupScheduleRequest request)
+        public async Task<ActionResult> PostAsync([FromBody] BackupScheduleRequest request)
         {
             try
             {
                 if (request == null)
                     throw new Exception("Object value can't be NULL");
                 //Verify Database Info Exists
-                BackupDatabaseInfo backupDatabaseInfo = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                BackupDatabaseInfo backupDatabaseInfo = await VerifyDatabaseExistsByIdAsync(request.BackupDatabaseInfoId);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
                 //Get Times By Timezone
                 DateTime currentTimeUTC = DateTime.UtcNow;
                 BackupSchedule saveObj = new BackupSchedule
@@ -142,7 +143,7 @@ namespace SemanticBackup.API.Controllers
                     CreatedOnUTC = currentTimeUTC,
                     Name = backupDatabaseInfo.Name,
                 };
-                bool savedSuccess = _backupSchedulePersistanceService.AddOrUpdate(saveObj);
+                bool savedSuccess = await _backupSchedulePersistanceService.AddOrUpdateAsync(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
                 return Ok();
@@ -155,7 +156,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put([FromBody] BackupScheduleRequest request, string id)
+        public async Task<ActionResult> PutAsync([FromBody] BackupScheduleRequest request, string id)
         {
             try
             {
@@ -164,13 +165,13 @@ namespace SemanticBackup.API.Controllers
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
                 //Verify Database Info Exists
-                BackupDatabaseInfo backupDatabaseInfo = VerifyDatabaseExistsById(request.BackupDatabaseInfoId);
+                BackupDatabaseInfo backupDatabaseInfo = await VerifyDatabaseExistsByIdAsync(request.BackupDatabaseInfoId);
                 //Proceed
-                var savedObj = _backupSchedulePersistanceService.GetById(id);
+                var savedObj = await _backupSchedulePersistanceService.GetByIdAsync(id);
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
-
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                //Proceed
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
                 //Update Params
                 savedObj.ResourceGroupId = backupDatabaseInfo.ResourceGroupId;
                 savedObj.BackupDatabaseInfoId = request.BackupDatabaseInfoId;
@@ -178,7 +179,7 @@ namespace SemanticBackup.API.Controllers
                 savedObj.EveryHours = request.EveryHours;
                 savedObj.StartDateUTC = request.StartDate.ConvertToUTC(resourceGroup?.TimeZone);
                 savedObj.Name = backupDatabaseInfo.Name;
-                bool updatedSuccess = _backupSchedulePersistanceService.Update(savedObj);
+                bool updatedSuccess = await _backupSchedulePersistanceService.UpdateAsync(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
                 return Ok();
@@ -191,14 +192,14 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult Delete(string id)
+        public async Task<ActionResult> DeleteAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
                 //Update Params
-                bool removedSuccess = _backupSchedulePersistanceService.Remove(id);
+                bool removedSuccess = await _backupSchedulePersistanceService.RemoveAsync(id);
                 if (!removedSuccess)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -13,6 +14,7 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class BackupBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
@@ -21,12 +23,14 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
+            IServiceScopeFactory serviceScopeFactory,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
             ISQLServerBackupProviderService sQLServerBackupProviderService,
             IMySQLServerBackupProviderService mySQLServerBackupProviderService, IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
+            this._serviceScopeFactory = serviceScopeFactory;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
@@ -52,14 +56,14 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(10000);
                     try
                     {
-                        List<BackupRecord> queuedBackups = this._backupRecordPersistanceService.GetAllByStatus(BackupRecordBackupStatus.QUEUED.ToString());
+                        List<BackupRecord> queuedBackups = await this._backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.QUEUED.ToString());
                         if (queuedBackups != null && queuedBackups.Count > 0)
                         {
                             List<string> scheduleToDelete = new List<string>();
                             foreach (BackupRecord backupRecord in queuedBackups)
                             {
                                 _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
-                                BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(backupRecord.BackupDatabaseInfoId);
+                                BackupDatabaseInfo backupDatabaseInfo = await this._databaseInfoPersistanceService.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
                                 if (backupDatabaseInfo == null)
                                 {
                                     _logger.LogWarning($"No Database Info matches with Id: {backupRecord.BackupDatabaseInfoId}, Backup Database Record will be Deleted: {backupRecord.Id}");
@@ -68,7 +72,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 else
                                 {
                                     //Check if valid Resource Group
-                                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
                                     if (resourceGroup == null)
                                     {
                                         _logger.LogWarning($"The Database Id: {backupRecord.BackupDatabaseInfoId}, doesn't seem to have been assigned to a valid Resource Group Id: {backupDatabaseInfo.ResourceGroupId}, Record will be Deleted");
@@ -79,13 +83,13 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                         {
                                             if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                                _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                                _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _serviceScopeFactory, _logger));
                                             else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                                _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                                _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _serviceScopeFactory, _logger));
                                             else
                                                 throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
                                             //Finally Update Status
-                                            bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
+                                            bool updated = await this._backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
                                             if (updated)
                                                 _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
                                             else
@@ -100,7 +104,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Check if Any Delete
                             if (scheduleToDelete.Count > 0)
                                 foreach (var rm in scheduleToDelete)
-                                    this._backupRecordPersistanceService.Remove(rm);
+                                    await this._backupRecordPersistanceService.RemoveAsync(rm);
                         }
                     }
                     catch (Exception ex)
@@ -122,7 +126,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(60000); //Runs After 1 Minute
                     try
                     {
-                        List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired();
+                        List<BackupRecord> expiredBackups = await this._backupRecordPersistanceService.GetAllExpiredAsync();
                         if (expiredBackups != null && expiredBackups.Count > 0)
                         {
                             List<string> toDeleteList = new List<string>();
@@ -132,7 +136,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Check if Any Delete
                             if (toDeleteList.Count > 0)
                                 foreach (var rm in toDeleteList)
-                                    if (!this._backupRecordPersistanceService.Remove(rm))
+                                    if (!(await this._backupRecordPersistanceService.RemoveAsync(rm)))
                                         _logger.LogWarning("Unable to delete Expired Backup Record");
                         }
                     }

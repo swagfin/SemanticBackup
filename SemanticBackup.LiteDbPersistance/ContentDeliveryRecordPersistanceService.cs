@@ -1,10 +1,12 @@
 ﻿using LiteDB;
+using LiteDB.Async;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.LiteDbPersistance
 {
@@ -19,60 +21,61 @@ namespace SemanticBackup.LiteDbPersistance
             this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
         }
 
-        public List<ContentDeliveryRecord> GetAll(string resourceGroupId)
+        public async Task<List<ContentDeliveryRecord>> GetAllAsync(string resourceGroupId)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderByDescending(x => x.RegisteredDateUTC).ToList();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
             }
         }
-        public List<ContentDeliveryRecord> GetAllByStatus(string status)
+        public async Task<List<ContentDeliveryRecord>> GetAllByStatusAsync(string status)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.CurrentStatus == status).OrderBy(x => x.RegisteredDateUTC).ToList();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.CurrentStatus == status).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
             }
         }
-        public List<ContentDeliveryRecord> GetAllByBackupRecordIdByStatus(string resourceGroupId, string id, string status = "*")
+        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, string id, string status = "*")
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
+                await db.PragmaAsync("UTC_DATE", true);
                 if (status == "*")
-                    return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToList();
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.CurrentStatus == status && x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToList();
+                    return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
+                return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.CurrentStatus == status && x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
             }
         }
-        public List<ContentDeliveryRecord> GetAllByBackupRecordId(string id)
+        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToList();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
             }
         }
 
-        public bool AddOrUpdate(ContentDeliveryRecord record)
+        public async Task<bool> AddOrUpdateAsync(ContentDeliveryRecord record)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
+                await db.PragmaAsync("UTC_DATE", true);
                 var collection = db.GetCollection<ContentDeliveryRecord>();
-                var objFound = collection.Query().Where(x => x.Id == record.Id).FirstOrDefault();
+                var objFound = await collection.Query().Where(x => x.Id == record.Id).FirstOrDefaultAsync();
                 if (objFound != null)
                 {
                     objFound.StatusUpdateDateUTC = record.StatusUpdateDateUTC;
                     objFound.CurrentStatus = record.CurrentStatus;
                     objFound.ExecutionMessage = record.ExecutionMessage;
-                    bool updatedSuccess = collection.Update(objFound);
+                    bool updatedSuccess = await collection.UpdateAsync(objFound);
                     if (updatedSuccess)
                         this.DispatchUpdatedStatus(objFound, false);
                     return updatedSuccess;
                 }
                 else
                 {
-                    bool savedSuccess = db.GetCollection<ContentDeliveryRecord>().Upsert(record);
+                    bool savedSuccess = await db.GetCollection<ContentDeliveryRecord>().UpsertAsync(record);
                     if (savedSuccess)
                         this.DispatchUpdatedStatus(record, true);
                     return savedSuccess;
@@ -80,13 +83,13 @@ namespace SemanticBackup.LiteDbPersistance
             }
         }
 
-        public bool UpdateStatusFeed(string id, string status, string message = null, long executionInMilliseconds = 0)
+        public async Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
+                await db.PragmaAsync("UTC_DATE", true);
                 var collection = db.GetCollection<ContentDeliveryRecord>();
-                var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
+                var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
                 if (objFound != null)
                 {
                     objFound.CurrentStatus = status;
@@ -96,7 +99,7 @@ namespace SemanticBackup.LiteDbPersistance
                         objFound.ExecutionMessage = message;
                         objFound.ExecutionMilliseconds = $"{executionInMilliseconds:N2}ms";
                     }
-                    bool updatedSuccess = collection.Update(objFound);
+                    bool updatedSuccess = await collection.UpdateAsync(objFound);
                     if (updatedSuccess)
                         this.DispatchUpdatedStatus(objFound, false);
                     return updatedSuccess;
@@ -105,36 +108,56 @@ namespace SemanticBackup.LiteDbPersistance
             }
         }
 
-        public ContentDeliveryRecord GetById(string id)
+        public async Task<ContentDeliveryRecord> GetByIdAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.Id == id).FirstOrDefault();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             }
         }
 
-        public bool Remove(string id)
+        public async Task<bool> RemoveAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
+                await db.PragmaAsync("UTC_DATE", true);
                 var collection = db.GetCollection<ContentDeliveryRecord>();
-                var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
+                var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
                 if (objFound != null)
                 {
-                    return collection.Delete(new BsonValue(objFound.Id));
+                    return await collection.DeleteAsync(new BsonValue(objFound.Id));
                 }
                 return false;
             }
         }
-
-        public bool Update(ContentDeliveryRecord record)
+        public async Task<bool> UpdateAsync(ContentDeliveryRecord record)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Update(record);
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ContentDeliveryRecord>().UpdateAsync(record);
+            }
+        }
+
+        public async Task<ContentDeliveryRecord> GetByContentTypeByExecutionMessageAsync(string deliveryType, string executionMessage)
+        {
+            using (var db = new LiteDatabaseAsync(connString))
+            {
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage).FirstOrDefaultAsync();
+            }
+        }
+
+        public async Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference)
+        {
+            if (statusChecks == null || statusChecks.Count == 0)
+                return null;
+            using (var db = new LiteDatabaseAsync(connString))
+            {
+                await db.PragmaAsync("UTC_DATE", true);
+                var records = await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => statusChecks.Contains(x.CurrentStatus)).OrderBy(x => x.RegisteredDateUTC).Select(x => new { x.Id, x.CurrentStatus, x.StatusUpdateDateUTC, x.RegisteredDateUTC }).ToListAsync();
+                return records.Where(x => (DateTime.UtcNow - x.StatusUpdateDateUTC).TotalMinutes >= minuteDifference).Select(x => x.Id).ToList();
             }
         }
 
@@ -149,24 +172,5 @@ namespace SemanticBackup.LiteDbPersistance
                     catch { }
         }
 
-        public ContentDeliveryRecord GetByContentTypeByExecutionMessage(string deliveryType, string executionMessage)
-        {
-            using (var db = new LiteDatabase(connString))
-            {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage).FirstOrDefault();
-            }
-        }
-
-        public List<string> GetAllNoneResponsive(List<string> statusChecks, int minuteDifference)
-        {
-            if (statusChecks == null || statusChecks.Count == 0)
-                return null;
-            using (var db = new LiteDatabase(connString))
-            {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ContentDeliveryRecord>().Query().Where(x => statusChecks.Contains(x.CurrentStatus)).OrderBy(x => x.RegisteredDateUTC).Select(x => new { x.Id, x.CurrentStatus, x.StatusUpdateDateUTC, x.RegisteredDateUTC }).ToList().Where(x => (DateTime.UtcNow - x.StatusUpdateDateUTC).TotalMinutes >= minuteDifference).Select(x => x.Id).ToList();
-            }
-        }
     }
 }

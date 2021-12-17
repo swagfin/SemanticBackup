@@ -47,7 +47,7 @@ namespace SemanticBackup.API.Services
                 {
                     IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
                     //Info On Resource Group
-                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecord.ResourceGroupId);
+                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
                     if (resourceGroup == null)
                         return; //No Valid Resource Group
                     if (!resourceGroup.NotifyOnErrorBackups)
@@ -78,12 +78,12 @@ namespace SemanticBackup.API.Services
                     IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
                     IBackupRecordPersistanceService _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
                     //Info On Resource Group
-                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(record.ResourceGroupId);
+                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(record.ResourceGroupId);
                     if (resourceGroup == null)
                         return; //No Valid Resource Group
                     if (!resourceGroup.NotifyOnErrorBackupDelivery)
                         return; //Disabled
-                    BackupRecord backupRecord = _backupRecordPersistanceService.GetById(record.BackupRecordId);
+                    BackupRecord backupRecord = await _backupRecordPersistanceService.GetByIdAsync(record.BackupRecordId);
                     if (backupRecord == null)
                         return; //No Valid Backup File
                     DateTime resourceLocalTime = backupRecord.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone);
@@ -142,7 +142,7 @@ namespace SemanticBackup.API.Services
                             }
                         }
                         //Finally Send
-                        await Task.Run(() => Smtp_Server.Send(e_mail));
+                        await Smtp_Server.SendMailAsync(e_mail);
                         _logger.LogInformation($"Sent Notifications to Resource Group addresses");
                     }
                 }

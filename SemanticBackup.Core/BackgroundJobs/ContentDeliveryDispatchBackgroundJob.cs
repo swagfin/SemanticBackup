@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -12,6 +13,7 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class ContentDeliveryDispatchBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IContentDeliveryRecordPersistanceService _contentDeliveryRecordPersistanceService;
         private readonly IContentDeliveryConfigPersistanceService _contentDeliveryConfigPersistanceService;
@@ -19,12 +21,14 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public ContentDeliveryDispatchBackgroundJob(ILogger<BackupBackgroundJob> logger,
+             IServiceScopeFactory serviceScopeFactory,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService,
             IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService,
             IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
+            this._serviceScopeFactory = serviceScopeFactory;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
             this._contentDeliveryConfigPersistanceService = contentDeliveryConfigPersistanceService;
@@ -47,16 +51,16 @@ namespace SemanticBackup.Core.BackgroundJobs
                 {
                     try
                     {
-                        List<ContentDeliveryRecord> contentDeliveryRecords = this._contentDeliveryRecordPersistanceService.GetAllByStatus(ContentDeliveryRecordStatus.QUEUED.ToString());
+                        List<ContentDeliveryRecord> contentDeliveryRecords = await this._contentDeliveryRecordPersistanceService.GetAllByStatusAsync(ContentDeliveryRecordStatus.QUEUED.ToString());
                         if (contentDeliveryRecords != null && contentDeliveryRecords.Count > 0)
                         {
                             List<string> scheduleToDeleteRecords = new List<string>();
                             foreach (ContentDeliveryRecord contentDeliveryRecord in contentDeliveryRecords)
                             {
                                 _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
-                                BackupRecord backupRecordInfo = this._backupRecordPersistanceService.GetById(contentDeliveryRecord?.BackupRecordId);
-                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecordInfo?.ResourceGroupId);
-                                ContentDeliveryConfiguration contentDeliveryConfiguration = this._contentDeliveryConfigPersistanceService.GetById(contentDeliveryRecord?.ContentDeliveryConfigurationId);
+                                BackupRecord backupRecordInfo = await this._backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId);
+                                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupRecordInfo?.ResourceGroupId);
+                                ContentDeliveryConfiguration contentDeliveryConfiguration = await this._contentDeliveryConfigPersistanceService.GetByIdAsync(contentDeliveryRecord?.ContentDeliveryConfigurationId);
 
                                 if (backupRecordInfo == null)
                                 {
@@ -83,32 +87,32 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DIRECT_LINK.ToString())
                                         {
                                             //Download Link Generator
-                                            _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.FTP_UPLOAD.ToString())
                                         {
                                             //FTP Uploader
-                                            _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.EMAIL_SMTP.ToString())
                                         {
                                             //Email Send and Uploader
-                                            _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.MEGA_STORAGE.ToString())
                                         {
                                             //Mega Nz Storage
-                                            _botsManagerBackgroundJob.AddBot(new UploaderMegaNxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderMegaNxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
                                         {
                                             //Email Send and Uploader
-                                            _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
                                         {
                                             //Azure Blob Storage
-                                            _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else
                                         {
@@ -118,7 +122,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
                                         }
                                         //Finally Update Status
-                                        bool updated = this._contentDeliveryRecordPersistanceService.UpdateStatusFeed(contentDeliveryRecord.Id, status, statusMsg);
+                                        bool updated = await this._contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(contentDeliveryRecord.Id, status, statusMsg);
                                         if (!updated)
                                             _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{contentDeliveryRecord.Id} status");
                                     }
@@ -129,7 +133,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Check if Any Delete
                             if (scheduleToDeleteRecords.Count > 0)
                                 foreach (var rm in scheduleToDeleteRecords)
-                                    this._contentDeliveryRecordPersistanceService.Remove(rm);
+                                    await this._contentDeliveryRecordPersistanceService.RemoveAsync(rm);
                         }
                     }
                     catch (Exception ex)
@@ -152,7 +156,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(60000); //Runs After 1 Minute
                     try
                     {
-                        List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired();
+                        List<BackupRecord> expiredBackups = await this._backupRecordPersistanceService.GetAllExpiredAsync();
                         if (expiredBackups != null && expiredBackups.Count > 0)
                         {
                             List<string> toDeleteList = new List<string>();
@@ -162,7 +166,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Check if Any Delete
                             if (toDeleteList.Count > 0)
                                 foreach (var rm in toDeleteList)
-                                    if (!this._backupRecordPersistanceService.Remove(rm))
+                                    if (!(await this._backupRecordPersistanceService.RemoveAsync(rm)))
                                         _logger.LogWarning("Unable to delete Expired Backup Record");
                         }
                     }

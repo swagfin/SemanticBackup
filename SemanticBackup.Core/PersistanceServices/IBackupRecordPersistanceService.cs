@@ -1,25 +1,27 @@
 ﻿using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IBackupRecordPersistanceService
     {
-        List<BackupRecord> GetAll(string resourceGroupId);
-        BackupRecord GetById(string id);
-        bool Remove(string id);
-        bool AddOrUpdate(BackupRecord record);
-        bool Update(BackupRecord record);
-        bool UpdateStatusFeed(string id, string status, string message = null, long executionInMilliseconds = 0, string newFilePath = null);
-        List<BackupRecord> GetAllByStatus(string status);
-        List<BackupRecord> GetAllByDatabaseId(string id);
-        List<BackupRecord> GetAllByRegisteredDateByStatus(string resourceGroupId, DateTime fromDate, string status = "*");
-        List<BackupRecord> GetAllByStatusUpdateDateByStatus(string resourceGroupId, DateTime fromDate, string status = "*");
-        List<BackupRecord> GetAllExpired();
-        List<BackupRecord> GetAllByDatabaseIdByStatus(string resourceGroupId, string id, string status = "*");
-        List<BackupRecord> GetAllReadyAndPendingDelivery();
-        bool UpdateDeliveryRunned(string backupRecordId, bool hasRun, string executedDeliveryRunStatus);
-        List<string> GetAllNoneResponsiveIds(List<string> statusChecks, int minuteDifference);
+        Task<List<BackupRecord>> GetAllAsync(string resourceGroupId);
+        Task<BackupRecord> GetByIdAsync(string id);
+        Task<bool> RemoveAsync(string id);
+        Task<bool> AddOrUpdateAsync(BackupRecord record);
+        Task<bool> UpdateAsync(BackupRecord record);
+        Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0, string newFilePath = null);
+        Task<List<BackupRecord>> GetAllByStatusAsync(string status);
+        Task<List<BackupRecord>> GetAllByDatabaseIdAsync(string id);
+        Task<List<BackupRecord>> GetAllByRegisteredDateByStatusAsync(string resourceGroupId, DateTime fromDate, string status = "*");
+        Task<List<BackupRecord>> GetAllByStatusUpdateDateByStatusAsync(string resourceGroupId, DateTime fromDate, string status = "*");
+        Task<List<BackupRecord>> GetAllExpiredAsync();
+        Task<List<BackupRecord>> GetAllByDatabaseIdByStatusAsync(string resourceGroupId, string id, string status = "*");
+        Task<List<BackupRecord>> GetAllReadyAndPendingDeliveryAsync();
+        Task<bool> UpdateDeliveryRunnedAsync(string backupRecordId, bool hasRun, string executedDeliveryRunStatus);
+        Task<List<string>> GetAllNoneResponsiveIdsAsync(List<string> statusChecks, int minuteDifference);
+        Task<int> GetAllCountAsync(string resourcegroup);
     }
 }

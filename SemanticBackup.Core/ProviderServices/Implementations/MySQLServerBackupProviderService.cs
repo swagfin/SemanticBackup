@@ -9,7 +9,7 @@ namespace SemanticBackup.Core.ProviderServices.Implementations
 {
     public class MySQLServerBackupProviderService : IMySQLServerBackupProviderService
     {
-        public bool BackupDatabase(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
+        public async Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
         {
             if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
                 throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
@@ -19,10 +19,10 @@ namespace SemanticBackup.Core.ProviderServices.Implementations
                 {
                     using (MySqlBackup mb = new MySqlBackup(cmd))
                     {
-                        conn.Open();
+                        await conn.OpenAsync();
                         cmd.Connection = conn;
                         mb.ExportToFile(backupRecord.Path.Trim());
-                        conn.Close();
+                        await conn.CloseAsync();
                     }
                 }
                 return true;
@@ -37,22 +37,22 @@ namespace SemanticBackup.Core.ProviderServices.Implementations
             {
                 using (MySqlCommand cmd = new MySqlCommand("SHOW DATABASES;"))
                 {
-                    conn.Open();
+                    await conn.OpenAsync();
                     cmd.Connection = conn;
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         if (reader.HasRows)
                         {
-                            while (reader.Read())
+                            while (await reader.ReadAsync())
                             {
                                 string dbName = reader?.GetString(0);
                                 if (!exclude.Contains(dbName))
                                     availableDbs.Add(dbName);
                             }
                         }
-                        reader.Close();
+                        await reader.CloseAsync();
                     }
-                    conn.Close();
+                    await conn.CloseAsync();
                 }
             }
             return availableDbs;

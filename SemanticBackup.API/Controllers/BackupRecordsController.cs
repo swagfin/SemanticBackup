@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
@@ -31,12 +32,12 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupRecordResponse>> Get(string resourcegroup)
+        public async Task<ActionResult<List<BackupRecordResponse>>> GetAsync(string resourcegroup)
         {
             try
             {
-                List<BackupRecord> records = _backupRecordPersistanceService.GetAll(resourcegroup);
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
+                List<BackupRecord> records = await _backupRecordPersistanceService.GetAllAsync(resourcegroup);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
                 return records.Select(x => new BackupRecordResponse
                 {
                     Id = x.Id,
@@ -59,18 +60,18 @@ namespace SemanticBackup.API.Controllers
             }
         }
         [HttpGet("ByDatabaseId/{id}")]
-        public ActionResult<List<BackupRecordResponse>> GetByDatabaseId(string id)
+        public async Task<ActionResult<List<BackupRecordResponse>>> GetByDatabaseIdAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     return new BadRequestObjectResult("Database Id can't be Null or Empty");
-                BackupDatabaseInfo validDatabase = _databaseInfoPersistanceService.GetById(id);
+                BackupDatabaseInfo validDatabase = await _databaseInfoPersistanceService.GetByIdAsync(id);
                 if (validDatabase == null)
                     return new List<BackupRecordResponse>();
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(validDatabase.ResourceGroupId);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(validDatabase.ResourceGroupId);
                 //Get Records By Database Id
-                List<BackupRecord> records = _backupRecordPersistanceService.GetAllByDatabaseId(id);
+                List<BackupRecord> records = await _backupRecordPersistanceService.GetAllByDatabaseIdAsync(id);
                 return records.Select(x => new BackupRecordResponse
                 {
                     Id = x.Id,
@@ -94,14 +95,14 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet("ByStatus/{status}")]
-        public ActionResult<List<BackupRecordResponse>> GetByStatus(string status, string resourcegroup)
+        public async Task<ActionResult<List<BackupRecordResponse>>> GetByStatusAsync(string status, string resourcegroup)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(status))
                     return new BadRequestObjectResult("Status was not Provided");
-                var records = _backupRecordPersistanceService.GetAllByStatus(status);
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
+                var records = await _backupRecordPersistanceService.GetAllByStatusAsync(status);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
                 return records.Select(x => new BackupRecordResponse
                 {
                     Id = x.Id,
@@ -125,16 +126,16 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<BackupRecordResponse> GetById(string id)
+        public async Task<ActionResult<BackupRecordResponse>> GetByIdAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                BackupRecord record = _backupRecordPersistanceService.GetById(id);
+                BackupRecord record = await _backupRecordPersistanceService.GetByIdAsync(id);
                 if (record == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(record.ResourceGroupId);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(record.ResourceGroupId);
                 return new BackupRecordResponse
                 {
                     Id = record.Id,
@@ -158,13 +159,13 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult Delete(string id)
+        public async Task<ActionResult> DeleteAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                bool removedSuccess = _backupRecordPersistanceService.Remove(id);
+                bool removedSuccess = await _backupRecordPersistanceService.RemoveAsync(id);
                 if (!removedSuccess)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else
@@ -179,19 +180,19 @@ namespace SemanticBackup.API.Controllers
 
         [Route("re-run/{id}")]
         [HttpGet, HttpPost]
-        public ActionResult GetInitRerun(string id)
+        public async Task<ActionResult> GetInitRerunAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var backupRecord = _backupRecordPersistanceService.GetById(id);
+                var backupRecord = await _backupRecordPersistanceService.GetByIdAsync(id);
                 if (backupRecord == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else if (backupRecord.BackupStatus != "ERROR")
                     return new ConflictObjectResult($"STATUS need to be ERROR, Current Status for this record is: {backupRecord.BackupStatus}");
                 string newBackupPath = backupRecord.Path.Replace(".zip", ".bak");
-                bool rerunSuccess = _backupRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.QUEUED.ToString(), "Queued for Re-run", 0, newBackupPath);
+                bool rerunSuccess = await _backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.QUEUED.ToString(), "Queued for Re-run", 0, newBackupPath);
                 if (rerunSuccess)
                     return Ok(rerunSuccess);
                 else
@@ -206,25 +207,24 @@ namespace SemanticBackup.API.Controllers
 
         [Route("request-instant-backup/{id}")]
         [HttpGet, HttpPost]
-        public ActionResult<BackupRecord> GetRequestInstantBackup(string id)
+        public async Task<ActionResult<BackupRecord>> GetRequestInstantBackupAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var backupDatabaseInfo = _databaseInfoPersistanceService.GetById(id);
+                var backupDatabaseInfo = await _databaseInfoPersistanceService.GetByIdAsync(id);
                 if (backupDatabaseInfo == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
-
                 //Check if an Existing Queued
-                var queuedExisting = this._backupRecordPersistanceService.GetAllByDatabaseIdByStatus(backupDatabaseInfo.ResourceGroupId, backupDatabaseInfo.Id, BackupRecordBackupStatus.QUEUED.ToString());
+                var queuedExisting = await this._backupRecordPersistanceService.GetAllByDatabaseIdByStatusAsync(backupDatabaseInfo.ResourceGroupId, backupDatabaseInfo.Id, BackupRecordBackupStatus.QUEUED.ToString());
                 if (queuedExisting != null && queuedExisting.Count > 0)
                 {
                     //No Need to Create another Just Return
                     return queuedExisting.FirstOrDefault();
                 }
                 //Resource Group
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo?.ResourceGroupId);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo?.ResourceGroupId);
                 //Proceed Otherwise
                 DateTime currentTimeUTC = DateTime.UtcNow;
                 DateTime currentTimeLocal = currentTimeUTC.ConvertFromUTC(resourceGroup?.TimeZone);
@@ -241,7 +241,7 @@ namespace SemanticBackup.API.Controllers
                     RegisteredDateUTC = currentTimeUTC,
                     ExecutedDeliveryRun = false
                 };
-                bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
+                bool addedSuccess = await this._backupRecordPersistanceService.AddOrUpdateAsync(newRecord);
                 if (addedSuccess)
                     return newRecord;
                 return null;

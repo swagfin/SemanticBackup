@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.Core.ProviderServices;
@@ -15,20 +16,20 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly BackupDatabaseInfo _databaseInfo;
         private readonly BackupRecord _backupRecord;
         private readonly ISQLServerBackupProviderService _backupProviderService;
-        private readonly IBackupRecordPersistanceService _persistanceService;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroup;
         public string BotId => _backupRecord.Id;
-        public SQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, ISQLServerBackupProviderService backupProviderService, IBackupRecordPersistanceService persistanceService, ILogger logger)
+        public SQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, ISQLServerBackupProviderService backupProviderService, IServiceScopeFactory scopeFactory, ILogger logger)
         {
             this._resourceGroup = resourceGroupId;
             this._databaseInfo = databaseInfo;
             this._backupRecord = backupRecord;
             this._backupProviderService = backupProviderService;
-            this._persistanceService = persistanceService;
+            this._scopeFactory = scopeFactory;
             this._logger = logger;
         }
         public async Task RunAsync()
@@ -43,7 +44,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 await Task.Delay(new Random().Next(1000));
                 stopwatch.Start();
                 //Execute Service
-                bool backupedUp = _backupProviderService.BackupDatabase(_databaseInfo, _backupRecord);
+                bool backupedUp = await _backupProviderService.BackupDatabaseAsync(_databaseInfo, _backupRecord);
                 stopwatch.Stop();
                 if (backupedUp)
                     UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.COMPLETED.ToString(), "Successfull", stopwatch.ElapsedMilliseconds);
@@ -70,7 +71,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         {
             try
             {
-                _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed);
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IBackupRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
+                }
             }
             catch (Exception ex)
             {

@@ -32,11 +32,11 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<BackupDatabaseInfoResponse>> Get(string resourcegroup)
+        public async Task<ActionResult<List<BackupDatabaseInfoResponse>>> GetAsync(string resourcegroup)
         {
             try
             {
-                var records = _backupDatabasePersistanceService.GetAll(resourcegroup);
+                var records = await _backupDatabasePersistanceService.GetAllAsync(resourcegroup);
                 if (records == null)
                     return new List<BackupDatabaseInfoResponse>();
                 return records.ToList().Select(x => new BackupDatabaseInfoResponse
@@ -59,13 +59,13 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<BackupDatabaseInfoResponse> GetRecord(string id)
+        public async Task<ActionResult<BackupDatabaseInfoResponse>> GetRecordAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var x = _backupDatabasePersistanceService.GetById(id);
+                var x = await _backupDatabasePersistanceService.GetByIdAsync(id);
                 if (x == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 return new BackupDatabaseInfoResponse
@@ -103,7 +103,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] BackupDatabaseRequest request, string resourcegroup)
+        public async Task<ActionResult> PostAsync([FromBody] BackupDatabaseRequest request, string resourcegroup)
         {
             try
             {
@@ -126,11 +126,11 @@ namespace SemanticBackup.API.Controllers
                         Description = request.Description,
                         DateRegisteredUTC = DateTime.UtcNow
                     };
-                    bool savedSuccess = _backupDatabasePersistanceService.AddOrUpdate(saveObj);
+                    bool savedSuccess = await _backupDatabasePersistanceService.AddOrUpdateAsync(saveObj);
                     if (!savedSuccess)
                         throw new Exception("Data was not Saved");
                     if (request.AutoCreateSchedule)
-                        CreateScheduleFor(saveObj);
+                        await CreateScheduleForAsync(saveObj);
                 }
                 return Ok();
             }
@@ -141,7 +141,7 @@ namespace SemanticBackup.API.Controllers
             }
         }
 
-        private void CreateScheduleFor(BackupDatabaseInfo databaseInfo)
+        private async Task CreateScheduleForAsync(BackupDatabaseInfo databaseInfo)
         {
             try
             {
@@ -156,7 +156,7 @@ namespace SemanticBackup.API.Controllers
                     CreatedOnUTC = currentTimeUTC,
                     Name = databaseInfo.Name
                 };
-                bool savedSuccess = _schedulePersistanceService.AddOrUpdate(saveObj);
+                bool savedSuccess = await _schedulePersistanceService.AddOrUpdateAsync(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
             }
@@ -164,7 +164,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put([FromBody] BackupDatabaseRequest request, string id)
+        public async Task<ActionResult> PutAsync([FromBody] BackupDatabaseRequest request, string id)
         {
             try
             {
@@ -172,7 +172,7 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Object value can't be NULL");
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var savedObj = _backupDatabasePersistanceService.GetById(id);
+                var savedObj = await _backupDatabasePersistanceService.GetByIdAsync(id);
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 //Update Params
@@ -185,7 +185,7 @@ namespace SemanticBackup.API.Controllers
                 savedObj.Port = request.Port;
                 savedObj.Description = request.Description;
 
-                bool updatedSuccess = _backupDatabasePersistanceService.Update(savedObj);
+                bool updatedSuccess = await _backupDatabasePersistanceService.UpdateAsync(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
                 return Ok();
@@ -198,14 +198,14 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult Delete(string id)
+        public async Task<ActionResult> DeleteAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
                 //Update Params
-                bool removedSuccess = _backupDatabasePersistanceService.Remove(id);
+                bool removedSuccess = await _backupDatabasePersistanceService.RemoveAsync(id);
                 if (!removedSuccess)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else
@@ -219,7 +219,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost("pre-get-database-collection")]
-        public async Task<IEnumerable<string>> GetPreGetDbCollection([FromForm] DatabaseCollectionRequest request)
+        public async Task<IEnumerable<string>> GetPreGetDbCollectionAsync([FromForm] DatabaseCollectionRequest request)
         {
             try
             {

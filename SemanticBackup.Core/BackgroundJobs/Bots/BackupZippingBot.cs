@@ -1,4 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -14,7 +15,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
     {
         private readonly string _resourceGroupId;
         private readonly BackupRecord _backupRecord;
-        private readonly IBackupRecordPersistanceService _persistanceService;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
@@ -23,11 +24,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string BotId => _backupRecord.Id;
 
-        public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IBackupRecordPersistanceService persistanceService, ILogger logger)
+        public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IServiceScopeFactory scopeFactory, ILogger logger)
         {
             this._resourceGroupId = resourceGroupId;
             this._backupRecord = backupRecord;
-            this._persistanceService = persistanceService;
+            this._scopeFactory = scopeFactory;
             this._logger = logger;
         }
         public async Task RunAsync()
@@ -86,7 +87,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         {
             try
             {
-                _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed, newZIPPath);
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IBackupRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed, newZIPPath);
+                }
             }
             catch (Exception ex)
             {

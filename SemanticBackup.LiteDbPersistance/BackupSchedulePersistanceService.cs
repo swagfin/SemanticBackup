@@ -1,8 +1,10 @@
 ﻿using LiteDB;
+using LiteDB.Async;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.LiteDbPersistance
 {
@@ -15,67 +17,75 @@ namespace SemanticBackup.LiteDbPersistance
             this.connString = options.ConnectionStringLiteDb;
         }
 
-        public List<BackupSchedule> GetAll(string resourcegroup)
+        public async Task<List<BackupSchedule>> GetAllAsync(string resourcegroup)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).ToList();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).ToListAsync();
             }
         }
-        public List<BackupSchedule> GetAllDueByDate()
+        public async Task<int> GetAllCountAsync(string resourcegroup)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRunUTC <= DateTime.UtcNow && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRunUTC).ToList();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).Select(x => x.Id).CountAsync();
             }
         }
-        public List<BackupSchedule> GetAllByDatabaseId(string id)
+        public async Task<List<BackupSchedule>> GetAllDueByDateAsync()
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).ToList();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRunUTC <= DateTime.UtcNow && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRunUTC).ToListAsync();
             }
         }
-        public bool AddOrUpdate(BackupSchedule record)
+        public async Task<List<BackupSchedule>> GetAllByDatabaseIdAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<BackupSchedule>().Upsert(record);
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).ToListAsync();
+            }
+        }
+        public async Task<bool> AddOrUpdateAsync(BackupSchedule record)
+        {
+            using (var db = new LiteDatabaseAsync(connString))
+            {
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<BackupSchedule>().UpsertAsync(record);
             }
         }
 
-        public BackupSchedule GetById(string id)
+        public async Task<BackupSchedule> GetByIdAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<BackupSchedule>().Query().Where(x => x.Id == id).FirstOrDefault();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<BackupSchedule>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             }
         }
 
-        public bool Remove(string id)
+        public async Task<bool> RemoveAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
+                await db.PragmaAsync("UTC_DATE", true);
                 var collection = db.GetCollection<BackupSchedule>();
-                var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
+                var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
                 if (objFound != null)
-                    return collection.Delete(new BsonValue(objFound.Id));
+                    return await collection.DeleteAsync(new BsonValue(objFound.Id));
                 return false;
             }
         }
 
-        public bool Update(BackupSchedule record)
+        public async Task<bool> UpdateAsync(BackupSchedule record)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<BackupSchedule>().Update(record);
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<BackupSchedule>().UpsertAsync(record);
             }
         }
     }

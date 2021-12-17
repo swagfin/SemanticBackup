@@ -67,7 +67,7 @@ namespace SemanticBackup.API.SignalRHubs
                 await Groups.AddToGroupAsync(Context.ConnectionId, group);
                 //Push Data to New
                 _logger.LogInformation($"Pushing Data to newly Joined Client under group {group}");
-                SendMetrics(group);
+                _ = SendMetricsAsync(group);
             }
             catch (Exception ex)
             {
@@ -87,7 +87,7 @@ namespace SemanticBackup.API.SignalRHubs
                         //Dispatch Data to Users
                         var groups = DashboardRefreshHubClientStorage.GetClientGroups().Where(x => x.Clients.Any());
                         foreach (var group in groups)
-                            SendMetrics(group.Name);
+                            _ = SendMetricsAsync(group.Name);
                     }
                     catch (Exception ex)
                     {
@@ -100,7 +100,7 @@ namespace SemanticBackup.API.SignalRHubs
             t.Start();
         }
 
-        private void SendMetrics(string groupRecord)
+        private async Task SendMetricsAsync(string groupRecord)
         {
             try
             {
@@ -116,7 +116,7 @@ namespace SemanticBackup.API.SignalRHubs
                 _logger.LogInformation("Preparing to send Metrics for Group: {group}", groupRecord);
                 //Resource Group Timezone
                 //Change UTC now to Resource Group TimeZone
-                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(resourcegroup);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
                 DateTime currentTimeUTC = DateTime.UtcNow;
 
                 DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);
@@ -124,7 +124,7 @@ namespace SemanticBackup.API.SignalRHubs
                 //Clear All
                 clientGrp.Metric.AvgMetrics = new List<RealTimeViewModel>();
 
-                var recordsLatest = _backupRecordPersistanceService.GetAllByRegisteredDateByStatus(resourcegroup, metricsFromDatUTC, subscriberGroup);
+                var recordsLatest = await _backupRecordPersistanceService.GetAllByRegisteredDateByStatusAsync(resourcegroup, metricsFromDatUTC, subscriberGroup);
                 if (recordsLatest != null && recordsLatest.Count > 0)
                     foreach (var record in recordsLatest)
                     {
@@ -144,7 +144,7 @@ namespace SemanticBackup.API.SignalRHubs
                         }
                     }
 
-                var recordsFailsLatest = _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatus(resourcegroup, metricsFromDatUTC, BackupRecordBackupStatus.ERROR.ToString());
+                var recordsFailsLatest = await _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatusAsync(resourcegroup, metricsFromDatUTC, BackupRecordBackupStatus.ERROR.ToString());
                 if (recordsFailsLatest != null && recordsFailsLatest.Count > 0)
                     foreach (var record in recordsFailsLatest)
                     {
@@ -175,9 +175,9 @@ namespace SemanticBackup.API.SignalRHubs
                     TimeStampCurrent = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone).IgnoreSeconds(false).ToString("hh tt")
                 }).OrderBy(x => x.TimeStamp).ToList();
 
-                clientGrp.Metric.TotalBackupSchedules = _backupSchedulePersistanceService.GetAll(resourcegroup).Count();
-                clientGrp.Metric.TotalDatabases = _databaseInfoPersistanceService.GetAll(resourcegroup).Count();
-                clientGrp.Metric.TotalBackupRecords = _backupRecordPersistanceService.GetAll(resourcegroup).Count();
+                clientGrp.Metric.TotalBackupSchedules = await _backupSchedulePersistanceService.GetAllCountAsync(resourcegroup);
+                clientGrp.Metric.TotalDatabases = await _databaseInfoPersistanceService.GetAllCountAsync(resourcegroup);
+                clientGrp.Metric.TotalBackupRecords = await _backupRecordPersistanceService.GetAllCountAsync(resourcegroup);
 
                 _ = hub.Clients.Group(groupRecord).SendAsync("ReceiveMetrics", clientGrp.Metric);
 

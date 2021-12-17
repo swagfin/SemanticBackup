@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -17,7 +18,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly ContentDeliveryRecord _contentDeliveryRecord;
         private readonly BackupRecord _backupRecord;
         private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
-        private readonly IContentDeliveryRecordPersistanceService _persistanceService;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
@@ -25,13 +26,13 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
 
-        public UploaderFTPBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
+        public UploaderFTPBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
             this._backupRecord = backupRecord;
             this._contentDeliveryConfiguration = contentDeliveryConfiguration;
-            this._persistanceService = persistanceService;
+            this._scopeFactory = scopeFactory;
             this._logger = logger;
         }
         public async Task RunAsync()
@@ -67,14 +68,14 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                     byte[] fileContents;
                     using (StreamReader sourceStream = new StreamReader(this._backupRecord.Path))
                     {
-                        fileContents = Encoding.UTF8.GetBytes(sourceStream.ReadToEnd());
+                        fileContents = Encoding.UTF8.GetBytes(await sourceStream.ReadToEndAsync());
                     }
                     request.ContentLength = fileContents.Length;
-                    using (Stream requestStream = request.GetRequestStream())
+                    using (Stream requestStream = await request.GetRequestStreamAsync())
                     {
-                        requestStream.Write(fileContents, 0, fileContents.Length);
+                        await requestStream.WriteAsync(fileContents, 0, fileContents.Length);
                     }
-                    using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
+                    using (FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync())
                     {
                         executionMessage = $"Uploaded to Server: {settings.Server}";
                     }
@@ -119,7 +120,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         {
             try
             {
-                _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed);
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IContentDeliveryRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
+                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
+                }
             }
             catch (Exception ex)
             {
