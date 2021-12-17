@@ -1,5 +1,6 @@
 ﻿using Dropbox.Api;
 using Dropbox.Api.Files;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SemanticBackup.Core.Models;
@@ -17,20 +18,20 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly ContentDeliveryRecord _contentDeliveryRecord;
         private readonly BackupRecord _backupRecord;
         private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
-        private readonly IContentDeliveryRecordPersistanceService _persistanceService;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
-        public UploaderDropboxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IContentDeliveryRecordPersistanceService persistanceService, ILogger logger)
+        public UploaderDropboxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory, ILogger logger)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
             this._backupRecord = backupRecord;
             this._contentDeliveryConfiguration = contentDeliveryConfiguration;
-            this._persistanceService = persistanceService;
+            this._scopeFactory = scopeFactory;
             this._logger = logger;
         }
         public async Task RunAsync()
@@ -94,7 +95,11 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         {
             try
             {
-                _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed);
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IContentDeliveryRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
+                    _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed);
+                }
             }
             catch (Exception ex)
             {

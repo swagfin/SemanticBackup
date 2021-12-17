@@ -6,7 +6,7 @@ namespace SemanticBackup.Core.ProviderServices
 {
     public interface IMySQLServerBackupProviderService
     {
-        bool BackupDatabase(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
+        Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
         Task<IEnumerable<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo);
     }
 }

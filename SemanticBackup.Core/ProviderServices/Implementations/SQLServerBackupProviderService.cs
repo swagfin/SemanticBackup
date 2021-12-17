@@ -15,19 +15,19 @@ BACKUP DATABASE [{0}]
 TO  DISK = N'{1}' 
 WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
 ";
-        public bool BackupDatabase(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
+        public async Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
         {
             if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
                 throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
             using (DbConnection connection = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 DbCommand command = connection.CreateCommand();
                 command.CommandTimeout = 0; // Backups can take a long time for big databases
                 command.CommandText = string.Format(BackupCommandTemplate, backupDatabaseInfo.DatabaseName, backupRecord.Path.Trim());
                 //Execute
-                int queryRows = command.ExecuteNonQuery();
-                connection.Close();
+                int queryRows = await command.ExecuteNonQueryAsync();
+                await connection.CloseAsync();
                 return true;
             }
         }
@@ -40,7 +40,7 @@ WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
             {
                 using (SqlCommand cmd = new SqlCommand("SELECT name FROM master.dbo.sysdatabases"))
                 {
-                    conn.Open();
+                    await conn.OpenAsync();
                     cmd.Connection = conn;
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
@@ -53,9 +53,9 @@ WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
                                     availableDbs.Add(dbName);
                             }
                         }
-                        reader.Close();
+                        await reader.CloseAsync();
                     }
-                    conn.Close();
+                    await conn.CloseAsync();
                 }
             }
             return availableDbs;

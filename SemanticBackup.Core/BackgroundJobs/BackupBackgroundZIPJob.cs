@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -12,17 +13,18 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class BackupBackgroundZIPJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundZIPJob> _logger;
-        private readonly PersistanceOptions _persistanceOptions;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupBackgroundZIPJob(ILogger<BackupBackgroundZIPJob> logger,
+             IServiceScopeFactory serviceScopeFactory,
             PersistanceOptions persistanceOptions,
             IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
-            this._persistanceOptions = persistanceOptions;
+            this._serviceScopeFactory = serviceScopeFactory;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
@@ -62,7 +64,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         {
                                             _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
                                             //Add to Queue
-                                            _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _backupRecordPersistanceService, _logger));
+                                            _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _serviceScopeFactory, _logger));
                                             bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
                                             if (updated)
                                                 _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");

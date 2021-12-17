@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -13,6 +14,7 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class BackupBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
         private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
@@ -21,12 +23,14 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger,
+            IServiceScopeFactory serviceScopeFactory,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IDatabaseInfoPersistanceService databaseInfoPersistanceService,
             ISQLServerBackupProviderService sQLServerBackupProviderService,
             IMySQLServerBackupProviderService mySQLServerBackupProviderService, IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
+            this._serviceScopeFactory = serviceScopeFactory;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
@@ -79,9 +83,9 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                         {
                                             if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                                _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                                _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._sQLServerBackupProviderService, _serviceScopeFactory, _logger));
                                             else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                                _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _backupRecordPersistanceService, _logger));
+                                                _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, this._mySQLServerBackupProviderService, _serviceScopeFactory, _logger));
                                             else
                                                 throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
                                             //Finally Update Status

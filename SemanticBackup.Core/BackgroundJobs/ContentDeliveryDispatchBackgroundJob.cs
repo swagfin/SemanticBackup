@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -12,6 +13,7 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class ContentDeliveryDispatchBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
         private readonly IContentDeliveryRecordPersistanceService _contentDeliveryRecordPersistanceService;
         private readonly IContentDeliveryConfigPersistanceService _contentDeliveryConfigPersistanceService;
@@ -19,12 +21,14 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public ContentDeliveryDispatchBackgroundJob(ILogger<BackupBackgroundJob> logger,
+             IServiceScopeFactory serviceScopeFactory,
             IBackupRecordPersistanceService backupRecordPersistanceService,
             IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService,
             IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService,
             IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
+            this._serviceScopeFactory = serviceScopeFactory;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
             this._contentDeliveryConfigPersistanceService = contentDeliveryConfigPersistanceService;
@@ -83,32 +87,32 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DIRECT_LINK.ToString())
                                         {
                                             //Download Link Generator
-                                            _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.FTP_UPLOAD.ToString())
                                         {
                                             //FTP Uploader
-                                            _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.EMAIL_SMTP.ToString())
                                         {
                                             //Email Send and Uploader
-                                            _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.MEGA_STORAGE.ToString())
                                         {
                                             //Mega Nz Storage
-                                            _botsManagerBackgroundJob.AddBot(new UploaderMegaNxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderMegaNxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
                                         {
                                             //Email Send and Uploader
-                                            _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
                                         {
                                             //Azure Blob Storage
-                                            _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, this._contentDeliveryRecordPersistanceService, this._logger));
+                                            _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory, this._logger));
                                         }
                                         else
                                         {
