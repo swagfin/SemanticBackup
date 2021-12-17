@@ -1,14 +1,16 @@
 ﻿using SemanticBackup.Core.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IDatabaseInfoPersistanceService
     {
-        List<BackupDatabaseInfo> GetAll(string resourceGroupId);
-        BackupDatabaseInfo GetById(string id);
-        bool Remove(string id);
-        bool AddOrUpdate(BackupDatabaseInfo record);
-        bool Update(BackupDatabaseInfo record);
+        Task<List<BackupDatabaseInfo>> GetAllAsync(string resourceGroupId);
+        Task<BackupDatabaseInfo> GetByIdAsync(string id);
+        Task<bool> RemoveAsync(string id);
+        Task<bool> AddOrUpdateAsync(BackupDatabaseInfo record);
+        Task<bool> UpdateAsync(BackupDatabaseInfo record);
+        Task<int> GetAllCountAsync(string resourceGroupId);
     }
 }

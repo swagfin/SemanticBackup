@@ -47,13 +47,13 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(10000);
                     try
                     {
-                        List<BackupRecord> queuedBackups = this._backupRecordPersistanceService.GetAllByStatus(BackupRecordBackupStatus.COMPLETED.ToString());
+                        List<BackupRecord> queuedBackups = await this._backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.COMPLETED.ToString());
                         if (queuedBackups != null && queuedBackups.Count > 0)
                         {
                             foreach (BackupRecord backupRecord in queuedBackups)
                             {
                                 //Check if valid Resource Group
-                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecord.ResourceGroupId);
+                                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
                                 if (resourceGroup != null)
                                 {
                                     //Use Resource Group Threads
@@ -65,7 +65,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
                                             //Add to Queue
                                             _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _serviceScopeFactory, _logger));
-                                            bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
+                                            bool updated = await this._backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
                                             if (updated)
                                                 _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
                                             else
@@ -75,7 +75,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     else
                                     {
                                         _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
-                                        bool updated = this._backupRecordPersistanceService.UpdateStatusFeed(backupRecord.Id, BackupRecordBackupStatus.READY.ToString());
+                                        bool updated = await this._backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.READY.ToString());
                                         if (updated)
                                             _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
                                         else

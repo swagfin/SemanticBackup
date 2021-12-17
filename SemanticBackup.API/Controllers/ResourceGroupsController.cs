@@ -7,6 +7,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
@@ -27,11 +28,11 @@ namespace SemanticBackup.API.Controllers
             this._persistanceOptions = persistanceOptions;
         }
         [HttpGet]
-        public ActionResult<List<ResourceGroup>> GetResourceGroups()
+        public async Task<ActionResult<List<ResourceGroup>>> GetResourceGroupsAsync()
         {
             try
             {
-                return _activeResourcegroupService.GetAll();
+                return await _activeResourcegroupService.GetAllAsync();
             }
             catch (Exception ex)
             {
@@ -40,13 +41,13 @@ namespace SemanticBackup.API.Controllers
             }
         }
         [HttpGet("{id}")]
-        public ActionResult<ResourceGroup> Get(string id)
+        public async Task<ActionResult<ResourceGroup>> GetAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var record = _activeResourcegroupService.GetById(id);
+                var record = await _activeResourcegroupService.GetByIdAsync(id);
                 if (record == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 return record;
@@ -59,7 +60,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] ResourceGroupRequest request)
+        public async Task<ActionResult> PostAsync([FromBody] ResourceGroupRequest request)
         {
             try
             {
@@ -82,7 +83,7 @@ namespace SemanticBackup.API.Controllers
                     NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery,
                     NotifyOnErrorBackups = request.NotifyOnErrorBackups,
                 };
-                bool savedSuccess = _activeResourcegroupService.Add(saveObj);
+                bool savedSuccess = await _activeResourcegroupService.AddAsync(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
 
@@ -90,7 +91,7 @@ namespace SemanticBackup.API.Controllers
                 List<ContentDeliveryConfiguration> configs = GetPostedConfigurations(saveObj.Id, request);
                 if (configs != null && configs.Count > 0)
                 {
-                    bool addedSuccess = this._contentDeliveryConfigPersistanceService.AddOrUpdate(configs);
+                    bool addedSuccess = await this._contentDeliveryConfigPersistanceService.AddOrUpdateAsync(configs);
                     if (!addedSuccess)
                         _logger.LogWarning("Resource Group Content Delivery Settings were not Saved");
                 }
@@ -104,7 +105,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put([FromBody] ResourceGroupRequest request, string id)
+        public async Task<ActionResult> PutAsync([FromBody] ResourceGroupRequest request, string id)
         {
             try
             {
@@ -114,7 +115,7 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Id can't be NULL");
                 //Verify Database Info Exists
                 //Proceed
-                var savedObj = _activeResourcegroupService.GetById(id);
+                var savedObj = await _activeResourcegroupService.GetByIdAsync(id);
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 //Update Params
@@ -128,7 +129,7 @@ namespace SemanticBackup.API.Controllers
                 savedObj.NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery;
                 savedObj.NotifyEmailDestinations = request.NotifyEmailDestinations;
                 //Update
-                bool updatedSuccess = _activeResourcegroupService.Update(savedObj);
+                bool updatedSuccess = await _activeResourcegroupService.UpdateAsync(savedObj);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
                 //Post Check and Get Delivery Settings
@@ -136,9 +137,9 @@ namespace SemanticBackup.API.Controllers
                 if (configs != null && configs.Count > 0)
                 {
                     //Remove Old
-                    this._contentDeliveryConfigPersistanceService.RemoveAllByResourceGroup(savedObj.Id);
+                    await this._contentDeliveryConfigPersistanceService.RemoveAllByResourceGroupAsync(savedObj.Id);
                     //Update New
-                    bool addedSuccess = this._contentDeliveryConfigPersistanceService.AddOrUpdate(configs);
+                    bool addedSuccess = await this._contentDeliveryConfigPersistanceService.AddOrUpdateAsync(configs);
                     if (!addedSuccess)
                         _logger.LogWarning("Resource Group Content Delivery Settings were not Updated");
                 }
@@ -151,13 +152,13 @@ namespace SemanticBackup.API.Controllers
             }
         }
         [HttpGet("switch-resource-group/{id}")]
-        public ActionResult GetSwitchResourceGroup(string id)
+        public async Task<ActionResult> GetSwitchResourceGroupAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                bool updatedSuccess = _activeResourcegroupService.Switch(id);
+                bool updatedSuccess = await _activeResourcegroupService.SwitchAsync(id);
                 if (!updatedSuccess)
                     throw new Exception("Data was not Updated");
                 return Ok(updatedSuccess);
@@ -170,14 +171,14 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult Delete(string id)
+        public async Task<ActionResult> DeleteAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
                 //Update Params
-                bool removedSuccess = _activeResourcegroupService.Remove(id);
+                bool removedSuccess = await _activeResourcegroupService.RemoveAsync(id);
                 if (!removedSuccess)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else

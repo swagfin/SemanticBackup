@@ -1,20 +1,21 @@
 ﻿using SemanticBackup.Core.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IContentDeliveryRecordPersistanceService
     {
-        List<ContentDeliveryRecord> GetAll(string resourceGroupId);
-        ContentDeliveryRecord GetById(string id);
-        bool Remove(string id);
-        bool AddOrUpdate(ContentDeliveryRecord record);
-        bool Update(ContentDeliveryRecord record);
-        bool UpdateStatusFeed(string id, string status, string message = null, long executionInMilliseconds = 0);
-        List<ContentDeliveryRecord> GetAllByStatus(string status);
-        List<ContentDeliveryRecord> GetAllByBackupRecordId(string id);
-        List<ContentDeliveryRecord> GetAllByBackupRecordIdByStatus(string resourceGroupId, string id, string status = "*");
-        ContentDeliveryRecord GetByContentTypeByExecutionMessage(string deliveryType, string executionMessage);
-        List<string> GetAllNoneResponsive(List<string> statusChecks, int minuteDifference);
+        Task<List<ContentDeliveryRecord>> GetAllAsync(string resourceGroupId);
+        Task<ContentDeliveryRecord> GetByIdAsync(string id);
+        Task<bool> RemoveAsync(string id);
+        Task<bool> AddOrUpdateAsync(ContentDeliveryRecord record);
+        Task<bool> UpdateAsync(ContentDeliveryRecord record);
+        Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0);
+        Task<List<ContentDeliveryRecord>> GetAllByStatusAsync(string status);
+        Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdAsync(string id);
+        Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, string id, string status = "*");
+        Task<ContentDeliveryRecord> GetByContentTypeByExecutionMessageAsync(string deliveryType, string executionMessage);
+        Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference);
     }
 }

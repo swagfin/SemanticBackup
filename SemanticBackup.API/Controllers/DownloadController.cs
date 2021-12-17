@@ -5,6 +5,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
@@ -24,20 +25,20 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult Get(string id, string token = null)
+        public async Task<ActionResult> GetAsync(string id, string token = null)
         {
             try
             {
                 string _key = string.IsNullOrWhiteSpace(token) ? id : $"{id}?token={token}";
-                ContentDeliveryRecord contentDeliveryRecord = _contentDeliveryRecordPersistanceService.GetByContentTypeByExecutionMessage(ContentDeliveryType.DIRECT_LINK.ToString(), _key);
+                ContentDeliveryRecord contentDeliveryRecord = await _contentDeliveryRecordPersistanceService.GetByContentTypeByExecutionMessageAsync(ContentDeliveryType.DIRECT_LINK.ToString(), _key);
                 if (contentDeliveryRecord == null)
                     return new NotFoundObjectResult("No Download File with the Link Provided");
-                BackupRecord backupRecord = _backupRecordPersistanceService.GetById(contentDeliveryRecord.BackupRecordId);
+                BackupRecord backupRecord = await _backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord.BackupRecordId);
                 if (backupRecord == null)
                     return new NotFoundObjectResult($"No Backup Record Information associated with the Link Provided: {id}");
                 if (!System.IO.File.Exists(backupRecord.Path))
                     return new NotFoundObjectResult($"No Backup Record File associated with the Link Provided: {id}");
-                return FileDownloadResponse(backupRecord.Path);
+                return await FileDownloadResponseAsync(backupRecord.Path);
             }
             catch (Exception ex)
             {
@@ -46,7 +47,7 @@ namespace SemanticBackup.API.Controllers
             }
         }
 
-        private FileContentResult FileDownloadResponse(string fullFilePath)
+        private async Task<FileContentResult> FileDownloadResponseAsync(string fullFilePath)
         {
             if (string.IsNullOrEmpty(fullFilePath))
                 return null;
@@ -60,7 +61,7 @@ namespace SemanticBackup.API.Controllers
                 Inline = true,
             };
             Response.Headers.Add("Content-Disposition", cd.ToString());
-            byte[] filedata = System.IO.File.ReadAllBytes(fullFilePath);
+            byte[] filedata = await System.IO.File.ReadAllBytesAsync(fullFilePath);
             return File(filedata, contentType);
         }
     }

@@ -1,16 +1,18 @@
 ﻿using SemanticBackup.Core.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.PersistanceServices
 {
     public interface IBackupSchedulePersistanceService
     {
-        List<BackupSchedule> GetAll(string resourcegroup);
-        BackupSchedule GetById(string id);
-        bool Remove(string id);
-        bool AddOrUpdate(BackupSchedule record);
-        bool Update(BackupSchedule record);
-        List<BackupSchedule> GetAllDueByDate();
-        List<BackupSchedule> GetAllByDatabaseId(string id);
+        Task<List<BackupSchedule>> GetAllAsync(string resourcegroup);
+        Task<BackupSchedule> GetByIdAsync(string id);
+        Task<bool> RemoveAsync(string id);
+        Task<bool> AddOrUpdateAsync(BackupSchedule record);
+        Task<bool> UpdateAsync(BackupSchedule record);
+        Task<List<BackupSchedule>> GetAllDueByDateAsync();
+        Task<List<BackupSchedule>> GetAllByDatabaseIdAsync(string id);
+        Task<int> GetAllCountAsync(string resourcegroup);
     }
 }

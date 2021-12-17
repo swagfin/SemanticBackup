@@ -90,7 +90,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     IBackupRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
-                    _persistanceService.UpdateStatusFeed(recordId, status, message, elapsed, newZIPPath);
+                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed, newZIPPath);
                 }
             }
             catch (Exception ex)

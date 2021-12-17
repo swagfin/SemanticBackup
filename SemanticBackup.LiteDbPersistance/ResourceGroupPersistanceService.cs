@@ -1,8 +1,10 @@
 ﻿using LiteDB;
+using LiteDB.Async;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.LiteDbPersistance
 {
@@ -22,102 +24,62 @@ namespace SemanticBackup.LiteDbPersistance
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
-        public bool Add(ResourceGroup record)
+        public async Task<bool> AddAsync(ResourceGroup record)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ResourceGroup>().Upsert(record);
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ResourceGroup>().UpsertAsync(record);
             }
         }
 
-        public List<ResourceGroup> GetAll()
+        public async Task<List<ResourceGroup>> GetAllAsync()
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ResourceGroup>().Query().OrderBy(x => x.Name).ToList();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ResourceGroup>().Query().OrderBy(x => x.Name).ToListAsync();
             }
         }
 
-        public ResourceGroup GetById(string id)
+        public async Task<ResourceGroup> GetByIdAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == id).OrderBy(x => x.Name).FirstOrDefault();
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == id).OrderBy(x => x.Name).FirstOrDefaultAsync();
             }
         }
 
-        public bool Remove(string id)
+        public async Task<bool> RemoveAsync(string id)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
+                await db.PragmaAsync("UTC_DATE", true);
                 var collection = db.GetCollection<ResourceGroup>();
-                var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
+                var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
                 if (objFound != null)
                 {
-                    bool success = collection.Delete(new BsonValue(objFound.Id));
-                    TryDeleteAllResourcesForGroup(id);
+                    bool success = await collection.DeleteAsync(new BsonValue(objFound.Id));
+                    await TryDeleteAllResourcesForGroupAsync(id);
                     return success;
                 }
                 return false;
             }
         }
 
-        private void TryDeleteAllResourcesForGroup(string resourceGroupId)
+        public async Task<bool> SwitchAsync(string id)
         {
-            //Delete Databases
-            try
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                var associatedDatabases = _databaseInfoPersistanceService.GetAll(resourceGroupId);
-                if (associatedDatabases != null)
-                    foreach (var record in associatedDatabases)
-                        _databaseInfoPersistanceService.Remove(record.Id);
-            }
-            catch { }
-            //Delete Schedules
-            try
-            {
-                var associatedSchedules = _backupSchedulePersistanceService.GetAll(resourceGroupId);
-                if (associatedSchedules != null)
-                    foreach (var record in associatedSchedules)
-                        _backupSchedulePersistanceService.Remove(record.Id);
-            }
-            catch { }
-            //Delete Backup Records
-            try
-            {
-                var associatedBackupRecords = _backupRecordPersistanceService.GetAll(resourceGroupId);
-                if (associatedBackupRecords != null)
-                    foreach (var record in associatedBackupRecords)
-                        _backupRecordPersistanceService.Remove(record.Id);
-            }
-            catch { }
-            //Delete Configuration for Dispatch
-            try
-            {
-                var associatedDeliveryConfigs = _contentDeliveryConfigPersistanceService.GetAll(resourceGroupId);
-                if (associatedDeliveryConfigs != null)
-                    foreach (var record in associatedDeliveryConfigs)
-                        _contentDeliveryConfigPersistanceService.Remove(record.Id);
-            }
-            catch { }
-        }
-
-        public bool Switch(string id)
-        {
-            using (var db = new LiteDatabase(connString))
-            {
-                db.Pragma("UTC_DATE", true);
+                await db.PragmaAsync("UTC_DATE", true);
                 var collection = db.GetCollection<ResourceGroup>();
-                var objFound = collection.Query().Where(x => x.Id == id).FirstOrDefault();
+                var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
                 if (objFound != null)
                     if (long.TryParse(DateTime.UtcNow.ToString("yyyyMMddHHmmss"), out long lastAccess))
                     {
                         objFound.LastAccess = lastAccess;
-                        bool updatedSuccess = collection.Update(objFound);
+                        bool updatedSuccess = await collection.UpdateAsync(objFound);
                         return updatedSuccess;
                     }
                 return false;
@@ -125,13 +87,54 @@ namespace SemanticBackup.LiteDbPersistance
 
         }
 
-        public bool Update(ResourceGroup record)
+        public async Task<bool> UpdateAsync(ResourceGroup record)
         {
-            using (var db = new LiteDatabase(connString))
+            using (var db = new LiteDatabaseAsync(connString))
             {
-                db.Pragma("UTC_DATE", true);
-                return db.GetCollection<ResourceGroup>().Update(record);
+                await db.PragmaAsync("UTC_DATE", true);
+                return await db.GetCollection<ResourceGroup>().UpdateAsync(record);
             }
         }
+
+        private async Task TryDeleteAllResourcesForGroupAsync(string resourceGroupId)
+        {
+            //Delete Databases
+            try
+            {
+                var associatedDatabases = await _databaseInfoPersistanceService.GetAllAsync(resourceGroupId);
+                if (associatedDatabases != null)
+                    foreach (var record in associatedDatabases)
+                        await _databaseInfoPersistanceService.RemoveAsync(record.Id);
+            }
+            catch { }
+            //Delete Schedules
+            try
+            {
+                var associatedSchedules = await _backupSchedulePersistanceService.GetAllAsync(resourceGroupId);
+                if (associatedSchedules != null)
+                    foreach (var record in associatedSchedules)
+                        await _backupSchedulePersistanceService.RemoveAsync(record.Id);
+            }
+            catch { }
+            //Delete Backup Records
+            try
+            {
+                var associatedBackupRecords = await _backupRecordPersistanceService.GetAllAsync(resourceGroupId);
+                if (associatedBackupRecords != null)
+                    foreach (var record in associatedBackupRecords)
+                        await _backupRecordPersistanceService.RemoveAsync(record.Id);
+            }
+            catch { }
+            //Delete Configuration for Dispatch
+            try
+            {
+                var associatedDeliveryConfigs = await _contentDeliveryConfigPersistanceService.GetAllAsync(resourceGroupId);
+                if (associatedDeliveryConfigs != null)
+                    foreach (var record in associatedDeliveryConfigs)
+                        await _contentDeliveryConfigPersistanceService.RemoveAsync(record.Id);
+            }
+            catch { }
+        }
+
     }
 }

@@ -56,14 +56,14 @@ namespace SemanticBackup.Core.BackgroundJobs
                     try
                     {
                         DateTime currentTimeUTC = DateTime.UtcNow;
-                        List<BackupSchedule> dueSchedules = this._backupSchedulePersistanceService.GetAllDueByDate();
+                        List<BackupSchedule> dueSchedules = await this._backupSchedulePersistanceService.GetAllDueByDateAsync();
                         if (dueSchedules != null && dueSchedules.Count > 0)
                         {
                             List<string> scheduleToDelete = new List<string>();
                             foreach (BackupSchedule schedule in dueSchedules)
                             {
                                 _logger.LogInformation($"Queueing Scheduled Backup...");
-                                BackupDatabaseInfo backupDatabaseInfo = this._databaseInfoPersistanceService.GetById(schedule.BackupDatabaseInfoId);
+                                BackupDatabaseInfo backupDatabaseInfo = await this._databaseInfoPersistanceService.GetByIdAsync(schedule.BackupDatabaseInfoId);
                                 if (backupDatabaseInfo == null)
                                 {
                                     _logger.LogWarning($"No Database Info matches with Id: {schedule.BackupDatabaseInfoId}, Schedule Record will be Deleted: {schedule.Id}");
@@ -72,7 +72,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 else
                                 {
                                     //Proceed
-                                    ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupDatabaseInfo.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
                                     if (resourceGroup == null)
                                     {
                                         _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");
@@ -96,14 +96,14 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             ExecutedDeliveryRun = false
                                         };
 
-                                        bool addedSuccess = this._backupRecordPersistanceService.AddOrUpdate(newRecord);
+                                        bool addedSuccess = await this._backupRecordPersistanceService.AddOrUpdateAsync(newRecord);
                                         if (!addedSuccess)
                                             throw new Exception("Unable to Queue Database for Backup");
                                         else
                                             _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
                                         //Update Schedule
                                         schedule.LastRunUTC = currentTimeUTC;
-                                        bool updatedSchedule = this._backupSchedulePersistanceService.Update(schedule);
+                                        bool updatedSchedule = await this._backupSchedulePersistanceService.UpdateAsync(schedule);
                                         if (!updatedSchedule)
                                             _logger.LogWarning("Unable to Update Scheduled Next Run");
                                     }
@@ -114,7 +114,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Check if Any Delete
                             if (scheduleToDelete.Count > 0)
                                 foreach (var rm in scheduleToDelete)
-                                    this._backupSchedulePersistanceService.Remove(rm);
+                                    await this._backupSchedulePersistanceService.RemoveAsync(rm);
                         }
 
                     }
@@ -140,20 +140,20 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         List<string> botsToRemove = new List<string>();
                         //REMOVE BACKUP RECORDS
-                        List<string> recordsIds = this._backupRecordPersistanceService.GetAllNoneResponsiveIds(statusChecks, executionTimeoutInMinutes);
+                        List<string> recordsIds = await this._backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
                         if (recordsIds != null && recordsIds.Count > 0)
                             foreach (string id in recordsIds)
                             {
-                                this._backupRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                                await this._backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
                                 botsToRemove.Add(id);
                             }
 
                         //REMOVE CONTENT DELIVERY RECORDS
-                        List<string> deliveryRecordIds = this._contentDeliveryRecordPersistanceService.GetAllNoneResponsive(statusChecks, executionTimeoutInMinutes);
+                        List<string> deliveryRecordIds = await this._contentDeliveryRecordPersistanceService.GetAllNoneResponsiveAsync(statusChecks, executionTimeoutInMinutes);
                         if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
                             foreach (string id in deliveryRecordIds)
                             {
-                                this._contentDeliveryRecordPersistanceService.UpdateStatusFeed(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                                await this._contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
                                 botsToRemove.Add(id);
                             }
 

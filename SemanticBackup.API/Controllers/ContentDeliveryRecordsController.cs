@@ -4,6 +4,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -22,11 +23,11 @@ namespace SemanticBackup.API.Controllers
             this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
         }
         [HttpGet]
-        public ActionResult<List<ContentDeliveryRecord>> Get(string resourcegroup)
+        public async Task<ActionResult<List<ContentDeliveryRecord>>> GetAsync(string resourcegroup)
         {
             try
             {
-                return this._contentDeliveryRecordPersistanceService.GetAll(resourcegroup);
+                return await this._contentDeliveryRecordPersistanceService.GetAllAsync(resourcegroup);
             }
             catch (Exception ex)
             {
@@ -36,11 +37,11 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpGet("ByBackupRecordId/{id}")]
-        public ActionResult<List<ContentDeliveryRecord>> GeByBackupRecordId(string id)
+        public async Task<ActionResult<List<ContentDeliveryRecord>>> GeByBackupRecordIdAsync(string id)
         {
             try
             {
-                return this._contentDeliveryRecordPersistanceService.GetAllByBackupRecordId(id);
+                return await this._contentDeliveryRecordPersistanceService.GetAllByBackupRecordIdAsync(id);
             }
             catch (Exception ex)
             {
@@ -51,18 +52,18 @@ namespace SemanticBackup.API.Controllers
 
         [Route("re-run/{id}")]
         [HttpGet, HttpPost]
-        public ActionResult GetInitRerun(string id)
+        public async Task<ActionResult> GetInitRerunAsync(string id)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var contentDeliveryRecord = _contentDeliveryRecordPersistanceService.GetById(id);
+                var contentDeliveryRecord = await _contentDeliveryRecordPersistanceService.GetByIdAsync(id);
                 if (contentDeliveryRecord == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 else if (contentDeliveryRecord.CurrentStatus != "ERROR")
                     return new ConflictObjectResult($"STATUS need to be ERROR, Current Status for this record is: {contentDeliveryRecord.CurrentStatus}");
-                bool rerunSuccess = _contentDeliveryRecordPersistanceService.UpdateStatusFeed(id, ContentDeliveryRecordStatus.QUEUED.ToString(), "Queued for Re-run", 0);
+                bool rerunSuccess = await _contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(id, ContentDeliveryRecordStatus.QUEUED.ToString(), "Queued for Re-run", 0);
                 if (rerunSuccess)
                     return Ok(rerunSuccess);
                 else

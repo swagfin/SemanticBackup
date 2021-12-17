@@ -51,16 +51,16 @@ namespace SemanticBackup.Core.BackgroundJobs
                 {
                     try
                     {
-                        List<ContentDeliveryRecord> contentDeliveryRecords = this._contentDeliveryRecordPersistanceService.GetAllByStatus(ContentDeliveryRecordStatus.QUEUED.ToString());
+                        List<ContentDeliveryRecord> contentDeliveryRecords = await this._contentDeliveryRecordPersistanceService.GetAllByStatusAsync(ContentDeliveryRecordStatus.QUEUED.ToString());
                         if (contentDeliveryRecords != null && contentDeliveryRecords.Count > 0)
                         {
                             List<string> scheduleToDeleteRecords = new List<string>();
                             foreach (ContentDeliveryRecord contentDeliveryRecord in contentDeliveryRecords)
                             {
                                 _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
-                                BackupRecord backupRecordInfo = this._backupRecordPersistanceService.GetById(contentDeliveryRecord?.BackupRecordId);
-                                ResourceGroup resourceGroup = _resourceGroupPersistanceService.GetById(backupRecordInfo?.ResourceGroupId);
-                                ContentDeliveryConfiguration contentDeliveryConfiguration = this._contentDeliveryConfigPersistanceService.GetById(contentDeliveryRecord?.ContentDeliveryConfigurationId);
+                                BackupRecord backupRecordInfo = await this._backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId);
+                                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupRecordInfo?.ResourceGroupId);
+                                ContentDeliveryConfiguration contentDeliveryConfiguration = await this._contentDeliveryConfigPersistanceService.GetByIdAsync(contentDeliveryRecord?.ContentDeliveryConfigurationId);
 
                                 if (backupRecordInfo == null)
                                 {
@@ -122,7 +122,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
                                         }
                                         //Finally Update Status
-                                        bool updated = this._contentDeliveryRecordPersistanceService.UpdateStatusFeed(contentDeliveryRecord.Id, status, statusMsg);
+                                        bool updated = await this._contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(contentDeliveryRecord.Id, status, statusMsg);
                                         if (!updated)
                                             _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{contentDeliveryRecord.Id} status");
                                     }
@@ -133,7 +133,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Check if Any Delete
                             if (scheduleToDeleteRecords.Count > 0)
                                 foreach (var rm in scheduleToDeleteRecords)
-                                    this._contentDeliveryRecordPersistanceService.Remove(rm);
+                                    await this._contentDeliveryRecordPersistanceService.RemoveAsync(rm);
                         }
                     }
                     catch (Exception ex)
@@ -156,7 +156,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(60000); //Runs After 1 Minute
                     try
                     {
-                        List<BackupRecord> expiredBackups = this._backupRecordPersistanceService.GetAllExpired();
+                        List<BackupRecord> expiredBackups = await this._backupRecordPersistanceService.GetAllExpiredAsync();
                         if (expiredBackups != null && expiredBackups.Count > 0)
                         {
                             List<string> toDeleteList = new List<string>();
@@ -166,7 +166,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Check if Any Delete
                             if (toDeleteList.Count > 0)
                                 foreach (var rm in toDeleteList)
-                                    if (!this._backupRecordPersistanceService.Remove(rm))
+                                    if (!(await this._backupRecordPersistanceService.RemoveAsync(rm)))
                                         _logger.LogWarning("Unable to delete Expired Backup Record");
                         }
                     }
