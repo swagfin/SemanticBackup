@@ -89,7 +89,6 @@
                         <a class="item active" data-tab="tabdownloadlink"><i class="linkify icon"></i> Direct Link</a>
                         <a class="item" data-tab="tabftp"><i class="server icon"></i> FTP Upload</a>
                         <a class="item" data-tab="tabemailsmtp"><i class="envelope icon"></i> Email (SMTP)</a>
-                        <a class="item" data-tab="tabmegastorage"><i class="cloud upload icon"></i> Mega Storage</a>
                         <a class="item" data-tab="tabdropbox"><i class="dropbox icon"></i> Dropbox Storage</a>
                         <a class="item" data-tab="tabazureblobstorage"><i class="box icon"></i> Azure Blob Storage</a>
                     </div>
@@ -144,6 +143,7 @@
                             <input id="RGRequest.RSEmailSMTPSetting.IsEnabled" asp-for="RGRequest.RSEmailSMTPSetting.IsEnabled">
                             <label title="Delivery Backup Records Via Email SMTP" style="cursor:pointer" for="RGRequest.RSEmailSMTPSetting.IsEnabled">Enable Email (SMTP) Backup Content Delivery</label>
                         </span>
+                        <p style="color:red;font-style:italic">*Note, if Backup compression is turned on, Email servers will not deliver compressed files, to deliver successfull, turn off Compression*</p>
                         <div class="two fields">
                             <div class="field">
                                 <label>SMTP Host</label>
@@ -171,30 +171,6 @@
                             <input asp-for="RGRequest.RSEmailSMTPSetting.SMTPDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
                         </div>
                     </div>
-
-                    <!--MEGA BLOB STORAGE-->
-                    <div class="ui bottom attached tab segment" data-tab="tabmegastorage">
-                        <span>
-                            <input id="RSMegaNxSetting.IsEnabled" asp-for="RGRequest.RSMegaNxSetting.IsEnabled">
-                            <label title="Delivery Backup Records Via Dropbox Storage" style="cursor:pointer" for="RSMegaNxSetting.IsEnabled">Enable Mega Storage Content Delivery</label>
-                        </span>
-                        <p>Create <a href="https://mega.nz/register/" target="_blank">Mega Storage Account</a> to get 50GB free Storage</p>
-                        <div class="two fields">
-                            <div class="field">
-                                <label>Username</label>
-                                <input asp-for="RGRequest.RSMegaNxSetting.Username" autocomplete="off" placeholder="e.g. username@domain.com">
-                            </div>
-                            <div class="field">
-                                <label>Password</label>
-                                <input asp-for="RGRequest.RSMegaNxSetting.Password" autocomplete="off" type="password" placeholder="xxxxxxxxxxxx">
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label>Remote Folder</label>
-                            <input asp-for="RGRequest.RSMegaNxSetting.RemoteFolder" autocomplete="off" value="backups" placeholder="e.g. backups">
-                        </div>
-                    </div>
-
                     <!--DROPBOX CONTENT DELIVERY LINK-->
                     <div class="ui bottom attached tab segment" data-tab="tabdropbox">
                         <span>

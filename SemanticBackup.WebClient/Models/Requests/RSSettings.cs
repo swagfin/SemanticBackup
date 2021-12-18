@@ -54,11 +54,4 @@ namespace SemanticBackup.WebClient.Models.Requests
         public string ConnectionString { get; set; }
         public string BlobContainer { get; set; }
     }
-    public class RSMegaNxSetting
-    {
-        public bool IsEnabled { get; set; } = false;
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string RemoteFolder { get; set; }
-    }
 }

@@ -98,11 +98,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                                                 //Email Send and Uploader
                                                 _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
                                             }
-                                            else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.MEGA_STORAGE.ToString())
-                                            {
-                                                //Mega Nz Storage
-                                                _botsManagerBackgroundJob.AddBot(new UploaderMegaNxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
-                                            }
                                             else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
                                             {
                                                 //Email Send and Uploader

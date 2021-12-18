@@ -23,6 +23,5 @@ namespace SemanticBackup.Core.Models
         EMAIL_SMTP,
         DROPBOX,
         AZURE_BLOB_STORAGE,
-        MEGA_STORAGE
     }
 }
