@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
@@ -13,28 +14,18 @@ namespace SemanticBackup.Core.BackgroundJobs
     {
         private readonly ILogger<BackupSchedulerBackgroundJob> _logger;
         private readonly PersistanceOptions _persistanceOptions;
-        private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
-        private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
-        private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
-        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
-        private readonly IContentDeliveryRecordPersistanceService _contentDeliveryRecordPersistanceService;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public BackupSchedulerBackgroundJob(ILogger<BackupSchedulerBackgroundJob> logger,
+        public BackupSchedulerBackgroundJob(
+            ILogger<BackupSchedulerBackgroundJob> logger,
             PersistanceOptions persistanceOptions,
-            IBackupSchedulePersistanceService backupSchedulePersistanceService,
-            IBackupRecordPersistanceService backupRecordPersistanceService,
-            IDatabaseInfoPersistanceService databaseInfoPersistanceService,
-            IResourceGroupPersistanceService resourceGroupPersistanceService,
-            IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
+            IServiceScopeFactory serviceScopeFactory,
+            BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;
-            this._backupSchedulePersistanceService = backupSchedulePersistanceService;
-            this._backupRecordPersistanceService = backupRecordPersistanceService;
-            this._databaseInfoPersistanceService = databaseInfoPersistanceService;
-            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
-            this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
+            this._serviceScopeFactory = serviceScopeFactory;
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
         public void Initialize()
@@ -55,68 +46,77 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(10000);
                     try
                     {
-                        DateTime currentTimeUTC = DateTime.UtcNow;
-                        List<BackupSchedule> dueSchedules = await this._backupSchedulePersistanceService.GetAllDueByDateAsync();
-                        if (dueSchedules != null && dueSchedules.Count > 0)
+                        using (var scope = _serviceScopeFactory.CreateScope())
                         {
-                            List<string> scheduleToDelete = new List<string>();
-                            foreach (BackupSchedule schedule in dueSchedules)
+                            //DI INJECTIONS
+                            IBackupSchedulePersistanceService backupSchedulePersistanceService = scope.ServiceProvider.GetRequiredService<IBackupSchedulePersistanceService>();
+                            IDatabaseInfoPersistanceService databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoPersistanceService>();
+                            IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                            //Proceed
+                            DateTime currentTimeUTC = DateTime.UtcNow;
+                            List<BackupSchedule> dueSchedules = await backupSchedulePersistanceService.GetAllDueByDateAsync();
+                            if (dueSchedules != null && dueSchedules.Count > 0)
                             {
-                                _logger.LogInformation($"Queueing Scheduled Backup...");
-                                BackupDatabaseInfo backupDatabaseInfo = await this._databaseInfoPersistanceService.GetByIdAsync(schedule.BackupDatabaseInfoId);
-                                if (backupDatabaseInfo == null)
+                                List<string> scheduleToDelete = new List<string>();
+                                foreach (BackupSchedule schedule in dueSchedules)
                                 {
-                                    _logger.LogWarning($"No Database Info matches with Id: {schedule.BackupDatabaseInfoId}, Schedule Record will be Deleted: {schedule.Id}");
-                                    scheduleToDelete.Add(schedule.Id);
-                                }
-                                else
-                                {
-                                    //Proceed
-                                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
-                                    if (resourceGroup == null)
+                                    _logger.LogInformation($"Queueing Scheduled Backup...");
+                                    BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(schedule.BackupDatabaseInfoId);
+                                    if (backupDatabaseInfo == null)
                                     {
-                                        _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");
+                                        _logger.LogWarning($"No Database Info matches with Id: {schedule.BackupDatabaseInfoId}, Schedule Record will be Deleted: {schedule.Id}");
                                         scheduleToDelete.Add(schedule.Id);
                                     }
                                     else
                                     {
-                                        //has valid Resource Group Proceed
-                                        DateTime resourceGroupLocalTime = DateTime.UtcNow.ConvertFromUTC(resourceGroup?.TimeZone);
-                                        DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
-                                        BackupRecord newRecord = new BackupRecord
+                                        //Proceed
+                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
+                                        if (resourceGroup == null)
                                         {
-                                            BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
-                                            ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
-                                            BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
-                                            ExpiryDateUTC = RecordExpiryUTC,
-                                            Name = backupDatabaseInfo.Name,
-                                            Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
-                                            StatusUpdateDateUTC = currentTimeUTC,
-                                            RegisteredDateUTC = currentTimeUTC,
-                                            ExecutedDeliveryRun = false
-                                        };
-
-                                        bool addedSuccess = await this._backupRecordPersistanceService.AddOrUpdateAsync(newRecord);
-                                        if (!addedSuccess)
-                                            throw new Exception("Unable to Queue Database for Backup");
+                                            _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");
+                                            scheduleToDelete.Add(schedule.Id);
+                                        }
                                         else
-                                            _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
-                                        //Update Schedule
-                                        schedule.LastRunUTC = currentTimeUTC;
-                                        bool updatedSchedule = await this._backupSchedulePersistanceService.UpdateAsync(schedule);
-                                        if (!updatedSchedule)
-                                            _logger.LogWarning("Unable to Update Scheduled Next Run");
+                                        {
+                                            //has valid Resource Group Proceed
+                                            DateTime resourceGroupLocalTime = DateTime.UtcNow.ConvertFromUTC(resourceGroup?.TimeZone);
+                                            DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
+                                            BackupRecord newRecord = new BackupRecord
+                                            {
+                                                BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
+                                                ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
+                                                BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
+                                                ExpiryDateUTC = RecordExpiryUTC,
+                                                Name = backupDatabaseInfo.Name,
+                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
+                                                StatusUpdateDateUTC = currentTimeUTC,
+                                                RegisteredDateUTC = currentTimeUTC,
+                                                ExecutedDeliveryRun = false
+                                            };
+
+                                            bool addedSuccess = await backupRecordPersistanceService.AddOrUpdateAsync(newRecord);
+                                            if (!addedSuccess)
+                                                throw new Exception("Unable to Queue Database for Backup");
+                                            else
+                                                _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
+                                            //Update Schedule
+                                            schedule.LastRunUTC = currentTimeUTC;
+                                            bool updatedSchedule = await backupSchedulePersistanceService.UpdateAsync(schedule);
+                                            if (!updatedSchedule)
+                                                _logger.LogWarning("Unable to Update Scheduled Next Run");
+                                        }
+
                                     }
 
                                 }
-
+                                //Check if Any Delete
+                                if (scheduleToDelete.Count > 0)
+                                    foreach (var rm in scheduleToDelete)
+                                        await backupSchedulePersistanceService.RemoveAsync(rm);
                             }
-                            //Check if Any Delete
-                            if (scheduleToDelete.Count > 0)
-                                foreach (var rm in scheduleToDelete)
-                                    await this._backupSchedulePersistanceService.RemoveAsync(rm);
-                        }
 
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -138,28 +138,35 @@ namespace SemanticBackup.Core.BackgroundJobs
                 {
                     try
                     {
-                        List<string> botsToRemove = new List<string>();
-                        //REMOVE BACKUP RECORDS
-                        List<string> recordsIds = await this._backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
-                        if (recordsIds != null && recordsIds.Count > 0)
-                            foreach (string id in recordsIds)
-                            {
-                                await this._backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                botsToRemove.Add(id);
-                            }
+                        using (var scope = _serviceScopeFactory.CreateScope())
+                        {
+                            //DI INJECTIONS
+                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                            IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
+                            //Proceed
+                            List<string> botsToRemove = new List<string>();
+                            //REMOVE BACKUP RECORDS
+                            List<string> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
+                            if (recordsIds != null && recordsIds.Count > 0)
+                                foreach (string id in recordsIds)
+                                {
+                                    await backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                                    botsToRemove.Add(id);
+                                }
 
-                        //REMOVE CONTENT DELIVERY RECORDS
-                        List<string> deliveryRecordIds = await this._contentDeliveryRecordPersistanceService.GetAllNoneResponsiveAsync(statusChecks, executionTimeoutInMinutes);
-                        if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
-                            foreach (string id in deliveryRecordIds)
-                            {
-                                await this._contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                botsToRemove.Add(id);
-                            }
+                            //REMOVE CONTENT DELIVERY RECORDS
+                            List<string> deliveryRecordIds = await contentDeliveryRecordPersistanceService.GetAllNoneResponsiveAsync(statusChecks, executionTimeoutInMinutes);
+                            if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
+                                foreach (string id in deliveryRecordIds)
+                                {
+                                    await contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                                    botsToRemove.Add(id);
+                                }
 
-                        //Finally Try And Stop
-                        if (botsToRemove.Count > 0)
-                            _botsManagerBackgroundJob.TerminateBots(botsToRemove);
+                            //Finally Try And Stop
+                            if (botsToRemove.Count > 0)
+                                _botsManagerBackgroundJob.TerminateBots(botsToRemove);
+                        }
                     }
                     catch (Exception ex) { _logger.LogWarning($"Stopping Non Responsive Services Error: {ex.Message}"); }
                     //Delay

@@ -46,16 +46,16 @@ namespace SemanticBackup.API
             services.AddSingleton(persistanceOptions); //Configure Global Instance Reg
 
             //Persistance
-            services.AddTransient<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
-            services.AddTransient<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
-            services.AddTransient<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
-            services.AddTransient<IResourceGroupPersistanceService, ResourceGroupPersistanceService>();
-            services.AddTransient<IContentDeliveryConfigPersistanceService, ContentDeliveryConfigPersistanceService>();
-            services.AddTransient<IContentDeliveryRecordPersistanceService, ContentDeliveryRecordPersistanceService>();
+            services.AddScoped<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
+            services.AddScoped<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
+            services.AddScoped<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
+            services.AddScoped<IResourceGroupPersistanceService, ResourceGroupPersistanceService>();
+            services.AddScoped<IContentDeliveryConfigPersistanceService, ContentDeliveryConfigPersistanceService>();
+            services.AddScoped<IContentDeliveryRecordPersistanceService, ContentDeliveryRecordPersistanceService>();
 
             //Backup Provider Engines
-            services.AddTransient<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
-            services.AddTransient<IMySQLServerBackupProviderService, MySQLServerBackupProviderService>();
+            services.AddScoped<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
+            services.AddScoped<IMySQLServerBackupProviderService, MySQLServerBackupProviderService>();
 
             //Background Jobs
             services.AddSingleton<IProcessorInitializable, BackupSchedulerBackgroundJob>();

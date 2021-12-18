@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
@@ -17,23 +18,16 @@ namespace SemanticBackup.API.SignalRHubs
     {
         private readonly ILogger<DashboardRefreshHubDispatcher> _logger;
         private readonly IHubContext<DashboardRefreshHubDispatcher> hub;
-        private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
-        private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
-        private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
-        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public DashboardRefreshHubDispatcher(ILogger<DashboardRefreshHubDispatcher> logger,
+        public DashboardRefreshHubDispatcher(
+            ILogger<DashboardRefreshHubDispatcher> logger,
             IHubContext<DashboardRefreshHubDispatcher> hub,
-            IDatabaseInfoPersistanceService databaseInfoPersistanceService,
-            IBackupSchedulePersistanceService backupSchedulePersistanceService,
-            IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService)
+            IServiceScopeFactory serviceScopeFactory)
         {
             this._logger = logger;
             this.hub = hub;
-            this._databaseInfoPersistanceService = databaseInfoPersistanceService;
-            this._backupSchedulePersistanceService = backupSchedulePersistanceService;
-            this._backupRecordPersistanceService = backupRecordPersistanceService;
-            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
+            this._serviceScopeFactory = serviceScopeFactory;
         }
 
         public void Initialize()
@@ -116,72 +110,83 @@ namespace SemanticBackup.API.SignalRHubs
                 _logger.LogInformation("Preparing to send Metrics for Group: {group}", groupRecord);
                 //Resource Group Timezone
                 //Change UTC now to Resource Group TimeZone
-                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
-                DateTime currentTimeUTC = DateTime.UtcNow;
 
-                DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);
-                DateTime metricsFromDatUTC = currentTimeUTC.AddHours(-24);// 24hrs Ago
-                //Clear All
-                clientGrp.Metric.AvgMetrics = new List<RealTimeViewModel>();
-
-                var recordsLatest = await _backupRecordPersistanceService.GetAllByRegisteredDateByStatusAsync(resourcegroup, metricsFromDatUTC, subscriberGroup);
-                if (recordsLatest != null && recordsLatest.Count > 0)
-                    foreach (var record in recordsLatest)
-                    {
-                        var existingMetric = clientGrp.Metric.AvgMetrics.FirstOrDefault(x => x.TimeStampCurrent == record.StatusUpdateDateUTC.IgnoreSeconds(false).ToString("hh tt"));
-                        if (existingMetric == null)
-                            clientGrp.Metric.AvgMetrics.Add(new RealTimeViewModel
-                            {
-                                TimeStamp = record.RegisteredDateUTC,
-                                SuccessCount = 1,
-                                ErrorsCount = 0,
-                                TimeStampCurrent = record.RegisteredDateUTC.IgnoreSeconds(false).ToString("hh tt")
-                            });
-                        else
-                        {
-                            existingMetric.SuccessCount += 1;
-                            existingMetric.TimeStamp = (existingMetric.TimeStamp < record.RegisteredDateUTC) ? record.RegisteredDateUTC : existingMetric.TimeStamp;
-                        }
-                    }
-
-                var recordsFailsLatest = await _backupRecordPersistanceService.GetAllByStatusUpdateDateByStatusAsync(resourcegroup, metricsFromDatUTC, BackupRecordBackupStatus.ERROR.ToString());
-                if (recordsFailsLatest != null && recordsFailsLatest.Count > 0)
-                    foreach (var record in recordsFailsLatest)
-                    {
-                        var existingMetric = clientGrp.Metric.AvgMetrics.FirstOrDefault(x => x.TimeStampCurrent == record.StatusUpdateDateUTC.IgnoreSeconds(false).ToString("hh tt"));
-                        if (existingMetric == null)
-                            clientGrp.Metric.AvgMetrics.Add(new RealTimeViewModel
-                            {
-                                TimeStamp = record.StatusUpdateDateUTC,
-                                SuccessCount = 0,
-                                ErrorsCount = 1,
-                                TimeStampCurrent = record.StatusUpdateDateUTC.IgnoreSeconds(false).ToString("hh tt")
-                            });
-                        else
-                        {
-                            existingMetric.ErrorsCount += 1;
-                            existingMetric.TimeStamp = (existingMetric.TimeStamp < record.StatusUpdateDateUTC) ? record.StatusUpdateDateUTC : existingMetric.TimeStamp;
-                        }
-                    }
-
-                //Set Last Update Time
-                clientGrp.LastRefreshUTC = currentTimeUTC;
-                //Convert Dates from Utc to Local Time
-                clientGrp.Metric.AvgMetrics = clientGrp.Metric.AvgMetrics.Select(x => new RealTimeViewModel
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
-                    ErrorsCount = x.ErrorsCount,
-                    SuccessCount = x.SuccessCount,
-                    TimeStamp = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone),
-                    TimeStampCurrent = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone).IgnoreSeconds(false).ToString("hh tt")
-                }).OrderBy(x => x.TimeStamp).ToList();
+                    //DI INJECTIONS
+                    IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                    IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                    IBackupSchedulePersistanceService backupSchedulePersistanceService = scope.ServiceProvider.GetRequiredService<IBackupSchedulePersistanceService>();
+                    IDatabaseInfoPersistanceService databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoPersistanceService>();
 
-                clientGrp.Metric.TotalBackupSchedules = await _backupSchedulePersistanceService.GetAllCountAsync(resourcegroup);
-                clientGrp.Metric.TotalDatabases = await _databaseInfoPersistanceService.GetAllCountAsync(resourcegroup);
-                clientGrp.Metric.TotalBackupRecords = await _backupRecordPersistanceService.GetAllCountAsync(resourcegroup);
+                    //Proceed
+                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
+                    DateTime currentTimeUTC = DateTime.UtcNow;
 
-                _ = hub.Clients.Group(groupRecord).SendAsync("ReceiveMetrics", clientGrp.Metric);
+                    DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);
+                    DateTime metricsFromDatUTC = currentTimeUTC.AddHours(-24);// 24hrs Ago
+                                                                              //Clear All
+                    clientGrp.Metric.AvgMetrics = new List<RealTimeViewModel>();
 
-                _logger.LogInformation("Successfully sent Metrics for Group: {group}", groupRecord);
+                    var recordsLatest = await backupRecordPersistanceService.GetAllByRegisteredDateByStatusAsync(resourcegroup, metricsFromDatUTC, subscriberGroup);
+                    if (recordsLatest != null && recordsLatest.Count > 0)
+                        foreach (var record in recordsLatest)
+                        {
+                            var existingMetric = clientGrp.Metric.AvgMetrics.FirstOrDefault(x => x.TimeStampCurrent == record.StatusUpdateDateUTC.IgnoreSeconds(false).ToString("hh tt"));
+                            if (existingMetric == null)
+                                clientGrp.Metric.AvgMetrics.Add(new RealTimeViewModel
+                                {
+                                    TimeStamp = record.RegisteredDateUTC,
+                                    SuccessCount = 1,
+                                    ErrorsCount = 0,
+                                    TimeStampCurrent = record.RegisteredDateUTC.IgnoreSeconds(false).ToString("hh tt")
+                                });
+                            else
+                            {
+                                existingMetric.SuccessCount += 1;
+                                existingMetric.TimeStamp = (existingMetric.TimeStamp < record.RegisteredDateUTC) ? record.RegisteredDateUTC : existingMetric.TimeStamp;
+                            }
+                        }
+
+                    var recordsFailsLatest = await backupRecordPersistanceService.GetAllByStatusUpdateDateByStatusAsync(resourcegroup, metricsFromDatUTC, BackupRecordBackupStatus.ERROR.ToString());
+                    if (recordsFailsLatest != null && recordsFailsLatest.Count > 0)
+                        foreach (var record in recordsFailsLatest)
+                        {
+                            var existingMetric = clientGrp.Metric.AvgMetrics.FirstOrDefault(x => x.TimeStampCurrent == record.StatusUpdateDateUTC.IgnoreSeconds(false).ToString("hh tt"));
+                            if (existingMetric == null)
+                                clientGrp.Metric.AvgMetrics.Add(new RealTimeViewModel
+                                {
+                                    TimeStamp = record.StatusUpdateDateUTC,
+                                    SuccessCount = 0,
+                                    ErrorsCount = 1,
+                                    TimeStampCurrent = record.StatusUpdateDateUTC.IgnoreSeconds(false).ToString("hh tt")
+                                });
+                            else
+                            {
+                                existingMetric.ErrorsCount += 1;
+                                existingMetric.TimeStamp = (existingMetric.TimeStamp < record.StatusUpdateDateUTC) ? record.StatusUpdateDateUTC : existingMetric.TimeStamp;
+                            }
+                        }
+
+                    //Set Last Update Time
+                    clientGrp.LastRefreshUTC = currentTimeUTC;
+                    //Convert Dates from Utc to Local Time
+                    clientGrp.Metric.AvgMetrics = clientGrp.Metric.AvgMetrics.Select(x => new RealTimeViewModel
+                    {
+                        ErrorsCount = x.ErrorsCount,
+                        SuccessCount = x.SuccessCount,
+                        TimeStamp = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone),
+                        TimeStampCurrent = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone).IgnoreSeconds(false).ToString("hh tt")
+                    }).OrderBy(x => x.TimeStamp).ToList();
+
+                    clientGrp.Metric.TotalBackupSchedules = await backupSchedulePersistanceService.GetAllCountAsync(resourcegroup);
+                    clientGrp.Metric.TotalDatabases = await databaseInfoPersistanceService.GetAllCountAsync(resourcegroup);
+                    clientGrp.Metric.TotalBackupRecords = await backupRecordPersistanceService.GetAllCountAsync(resourcegroup);
+
+                    _ = hub.Clients.Group(groupRecord).SendAsync("ReceiveMetrics", clientGrp.Metric);
+
+                    _logger.LogInformation("Successfully sent Metrics for Group: {group}", groupRecord);
+                }
             }
             catch (Exception ex)
             {

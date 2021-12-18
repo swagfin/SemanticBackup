@@ -1,5 +1,6 @@
 ﻿using LiteDB;
 using LiteDB.Async;
+using SemanticBackup.Core;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
@@ -76,12 +77,11 @@ namespace SemanticBackup.LiteDbPersistance
                 var collection = db.GetCollection<ResourceGroup>();
                 var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
                 if (objFound != null)
-                    if (long.TryParse(DateTime.UtcNow.ToString("yyyyMMddHHmmss"), out long lastAccess))
-                    {
-                        objFound.LastAccess = lastAccess;
-                        bool updatedSuccess = await collection.UpdateAsync(objFound);
-                        return updatedSuccess;
-                    }
+                {
+                    objFound.LastAccess = DateTime.UtcNow.ConvertLongFormat();
+                    bool updatedSuccess = await collection.UpdateAsync(objFound);
+                    return updatedSuccess;
+                }
                 return false;
             }
 

@@ -19,20 +19,22 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly BackupRecord _backupRecord;
         private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger _logger;
+        private readonly ILogger<UploaderDropboxBot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
-        public UploaderDropboxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory, ILogger logger)
+        public UploaderDropboxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
         {
             this._resourceGroupId = backupRecord.ResourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
             this._backupRecord = backupRecord;
             this._contentDeliveryConfiguration = contentDeliveryConfiguration;
             this._scopeFactory = scopeFactory;
-            this._logger = logger;
+            //Logger
+            using (var scope = _scopeFactory.CreateScope())
+                _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderDropboxBot>>();
         }
         public async Task RunAsync()
         {

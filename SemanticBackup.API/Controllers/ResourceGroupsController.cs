@@ -70,11 +70,10 @@ namespace SemanticBackup.API.Controllers
                 request.TimeZone = (string.IsNullOrWhiteSpace(request.TimeZone)) ? _persistanceOptions.ServerDefaultTimeZone : request.TimeZone;
                 request.MaximumRunningBots = (request.MaximumRunningBots < 1) ? 1 : request.MaximumRunningBots;
                 //Proceed
-                long.TryParse(DateTime.UtcNow.ToString("yyyyMMddHHmmss"), out long lastAccess);
                 ResourceGroup saveObj = new ResourceGroup
                 {
                     Name = request.Name,
-                    LastAccess = lastAccess,
+                    LastAccess = DateTime.UtcNow.ConvertLongFormat(),
                     TimeZone = request.TimeZone,
                     MaximumRunningBots = request.MaximumRunningBots,
                     CompressBackupFiles = request.CompressBackupFiles,
@@ -228,17 +227,6 @@ namespace SemanticBackup.API.Controllers
                         Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting),
                         PriorityIndex = 2
                     });
-                //Mega Storage
-                if (request.RSMegaNxSetting != null && request.RSMegaNxSetting.IsEnabled)
-                    configs.Add(new ContentDeliveryConfiguration
-                    {
-                        IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.MEGA_STORAGE.ToString(),
-                        ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSMegaNxSetting),
-                        PriorityIndex = 3
-                    });
-
                 //Dropbox
                 if (request.RSDropBoxSetting != null && request.RSDropBoxSetting.IsEnabled)
                     configs.Add(new ContentDeliveryConfiguration

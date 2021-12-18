@@ -16,7 +16,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly string _resourceGroupId;
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger _logger;
+        private readonly ILogger<BackupZippingRobot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
@@ -24,12 +24,14 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string BotId => _backupRecord.Id;
 
-        public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IServiceScopeFactory scopeFactory, ILogger logger)
+        public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IServiceScopeFactory scopeFactory)
         {
             this._resourceGroupId = resourceGroupId;
             this._backupRecord = backupRecord;
             this._scopeFactory = scopeFactory;
-            this._logger = logger;
+            //Logger
+            using (var scope = _scopeFactory.CreateScope())
+                _logger = scope.ServiceProvider.GetRequiredService<ILogger<BackupZippingRobot>>();
         }
         public async Task RunAsync()
         {
