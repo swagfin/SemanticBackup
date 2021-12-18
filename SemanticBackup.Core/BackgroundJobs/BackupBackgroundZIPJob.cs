@@ -14,19 +14,15 @@ namespace SemanticBackup.Core.BackgroundJobs
     {
         private readonly ILogger<BackupBackgroundZIPJob> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
-        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
-        public BackupBackgroundZIPJob(ILogger<BackupBackgroundZIPJob> logger,
-             IServiceScopeFactory serviceScopeFactory,
-            PersistanceOptions persistanceOptions,
-            IBackupRecordPersistanceService backupRecordPersistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, BotsManagerBackgroundJob botsManagerBackgroundJob)
+        public BackupBackgroundZIPJob(
+            ILogger<BackupBackgroundZIPJob> logger,
+            IServiceScopeFactory serviceScopeFactory,
+            BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
             this._serviceScopeFactory = serviceScopeFactory;
-            this._backupRecordPersistanceService = backupRecordPersistanceService;
-            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
 
@@ -47,47 +43,53 @@ namespace SemanticBackup.Core.BackgroundJobs
                     await Task.Delay(10000);
                     try
                     {
-                        List<BackupRecord> queuedBackups = await this._backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.COMPLETED.ToString());
-                        if (queuedBackups != null && queuedBackups.Count > 0)
+                        using (var scope = _serviceScopeFactory.CreateScope())
                         {
-                            foreach (BackupRecord backupRecord in queuedBackups)
+                            //DI INJECTIONS
+                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                            IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                            //Proceed
+                            List<BackupRecord> queuedBackups = await backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.COMPLETED.ToString());
+                            if (queuedBackups != null && queuedBackups.Count > 0)
                             {
-                                //Check if valid Resource Group
-                                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
-                                if (resourceGroup != null)
+                                foreach (BackupRecord backupRecord in queuedBackups)
                                 {
-                                    //Use Resource Group Threads
-                                    if (resourceGroup.CompressBackupFiles)
+                                    //Check if valid Resource Group
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
+                                    if (resourceGroup != null)
                                     {
-                                        //Check Resource Group Maximum Threads
-                                        if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
+                                        //Use Resource Group Threads
+                                        if (resourceGroup.CompressBackupFiles)
                                         {
-                                            _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
-                                            //Add to Queue
-                                            _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _serviceScopeFactory, _logger));
-                                            bool updated = await this._backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
+                                            //Check Resource Group Maximum Threads
+                                            if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
+                                            {
+                                                _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
+                                                //Add to Queue
+                                                _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _serviceScopeFactory));
+                                                bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.COMPRESSING.ToString());
+                                                if (updated)
+                                                    _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
+                                                else
+                                                    _logger.LogWarning($"Queued for Zipping But Failed to Update Status for Backup Record Key: #{backupRecord.Id}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
+                                            bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.READY.ToString());
                                             if (updated)
-                                                _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
+                                                _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
                                             else
-                                                _logger.LogWarning($"Queued for Zipping But Failed to Update Status for Backup Record Key: #{backupRecord.Id}");
+                                                _logger.LogWarning($"Failed to Update Status as READY for Backup Record Key: #{backupRecord.Id}");
                                         }
                                     }
                                     else
-                                    {
-                                        _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
-                                        bool updated = await this._backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.READY.ToString());
-                                        if (updated)
-                                            _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
-                                        else
-                                            _logger.LogWarning($"Failed to Update Status as READY for Backup Record Key: #{backupRecord.Id}");
-                                    }
-                                }
-                                else
-                                    _logger.LogWarning($"The Backup Record Id: {backupRecord.Id}, doesn't seem to have been assigned to a valid Resource Group Id: {backupRecord.ResourceGroupId}, Zipping Skipped");
+                                        _logger.LogWarning($"The Backup Record Id: {backupRecord.Id}, doesn't seem to have been assigned to a valid Resource Group Id: {backupRecord.ResourceGroupId}, Zipping Skipped");
 
+                                }
                             }
                         }
-
                     }
                     catch (Exception ex)
                     {

@@ -15,22 +15,22 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         private readonly string _resourceGroup;
         private readonly BackupDatabaseInfo _databaseInfo;
         private readonly BackupRecord _backupRecord;
-        private readonly IMySQLServerBackupProviderService _backupProviderService;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger _logger;
+        private readonly ILogger<MySQLBackupBot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroup;
         public string BotId => _backupRecord.Id;
-        public MySQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IMySQLServerBackupProviderService backupProviderService, IServiceScopeFactory serviceScopeFactory, ILogger logger)
+        public MySQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IServiceScopeFactory serviceScopeFactory)
         {
             this._resourceGroup = resourceGroupId;
             this._databaseInfo = databaseInfo;
             this._backupRecord = backupRecord;
-            this._backupProviderService = backupProviderService;
             this._scopeFactory = serviceScopeFactory;
-            this._logger = logger;
+            //Logger
+            using (var scope = _scopeFactory.CreateScope())
+                _logger = scope.ServiceProvider.GetRequiredService<ILogger<MySQLBackupBot>>();
         }
         public async Task RunAsync()
         {
@@ -44,7 +44,12 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 await Task.Delay(new Random().Next(1000));
                 stopwatch.Start();
                 //Execute Service
-                bool backupedUp = await _backupProviderService.BackupDatabaseAsync(_databaseInfo, _backupRecord);
+                bool backupedUp = false;
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    IMySQLServerBackupProviderService providerService = scope.ServiceProvider.GetRequiredService<IMySQLServerBackupProviderService>();
+                    backupedUp = await providerService.BackupDatabaseAsync(_databaseInfo, _backupRecord);
+                }
                 stopwatch.Stop();
                 if (backupedUp)
                     UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.COMPLETED.ToString(), "Successfull", stopwatch.ElapsedMilliseconds);
