@@ -70,11 +70,10 @@ namespace SemanticBackup.API.Controllers
                 request.TimeZone = (string.IsNullOrWhiteSpace(request.TimeZone)) ? _persistanceOptions.ServerDefaultTimeZone : request.TimeZone;
                 request.MaximumRunningBots = (request.MaximumRunningBots < 1) ? 1 : request.MaximumRunningBots;
                 //Proceed
-                long.TryParse(DateTime.UtcNow.ToString("yyyyMMddHHmmss"), out long lastAccess);
                 ResourceGroup saveObj = new ResourceGroup
                 {
                     Name = request.Name,
-                    LastAccess = lastAccess,
+                    LastAccess = DateTime.UtcNow.ConvertLongFormat(),
                     TimeZone = request.TimeZone,
                     MaximumRunningBots = request.MaximumRunningBots,
                     CompressBackupFiles = request.CompressBackupFiles,
