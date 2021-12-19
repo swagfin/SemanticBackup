@@ -39,6 +39,8 @@ namespace SemanticBackup.Core.BackgroundJobs
             {
                 while (true)
                 {
+                    //Await
+                    await Task.Delay(10000);
                     try
                     {
                         using (var scope = _serviceScopeFactory.CreateScope())
@@ -136,8 +138,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     {
                         _logger.LogError(ex.Message);
                     }
-                    //Await
-                    await Task.Delay(5000);
+
                 }
             });
             t.Start();

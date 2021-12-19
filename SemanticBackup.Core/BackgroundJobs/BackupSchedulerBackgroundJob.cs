@@ -43,7 +43,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                 while (true)
                 {
                     //Await
-                    await Task.Delay(10000);
+                    await Task.Delay(3000);
                     try
                     {
                         using (var scope = _serviceScopeFactory.CreateScope())
@@ -101,8 +101,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             else
                                                 _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
                                             //Update Schedule
-                                            schedule.LastRunUTC = currentTimeUTC;
-                                            bool updatedSchedule = await backupSchedulePersistanceService.UpdateAsync(schedule);
+                                            bool updatedSchedule = await backupSchedulePersistanceService.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
                                             if (!updatedSchedule)
                                                 _logger.LogWarning("Unable to Update Scheduled Next Run");
                                         }

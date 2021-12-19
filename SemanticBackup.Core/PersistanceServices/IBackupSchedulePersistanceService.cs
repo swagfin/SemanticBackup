@@ -1,4 +1,5 @@
 ﻿using SemanticBackup.Core.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,5 +15,6 @@ namespace SemanticBackup.Core.PersistanceServices
         Task<List<BackupSchedule>> GetAllDueByDateAsync();
         Task<List<BackupSchedule>> GetAllByDatabaseIdAsync(string id);
         Task<int> GetAllCountAsync(string resourcegroup);
+        Task<bool> UpdateLastRunAsync(string id, DateTime lastRunUTC);
     }
 }

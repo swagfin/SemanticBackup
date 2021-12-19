@@ -45,6 +45,9 @@ namespace SemanticBackup.API
             persistanceOptions.DefaultBackupDirectory = persistanceOptions.DefaultBackupDirectory.Replace("{{env}}", this.Environment.ContentRootPath);
             services.AddSingleton(persistanceOptions); //Configure Global Instance Reg
 
+            //Register Database Context
+            services.AddSingleton<ILiteDbContext, LiteDbContext>();
+
             //Persistance
             services.AddScoped<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
             services.AddScoped<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
