@@ -19,7 +19,7 @@ namespace SemanticBackup.LiteDbPersistance
 
         public async Task<List<BackupSchedule>> GetAllAsync(string resourcegroup)
         {
-            return await db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).ToListAsync();
+            return await db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).OrderBy(x => x.Name).ToListAsync();
         }
         public async Task<int> GetAllCountAsync(string resourcegroup)
         {
@@ -31,7 +31,7 @@ namespace SemanticBackup.LiteDbPersistance
         }
         public async Task<List<BackupSchedule>> GetAllByDatabaseIdAsync(string id)
         {
-            return await db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).ToListAsync();
+            return await db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.Name).ToListAsync();
         }
         public async Task<bool> AddOrUpdateAsync(BackupSchedule record)
         {
@@ -60,7 +60,7 @@ namespace SemanticBackup.LiteDbPersistance
             if (objFound != null)
             {
                 objFound.LastRunUTC = lastRunUTC;
-                return await collection.DeleteAsync(new BsonValue(objFound.Id));
+                return await collection.UpdateAsync(objFound);
             }
             return false;
         }
