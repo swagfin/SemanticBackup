@@ -7,5 +7,6 @@
         public bool EnsureDefaultBackupDirectoryExists { get; set; } = true;
         public string BackupFileSaveFormat { get; set; } = "{{database}}\\{{database}}-{{datetime}}.{{databasetype}}.bak";
         public int ExecutionTimeoutInMinutes { get; set; } = 10;
+        public bool InDepthBackupRecordDeleteEnabled { get; set; } = true;
     }
 }
