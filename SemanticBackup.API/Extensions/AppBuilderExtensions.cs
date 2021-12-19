@@ -17,6 +17,10 @@ namespace SemanticBackup.API.Extensions
             string directory = Path.GetDirectoryName(liteDbConfig.ConnectionString);
             if (directory != null && !Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
+            //Ensure Lite Db Exists
+            var liteDbContext = (ILiteDbContext)builder.ApplicationServices.GetService(typeof(ILiteDbContext));
+            if (liteDbContext == null)
+                return;
         }
         public static void EnsureBackupDirectoryExists(this IApplicationBuilder builder)
         {

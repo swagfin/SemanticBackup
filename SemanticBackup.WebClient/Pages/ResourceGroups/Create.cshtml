@@ -210,21 +210,19 @@
                 <div class="ui divider"></div>
                 <h4 class="ui primary header">Notification Alerts</h4>
                 <section class="ui segment attached form">
-                    <div class="two fields">
-                        <div class="field">
-                            <label></label>
-                            <span>
-                                <input id="NotifyOnErrorBackups" asp-for="RGRequest.NotifyOnErrorBackups">
-                                <label title="Notify addresses on Backup Execution Run Error" style="cursor:pointer" for="NotifyOnErrorBackups">Notify On Backup Execution Failure</label>
-                            </span>
-                        </div>
-                        <div class="field">
-                            <label></label>
-                            <span>
-                                <input id="NotifyOnErrorBackupDelivery" asp-for="RGRequest.NotifyOnErrorBackupDelivery">
-                                <label title="Notify addresses on Backup Content Delivery Run Error" style="cursor:pointer" for="NotifyOnErrorBackupDelivery">Notify On Backup Delivery Failure</label>
-                            </span>
-                        </div>
+                    <div class="field">
+                        <label></label>
+                        <span>
+                            <input id="NotifyOnErrorBackups" asp-for="RGRequest.NotifyOnErrorBackups">
+                            <label title="Notify addresses on Backup Execution Run Error" style="cursor:pointer" for="NotifyOnErrorBackups">Notify On Backup Execution Failure</label>
+                        </span>
+                    </div>
+                    <div class="field">
+                        <label></label>
+                        <span>
+                            <input id="NotifyOnErrorBackupDelivery" asp-for="RGRequest.NotifyOnErrorBackupDelivery">
+                            <label title="Notify addresses on Backup Content Delivery Run Error" style="cursor:pointer" for="NotifyOnErrorBackupDelivery">Notify On Backup Delivery Failure</label>
+                        </span>
                     </div>
                     <div class="field">
                         <label>Notification Addresses (Separate with ",")</label>

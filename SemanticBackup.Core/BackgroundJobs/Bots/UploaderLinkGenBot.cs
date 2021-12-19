@@ -49,7 +49,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 if (settings.DownloadLinkType == "LONG")
                     contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{this._backupRecord.Id}|{this._contentDeliveryConfiguration.Id}".ToMD5String());
                 //Job to Do
-                await Task.Delay(new Random().Next(2000, 3000));
+                await Task.Delay(new Random().Next(3000));
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), contentLink, stopwatch.ElapsedMilliseconds);
                 _logger.LogInformation($"Creating Download Link: {_backupRecord.Path}... SUCCESS");

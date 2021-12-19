@@ -40,7 +40,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                 while (true)
                 {
                     //Await
-                    await Task.Delay(10000);
+                    await Task.Delay(5000);
                     try
                     {
                         using (var scope = _serviceScopeFactory.CreateScope())
