@@ -68,6 +68,10 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 this._logger.LogWarning(ex.Message);
                 stopwatch.Stop();
             }
+            finally
+            {
+                this.IsCompleted = true;
+            }
         }
 
         private RSDropBoxSetting GetValidDeserializedSettings()
