@@ -183,7 +183,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     var dbRecords = await contentDeliveryRecordsService.GetAllByBackupRecordIdAsync(rm.Id); //database record content delivery
                     if (dbRecords == null)
                         return;
-                    List<string> supportedInDepthDelete = new List<string> { ContentDeliveryType.DROPBOX.ToString() };
+                    List<string> supportedInDepthDelete = new List<string> { ContentDeliveryType.DROPBOX.ToString(), ContentDeliveryType.AZURE_BLOB_STORAGE.ToString() };
                     List<ContentDeliveryRecord> supportedDeliveryRecords = dbRecords.Where(x => supportedInDepthDelete.Contains(x.DeliveryType)).ToList();
                     if (supportedDeliveryRecords == null || supportedDeliveryRecords.Count == 0)
                         return;
@@ -192,8 +192,15 @@ namespace SemanticBackup.Core.BackgroundJobs
                         ContentDeliveryConfiguration config = await contentDeliveryConfigPersistanceService.GetByIdAsync(rec.ContentDeliveryConfigurationId);
                         if (rec.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
                         {
+                            //In Depth Remove From DropBox
                             botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(rm, rec, config, _serviceScopeFactory));
                         }
+                        else if (rec.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
+                        {
+                            //In Depth remove From Azure Storage
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(rm, rec, config, _serviceScopeFactory));
+                        }
+
                     }
                 }
 
