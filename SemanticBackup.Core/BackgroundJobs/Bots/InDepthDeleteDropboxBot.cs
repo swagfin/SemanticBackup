@@ -57,14 +57,15 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 //Proceed
                 using (DropboxClient dbx = new DropboxClient(settings.AccessToken.Trim()))
                 {
-                    await dbx.Files.PermanentlyDeleteAsync(string.Format("{0}{1}", validDirectory, fileName));
+                    string initialFileName = string.Format("{0}{1}", validDirectory, fileName);
+                    Dropbox.Api.Files.DeleteResult delResponse = await dbx.Files.DeleteV2Async(initialFileName, null);
                 }
                 stopwatch.Stop();
                 _logger.LogInformation($"DELETING Backup File From DropBox: {_backupRecord.Path}... SUCCESS");
             }
             catch (Exception ex)
             {
-                this._logger.LogError(ex.Message);
+                this._logger.LogWarning(ex.Message);
                 stopwatch.Stop();
             }
         }

@@ -139,7 +139,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             List<BackupRecord> expiredBackups = await backupRecordPersistanceService.GetAllExpiredAsync();
                             if (expiredBackups != null && expiredBackups.Count > 0)
                             {
-                                foreach (BackupRecord rm in expiredBackups)
+                                foreach (BackupRecord rm in expiredBackups.Take(50).ToList())
                                     if (!await backupRecordPersistanceService.RemoveAsync(rm.Id))
                                         _logger.LogWarning($"Unable to delete Expired Backup Record: {rm.Id}");
                                     else
