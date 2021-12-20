@@ -16,11 +16,16 @@ namespace SemanticBackup.LiteDbPersistance
     {
         private LiteDatabaseAsync db;
         private readonly IEnumerable<IRecordStatusChangedNotifier> _backupRecordStatusChangedNotifiers;
+        private readonly IContentDeliveryRecordPersistanceService _contentDeliveryRecordPersistanceService;
 
-        public BackupRecordPersistanceService(ILiteDbContext context, IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers)
+        public BackupRecordPersistanceService(
+            ILiteDbContext context,
+            IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers,
+            IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService)
         {
             this.db = context.Database;
             this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
+            this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
         }
 
         public async Task<List<BackupRecord>> GetAllAsync(string resourcegroup)
@@ -115,10 +120,26 @@ namespace SemanticBackup.LiteDbPersistance
                 string pathToRemove = objFound.Path;
                 bool removedSuccess = await collection.DeleteAsync(new BsonValue(objFound.Id));
                 if (removedSuccess)
+                {
+                    TryDeleteContentDispatchRecordsAsync(id);
                     TryDeleteOldFile(pathToRemove);
+                }
                 return removedSuccess;
             }
             return false;
+        }
+
+        private async void TryDeleteContentDispatchRecordsAsync(string id)
+        {
+            try
+            {
+                //Get all by Backup Record
+                List<ContentDeliveryRecord> associateRecords = await _contentDeliveryRecordPersistanceService.GetAllByBackupRecordIdAsync(id);
+                if (associateRecords != null && associateRecords.Count > 0)
+                    foreach (ContentDeliveryRecord record in associateRecords)
+                        await _contentDeliveryRecordPersistanceService.RemoveAsync(record.Id);
+            }
+            catch { }
         }
 
         public async Task<bool> UpdateAsync(BackupRecord record)

@@ -5,6 +5,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,15 +14,18 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class BackupBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
+        private readonly PersistanceOptions _persistanceOptions;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
         public BackupBackgroundJob(
             ILogger<BackupBackgroundJob> logger,
+            PersistanceOptions persistanceOptions,
             IServiceScopeFactory serviceScopeFactory,
             BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
+            this._persistanceOptions = persistanceOptions;
             this._serviceScopeFactory = serviceScopeFactory;
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
@@ -49,7 +53,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                             IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
                             IDatabaseInfoPersistanceService databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoPersistanceService>();
                             IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
-
                             //Proceed
                             List<BackupRecord> queuedBackups = await backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.QUEUED.ToString());
                             if (queuedBackups != null && queuedBackups.Count > 0)
@@ -121,7 +124,11 @@ namespace SemanticBackup.Core.BackgroundJobs
             {
                 while (true)
                 {
+#if DEBUG
+                    await Task.Delay(3000); //Runs After 3sec
+#else
                     await Task.Delay(60000); //Runs After 1 Minute
+#endif
                     try
                     {
                         using (var scope = _serviceScopeFactory.CreateScope())
@@ -132,15 +139,16 @@ namespace SemanticBackup.Core.BackgroundJobs
                             List<BackupRecord> expiredBackups = await backupRecordPersistanceService.GetAllExpiredAsync();
                             if (expiredBackups != null && expiredBackups.Count > 0)
                             {
-                                List<string> toDeleteList = new List<string>();
-                                foreach (BackupRecord backupRecord in expiredBackups)
-                                    toDeleteList.Add(backupRecord.Id);
-                                _logger.LogInformation($"Queued ({expiredBackups.Count}) Expired Records for Delete");
-                                //Check if Any Delete
-                                if (toDeleteList.Count > 0)
-                                    foreach (var rm in toDeleteList)
-                                        if (!(await backupRecordPersistanceService.RemoveAsync(rm)))
-                                            _logger.LogWarning("Unable to delete Expired Backup Record");
+                                foreach (BackupRecord rm in expiredBackups.Take(50).ToList())
+                                    if (!await backupRecordPersistanceService.RemoveAsync(rm.Id))
+                                        _logger.LogWarning($"Unable to delete Expired Backup Record: {rm.Id}");
+                                    else
+                                    {
+                                        _logger.LogInformation($"Removed Expired Backup Record, Id: {rm.Id}");
+                                        //Options InDepth Delete
+                                        if (_persistanceOptions.InDepthBackupRecordDeleteEnabled)
+                                            await StartInDepthDeleteForAsync(rm);
+                                    }
                             }
                         }
                     }
@@ -151,6 +159,46 @@ namespace SemanticBackup.Core.BackgroundJobs
                 }
             });
             t.Start();
+        }
+
+        private async Task StartInDepthDeleteForAsync(BackupRecord rm)
+        {
+            try
+            {
+                if (rm == null) return;
+                //scope
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                    IContentDeliveryRecordPersistanceService contentDeliveryRecordsService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
+                    IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigPersistanceService>();
+                    BotsManagerBackgroundJob botsManagerBackgroundJob = scope.ServiceProvider.GetRequiredService<BotsManagerBackgroundJob>();
+                    ResourceGroup backRecordResourceGrp = await resourceGroupPersistanceService.GetByIdAsync(rm.ResourceGroupId);
+                    if (backRecordResourceGrp == null)
+                    {
+                        _logger.LogWarning($"InDepth Deletion Failed, the Database Record has no valid Resource Group, Id: {rm.ResourceGroupId}, resource Group: {rm.ResourceGroupId}");
+                        return;
+                    }
+                    //Proceed
+                    var dbRecords = await contentDeliveryRecordsService.GetAllByBackupRecordIdAsync(rm.Id); //database record content delivery
+                    if (dbRecords == null)
+                        return;
+                    List<string> supportedInDepthDelete = new List<string> { ContentDeliveryType.DROPBOX.ToString() };
+                    List<ContentDeliveryRecord> supportedDeliveryRecords = dbRecords.Where(x => supportedInDepthDelete.Contains(x.DeliveryType)).ToList();
+                    if (supportedDeliveryRecords == null || supportedDeliveryRecords.Count == 0)
+                        return;
+                    foreach (var rec in supportedDeliveryRecords)
+                    {
+                        ContentDeliveryConfiguration config = await contentDeliveryConfigPersistanceService.GetByIdAsync(rec.ContentDeliveryConfigurationId);
+                        if (rec.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
+                        {
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(rm, rec, config, _serviceScopeFactory));
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex) { _logger.LogError(ex.Message); }
         }
     }
 }
