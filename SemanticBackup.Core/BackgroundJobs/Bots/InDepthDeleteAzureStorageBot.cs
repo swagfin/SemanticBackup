@@ -54,18 +54,17 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 if (string.IsNullOrWhiteSpace(settings.ConnectionString))
                     throw new Exception("Invalid Connection String");
                 //Proceed
-                using (FileStream stream = File.Open(this._backupRecord.Path, FileMode.Open))
+                CloudStorageAccount account = CloudStorageAccount.Parse(settings.ConnectionString);
+                var blobClient = account.CreateCloudBlobClient();
+                // Make sure container is there
+                var blobContainer = blobClient.GetContainerReference(validContainer);
+                if (blobContainer != null)
                 {
-                    CloudStorageAccount account = CloudStorageAccount.Parse(settings.ConnectionString);
-                    var blobClient = account.CreateCloudBlobClient();
-                    // Make sure container is there
-                    var blobContainer = blobClient.GetContainerReference(validContainer);
-                    await blobContainer.CreateIfNotExistsAsync();
                     CloudBlockBlob blockBlob = blobContainer.GetBlockBlobReference(fileName);
                     await blockBlob.DeleteIfExistsAsync(); //Removes Blob Reference
                 }
                 stopwatch.Stop();
-                _logger.LogInformation($"deleting Backup File From Azure Blob Storage: {_backupRecord.Path}... SUCCESS");
+                _logger.LogInformation($"DELETING Backup File From Azure Blob Storage: {_backupRecord.Path}... SUCCESS");
             }
             catch (Exception ex)
             {
