@@ -55,6 +55,7 @@ namespace SemanticBackup.API
             services.AddScoped<IResourceGroupPersistanceService, ResourceGroupPersistanceService>();
             services.AddScoped<IContentDeliveryConfigPersistanceService, ContentDeliveryConfigPersistanceService>();
             services.AddScoped<IContentDeliveryRecordPersistanceService, ContentDeliveryRecordPersistanceService>();
+            services.AddScoped<IUserAccountPersistanceService, UserAccountPersistanceService>();
 
             //Backup Provider Engines
             services.AddScoped<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
