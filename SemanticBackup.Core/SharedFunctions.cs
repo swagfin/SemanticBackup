@@ -12,7 +12,7 @@ namespace SemanticBackup.Core
             //Proceed
             return format.Replace("{{database}}", backupDatabaseInfo.DatabaseName)
                                          .Replace("{{date}}", $"{currentTime:yyyy-MM-dd}")
-                                         .Replace("{{datetime}}", $"{currentTime:yyyy-MM-dd-HHmmss}")
+                                         .Replace("{{datetime}}", $"{currentTime:yyyy-MM-dd-HHmmssffff}")
                                          .Replace("{{databasetype}}", backupDatabaseInfo.DatabaseType);
         }
     }
