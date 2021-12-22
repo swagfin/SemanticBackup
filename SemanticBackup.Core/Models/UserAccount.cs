@@ -10,7 +10,8 @@ namespace SemanticBackup.Core.Models
         public string FullName { get; set; }
         public string Password { get; set; }
         public UserAccountType UserAccountType { get; set; } = UserAccountType.ADMIN;
-        public DateTime? LastLogin { get; set; } = null;
+        public DateTime? LastLoginUTC { get; set; } = null;
+        public string LastLoginToken { get; set; } = null;
     }
     public enum UserAccountType
     {
