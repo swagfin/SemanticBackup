@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
+    [AllowAnonymous]
     [Route("/d/{id}")]
     [ApiController]
     public class DownloadController : ControllerBase

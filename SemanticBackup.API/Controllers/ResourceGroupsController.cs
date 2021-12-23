@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SemanticBackup.API.Models.Requests;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("{resourcegroup}/api/[controller]")]
     public class ResourceGroupsController : ControllerBase
@@ -27,6 +29,7 @@ namespace SemanticBackup.API.Controllers
             this._contentDeliveryConfigPersistanceService = contentDeliveryConfigPersistanceService;
             this._persistanceOptions = persistanceOptions;
         }
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<ResourceGroup>>> GetResourceGroupsAsync()
         {
@@ -40,6 +43,8 @@ namespace SemanticBackup.API.Controllers
                 return new List<ResourceGroup>();
             }
         }
+
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<ResourceGroup>> GetAsync(string id)
         {

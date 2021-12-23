@@ -12,7 +12,7 @@ namespace SemanticBackup.API
         public string SMTPDefaultSMTPFromName { get; set; }
         public string JWTSecret { get; set; } = Guid.NewGuid().ToString();
         public int JWTExpirationInDays { get; set; } = 3;
-        public string JWTIssuer { get; set; } = "semanticbackup.api";
-        public string JWTAudience { get; set; } = "all@semanticbackup.api";
+        public string JWTIssuer { get; set; } = "issuer";
+        public string JWTAudience { get; set; } = "audiences";
     }
 }

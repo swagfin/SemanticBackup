@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
+    [Authorize]
     [Route("{resourcegroup}/api/[controller]")]
     [ApiController]
     public class UserAccountsController : ControllerBase
@@ -29,6 +31,7 @@ namespace SemanticBackup.API.Controllers
             this._options = options.Value;
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult> SignInAsync(SignInRequest signInRequest)
         {

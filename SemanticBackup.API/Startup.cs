@@ -104,7 +104,7 @@ namespace SemanticBackup.API
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidIssuer = _options.JWTIssuer,
-                        ValidAudience = _options.JWTIssuer,
+                        ValidAudience = _options.JWTAudience,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.JWTSecret)),
                         ClockSkew = TimeSpan.Zero
                     };

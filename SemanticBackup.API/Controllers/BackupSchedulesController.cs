@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("{resourcegroup}/api/[controller]")]
     public class BackupSchedulesController : ControllerBase

@@ -59,7 +59,6 @@ namespace SemanticBackup.WebClient.Pages.Account
                     AuthenticationProperties authProperties = new AuthenticationProperties
                     {
                         ExpiresUtc = jwttoken.ValidTo,
-                        AllowRefresh = true,
                         IsPersistent = true,
                     };
                     //Sign In User
