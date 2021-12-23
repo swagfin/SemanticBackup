@@ -65,13 +65,7 @@ namespace SemanticBackup.WebClient
             var cookiePolicyOptions = new CookiePolicyOptions
             {
                 MinimumSameSitePolicy = SameSiteMode.Strict,
-                //https://docs.microsoft.com/en-us/aspnet/core/security/gdpr?view=aspnetcore-3.1
-                // This lambda determines whether user consent for non-essential 
-                // cookies is needed for a given request.
-                //CheckConsentNeeded = context => true
-
-                ///cookie configs
-                ///
+                Secure = CookieSecurePolicy.None
             };
             app.UseCookiePolicy(cookiePolicyOptions);
 

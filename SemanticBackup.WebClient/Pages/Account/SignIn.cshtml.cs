@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using SemanticBackup.WebClient.Models.Requests;
 using SemanticBackup.WebClient.Services;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -48,18 +49,22 @@ namespace SemanticBackup.WebClient.Pages.Account
                         throw new Exception("Invalid Username or Password Provided");
                     //Proceeed
                     JwtSecurityToken jwttoken = new JwtSecurityTokenHandler().ReadJwtToken(token);
-                    var claims = jwttoken.Claims.ToList();
-                    //Add Claim
+                    List<Claim> claims = jwttoken.Claims.ToList();
+                    //Add new Role Basedd Claim
                     claims.Add(new Claim("semantic-backup-token", token));
                     //Prepare Selft Claims Identity
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var authProperties = new AuthenticationProperties
+                    ClaimsIdentity identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
+                    identity.AddClaims(claims);
+                    ClaimsPrincipal principal = new ClaimsPrincipal(identity);
+                    AuthenticationProperties authProperties = new AuthenticationProperties
                     {
                         ExpiresUtc = jwttoken.ValidTo,
+                        AllowRefresh = true,
                         IsPersistent = true,
                     };
                     //Sign In User
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(principal), authProperties);
+                    await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
                     return LocalRedirect(returnUrl);
                 }
