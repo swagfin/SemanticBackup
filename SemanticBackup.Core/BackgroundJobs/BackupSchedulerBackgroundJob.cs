@@ -104,6 +104,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             bool updatedSchedule = await backupSchedulePersistanceService.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
                                             if (!updatedSchedule)
                                                 _logger.LogWarning("Unable to Update Scheduled Next Run");
+                                            //Buy Some Seconds to avoid Conflict Name
+                                            await Task.Delay(new Random().Next(100));
                                         }
 
                                     }
