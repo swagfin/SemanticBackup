@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
@@ -10,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("{resourcegroup}/api/[controller]")]
     public class ContentDeliveryRecordsController : ControllerBase

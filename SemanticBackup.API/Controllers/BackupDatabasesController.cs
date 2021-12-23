@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
@@ -12,8 +13,9 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
-    [ApiController]
+    [Authorize]
     [Route("{resourcegroup}/api/[controller]")]
+    [ApiController]
     public class BackupDatabasesController : ControllerBase
     {
         private readonly ILogger<BackupDatabasesController> _logger;
@@ -30,7 +32,6 @@ namespace SemanticBackup.API.Controllers
             this._mySQLServerBackupProviderService = mySQLServerBackupProviderService;
             this._sQLServerBackupProviderService = sQLServerBackupProviderService;
         }
-
         [HttpGet]
         public async Task<ActionResult<List<BackupDatabaseInfoResponse>>> GetAsync(string resourcegroup)
         {

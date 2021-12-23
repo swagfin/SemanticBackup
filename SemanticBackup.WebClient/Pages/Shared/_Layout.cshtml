@@ -1,5 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 
@@ -44,80 +43,96 @@
         <div class="aside-body">
 
             <div class="aside-loggedin">
-
                 @{
                     var activeDirectory = ResourceGroups.CurrentResourceGroup;
-                    if (ResourceGroups.All != null && ResourceGroups.All.Count > 0)
+                    if (User.Identity.IsAuthenticated)
                     {
+                        if (ResourceGroups.All != null && ResourceGroups.All.Count > 0)
+                        {
 
-                        <div class="aside-loggedin-user">
-                            <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
-                            <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name)</span>
-                                <i data-feather="chevron-down"></i>
-                            </a>
-                        </div>
+                            <div class="aside-loggedin-user">
+                                <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
+                                    <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name)</span>
+                                    <i data-feather="chevron-down"></i>
+                                </a>
+                            </div>
 
 
-                        <div class="collapse" id="loggedinMenu">
-                            <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
-                            <ul class="nav nav-aside mg-b-0">
-                                @{
-                                    foreach (var directory in ResourceGroups.All)
-                                    {
-                                        string class_style = "";
-                                        if (activeDirectory.Id == directory.Id)
+                            <div class="collapse" id="loggedinMenu">
+                                <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
+                                <ul class="nav nav-aside mg-b-0">
+                                    @{
+                                        foreach (var directory in ResourceGroups.All)
                                         {
-                                            class_style = "active";
+                                            string class_style = "";
+                                            if (activeDirectory.Id == directory.Id)
+                                            {
+                                                class_style = "active";
+                                            }
+                                            <li class="nav-item @(class_style)"><a href="~/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
                                         }
-                                        <li class="nav-item @(class_style)"><a href="~/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
                                     }
-                                }
+                                    <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <ul class="nav nav-aside mg-b-0">
                                 <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
                             </ul>
-                        </div>
-                    }
-                    else
-                    {
-                        <ul class="nav nav-aside mg-b-0">
-                                 <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
-                        </ul>
-                        <script type="text/javascript">
-                            location.href="/resource-groups/";
-                        </script>
-                    }
+                            <script type="text/javascript">
+                                location.href="/resource-groups/";
+                            </script>
+                        }
 
+                    }
                 }
-
-
             </div>
 
 
             <!-- aside-loggedin -->
             <ul class="nav nav-aside">
-                <li class="nav-label">Dashboards</li>
-                <li class="nav-item active"><a href="~/" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
+                @{
+                    if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-label">Dashboards</li>
+                        <li class="nav-item active"><a href="~/" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
 
-                <li class="nav-label mg-t-25">Backup Menu</li>
+                        <li class="nav-label mg-t-25">Backup Menu</li>
 
-                <li class="nav-item"><a href="~/Databases/" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
-                <li class="nav-item"><a href="~/DatabaseBackupSchedules/" class="nav-link"><i data-feather="clock"></i> <span>Backup Schedules</span></a></li>
-                <li class="nav-item"><a href="~/DatabaseBackups/" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
-
-
-
-                <li class="nav-label mg-t-25">RESOURCE GROUPS</li>
-                <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>Create Resource Group</span></a></li>
-                <li class="nav-item"><a href="~/resource-groups/" class="nav-link"><i data-feather="grid"></i> <span>Manage Resource Groups</span></a></li>
-
-                <li class="nav-item with-sub">
-                    <a href="" class="nav-link"><i data-feather="edit"></i> <span>Custom Functions</span></a>
-                    <ul>
-                        <li><a href="/">Requeue</a></li>
-                        <li><a href="/">Get Download Link</a></li>
-                    </ul>
-                </li>
+                        <li class="nav-item"><a href="~/Databases/" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
+                        <li class="nav-item"><a href="~/DatabaseBackupSchedules/" class="nav-link"><i data-feather="clock"></i> <span>Backup Schedules</span></a></li>
+                        <li class="nav-item"><a href="~/DatabaseBackups/" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
 
 
+
+                        <li class="nav-label mg-t-25">RESOURCE GROUPS</li>
+                        <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>Create Resource Group</span></a></li>
+                        <li class="nav-item"><a href="~/resource-groups/" class="nav-link"><i data-feather="grid"></i> <span>Manage Resource Groups</span></a></li>
+
+                        <li class="nav-item with-sub">
+                            <a href="" class="nav-link"><i data-feather="edit"></i> <span>Custom Functions</span></a>
+                            <ul>
+                                <li><a href="/">Requeue</a></li>
+                                <li><a href="/">Get Download Link</a></li>
+                            </ul>
+                        </li>
+
+                    }
+                }
+
+                @{
+                    <li class="nav-label mg-t-25">Account</li>
+                    if (!User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item"><a href="~/account/login" class="nav-link"><i data-feather="log-in"></i> <span>Sign In</span></a></li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a href="~/account/logout" class="nav-link"><i data-feather="log-out"></i> <span>Sign Out</span></a></li>
+                    }
+                }
 
             </ul>
         </div>
@@ -129,7 +144,16 @@
                 <input type="search" class="form-control" placeholder="Search...">
             </div>
             <nav class="nav">
-                <a href="~/resource-groups/" class="nav-link active"><i data-feather="grid"></i> <span class="ui basic yellow label left pointing">@(activeDirectory?.Name)</span></a>
+                @{
+                    if (User.Identity.IsAuthenticated)
+                    {
+                        <a href="~/" class="nav-link active"><i data-feather="user"></i> <span class="ui basic blue label left pointing">@(User.Identity?.Name)</span></a>
+                    }
+                    else
+                    {
+                        <a href="/Account/Login" class="btn btn-buy"><i data-feather="log-in"></i> <span>Sign in</span></a>
+                    }
+                }
             </nav>
         </div><!-- content-header -->
 

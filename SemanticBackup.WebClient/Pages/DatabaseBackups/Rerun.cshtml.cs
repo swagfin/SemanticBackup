@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.DatabaseBackups
 {
+    [Authorize]
     public class RerunModel : PageModel
     {
         private readonly IHttpService _httpService;

@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,6 +26,15 @@ namespace SemanticBackup.WebClient
             services.Configure<WebClientOptions>(Configuration.GetSection(nameof(WebClientOptions)));
             services.AddTransient<IHttpService, HttpService>();
 
+            //Required 
+
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                    .AddCookie(opt =>
+                    {
+                        ///extra configs
+                    });
+
+            services.AddHttpContextAccessor();
             //Directory Services
             services.AddSingleton<TimeZoneHelper>(); //TimeZones
             services.AddSingleton<IResourceGroupService, ResourceGroupService>();
@@ -45,11 +56,20 @@ namespace SemanticBackup.WebClient
                 app.UseExceptionHandler("/Error");
             }
 
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            var cookiePolicyOptions = new CookiePolicyOptions
+            {
+                MinimumSameSitePolicy = SameSiteMode.Strict,
+                Secure = CookieSecurePolicy.None
+            };
+            app.UseCookiePolicy(cookiePolicyOptions);
 
             app.UseEndpoints(endpoints =>
             {

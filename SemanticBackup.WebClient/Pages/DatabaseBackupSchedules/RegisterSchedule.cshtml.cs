@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.DatabaseBackupSchedules
 {
+    [Authorize]
     public class RegisterScheduleModel : PageModel
     {
         private readonly IHttpService _httpService;

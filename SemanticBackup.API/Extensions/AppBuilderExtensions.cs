@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using SemanticBackup.Core;
+using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.LiteDbPersistance;
 using System.Collections.Generic;
 using System.IO;
@@ -21,6 +22,17 @@ namespace SemanticBackup.API.Extensions
             var liteDbContext = (ILiteDbContext)builder.ApplicationServices.GetService(typeof(ILiteDbContext));
             if (liteDbContext == null)
                 return;
+        }
+        public static void EnsureUserAccountsExists(this IApplicationBuilder builder)
+        {
+            var userService = (IUserAccountPersistanceService)builder.ApplicationServices.GetService(typeof(IUserAccountPersistanceService));
+            if (userService == null)
+                return;
+            //User Account Service
+            int count = userService.GetAllCountAsync().GetAwaiter().GetResult();
+            if (count == 0)
+                userService.AddOrUpdateAsync(new Core.Models.UserAccount { EmailAddress = "admin@admin.com", FullName = "Administrator", Password = "admin", UserAccountType = Core.Models.UserAccountType.ADMIN }).GetAwaiter().GetResult();
+
         }
         public static void EnsureBackupDirectoryExists(this IApplicationBuilder builder)
         {
