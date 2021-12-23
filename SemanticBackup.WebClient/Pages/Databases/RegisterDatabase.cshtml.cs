@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Pages.Databases
 {
+    [Authorize]
     public class RegisterDatabaseModel : PageModel
     {
         private readonly IHttpService _httpService;

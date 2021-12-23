@@ -87,42 +87,52 @@
                         }
 
                     }
-                    else
-                    {
-                        //<script type="text/javascript">
-                        //    location.href="/Account/Login";
-                        //</script>
-                    }
                 }
             </div>
 
 
             <!-- aside-loggedin -->
             <ul class="nav nav-aside">
-                <li class="nav-label">Dashboards</li>
-                <li class="nav-item active"><a href="~/" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
+                @{
+                    if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-label">Dashboards</li>
+                        <li class="nav-item active"><a href="~/" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
 
-                <li class="nav-label mg-t-25">Backup Menu</li>
+                        <li class="nav-label mg-t-25">Backup Menu</li>
 
-                <li class="nav-item"><a href="~/Databases/" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
-                <li class="nav-item"><a href="~/DatabaseBackupSchedules/" class="nav-link"><i data-feather="clock"></i> <span>Backup Schedules</span></a></li>
-                <li class="nav-item"><a href="~/DatabaseBackups/" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
-
-
-
-                <li class="nav-label mg-t-25">RESOURCE GROUPS</li>
-                <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>Create Resource Group</span></a></li>
-                <li class="nav-item"><a href="~/resource-groups/" class="nav-link"><i data-feather="grid"></i> <span>Manage Resource Groups</span></a></li>
-
-                <li class="nav-item with-sub">
-                    <a href="" class="nav-link"><i data-feather="edit"></i> <span>Custom Functions</span></a>
-                    <ul>
-                        <li><a href="/">Requeue</a></li>
-                        <li><a href="/">Get Download Link</a></li>
-                    </ul>
-                </li>
+                        <li class="nav-item"><a href="~/Databases/" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
+                        <li class="nav-item"><a href="~/DatabaseBackupSchedules/" class="nav-link"><i data-feather="clock"></i> <span>Backup Schedules</span></a></li>
+                        <li class="nav-item"><a href="~/DatabaseBackups/" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
 
 
+
+                        <li class="nav-label mg-t-25">RESOURCE GROUPS</li>
+                        <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>Create Resource Group</span></a></li>
+                        <li class="nav-item"><a href="~/resource-groups/" class="nav-link"><i data-feather="grid"></i> <span>Manage Resource Groups</span></a></li>
+
+                        <li class="nav-item with-sub">
+                            <a href="" class="nav-link"><i data-feather="edit"></i> <span>Custom Functions</span></a>
+                            <ul>
+                                <li><a href="/">Requeue</a></li>
+                                <li><a href="/">Get Download Link</a></li>
+                            </ul>
+                        </li>
+
+                    }
+                }
+
+                @{
+                    <li class="nav-label mg-t-25">Account</li>
+                    if (!User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item"><a href="~/account/login" class="nav-link"><i data-feather="log-in"></i> <span>Sign In</span></a></li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a href="~/account/logout" class="nav-link"><i data-feather="log-out"></i> <span>Sign Out</span></a></li>
+                    }
+                }
 
             </ul>
         </div>
@@ -134,7 +144,16 @@
                 <input type="search" class="form-control" placeholder="Search...">
             </div>
             <nav class="nav">
-                <a href="~/resource-groups/" class="nav-link active"><i data-feather="grid"></i> <span class="ui basic yellow label left pointing">@(activeDirectory?.Name)</span></a>
+                @{
+                    if (User.Identity.IsAuthenticated)
+                    {
+                        <a href="~/" class="nav-link active"><i data-feather="user"></i> <span class="ui basic blue label left pointing">@(User.Identity?.Name)</span></a>
+                    }
+                    else
+                    {
+                        <a href="/Account/Login" class="btn btn-buy"><i data-feather="log-in"></i> <span>Sign in</span></a>
+                    }
+                }
             </nav>
         </div><!-- content-header -->
 

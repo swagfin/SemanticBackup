@@ -64,8 +64,6 @@ namespace SemanticBackup.WebClient.Pages.Account
                     };
                     //Sign In User
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(principal), authProperties);
-                    await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
                     return LocalRedirect(returnUrl);
                 }
             }

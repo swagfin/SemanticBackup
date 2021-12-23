@@ -28,13 +28,13 @@ namespace SemanticBackup.WebClient
 
             //Required 
 
-            services.AddHttpContextAccessor();
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-              .AddCookie(opt =>
-              {
-                  ///extra configs
-              });
+                    .AddCookie(opt =>
+                    {
+                        ///extra configs
+                    });
 
+            services.AddHttpContextAccessor();
             //Directory Services
             services.AddSingleton<TimeZoneHelper>(); //TimeZones
             services.AddSingleton<IResourceGroupService, ResourceGroupService>();
@@ -56,10 +56,12 @@ namespace SemanticBackup.WebClient
                 app.UseExceptionHandler("/Error");
             }
 
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             var cookiePolicyOptions = new CookiePolicyOptions
