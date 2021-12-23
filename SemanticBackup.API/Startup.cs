@@ -138,9 +138,9 @@ namespace SemanticBackup.API
                 app.UseDeveloperExceptionPage();
             }
             // app.UseHttpsRedirection();
+            app.UseRouting();
 
             app.UseCors();
-            app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
 
