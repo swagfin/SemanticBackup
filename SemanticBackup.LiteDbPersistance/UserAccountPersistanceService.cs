@@ -2,6 +2,7 @@
 using LiteDB.Async;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -35,6 +36,8 @@ namespace SemanticBackup.LiteDbPersistance
         }
         public async Task<UserAccount> GetByCredentialsAsync(string emailAddress, string password)
         {
+            //Ensure Default Account Exist
+            await EnsureAccountsExistsAsync();
             return await db.GetCollection<UserAccount>().Query().Where(x => x.EmailAddress == emailAddress && x.Password == password).FirstOrDefaultAsync();
         }
 
@@ -47,9 +50,29 @@ namespace SemanticBackup.LiteDbPersistance
             return false;
         }
 
+        public async Task<bool> UpdateLastSeenAsync(string emailAddress, DateTime lastSeenUTC, string lastToken)
+        {
+            var collection = db.GetCollection<UserAccount>();
+            var objFound = await collection.Query().Where(x => x.EmailAddress == emailAddress).FirstOrDefaultAsync();
+            if (objFound != null)
+            {
+                objFound.LastLoginUTC = lastSeenUTC;
+                objFound.LastLoginToken = lastToken;
+                return await collection.UpdateAsync(objFound);
+            }
+            return false;
+        }
         public async Task<bool> UpdateAsync(UserAccount record)
         {
             return await db.GetCollection<UserAccount>().UpdateAsync(record);
+        }
+
+        private async Task EnsureAccountsExistsAsync()
+        {
+            //User Account Service
+            int count = await GetAllCountAsync();
+            if (count == 0)
+                await AddOrUpdateAsync(new Core.Models.UserAccount { EmailAddress = "admin@admin.com", FullName = "Administrator", Password = "admin", UserAccountType = Core.Models.UserAccountType.ADMIN });
         }
     }
 }

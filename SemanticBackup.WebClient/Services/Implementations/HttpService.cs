@@ -1,23 +1,25 @@
-﻿using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.WebClient.Services.Implementations
 {
     public class HttpService : IHttpService
     {
+
         public string ApiEndPoint { get; }
-        private string SigningSecret { get; set; } = string.Empty;
-        public HttpService(IOptions<WebClientOptions> options)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public HttpService(IOptions<WebClientOptions> options, IHttpContextAccessor httpContextAccessor)
         {
             ApiEndPoint = options.Value?.ApiUrl;
-            SigningSecret = options.Value?.SigningSecret;
+            this._httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<T> GetAsync<T>(string url)
@@ -27,13 +29,11 @@ namespace SemanticBackup.WebClient.Services.Implementations
             client.BaseAddress = new Uri(string.Format("{0}{1}/", ApiEndPoint, (ResourceGroups.CurrentResourceGroup == null) ? "*" : ResourceGroups.CurrentResourceGroup?.Id));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await client.GetAsync(url);
-
             if (response.IsSuccessStatusCode)
             {
                 var res = await response.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<T>(res);
             }
-
             throw new Exception { };
         }
 
@@ -84,25 +84,24 @@ namespace SemanticBackup.WebClient.Services.Implementations
 
             throw new Exception { };
         }
-
         public string GetToken()
         {
-            var _signKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningSecret));
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Issuer = "tv-analytics",
-                Audience = "tv-analytics",
-                IssuedAt = DateTime.UtcNow,
-                NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.AddMinutes(15),       //Expires after 15 minutes,
-                SigningCredentials = new SigningCredentials(_signKey, SecurityAlgorithms.HmacSha256Signature),
-            };
+            var user = _httpContextAccessor?.HttpContext?.User;
+            if (user == null) return null;
+            var token = user.Claims.FirstOrDefault(x => x.Type == "semantic-backup-token");
+            return token?.Value;
+        }
 
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
-            var jwtToken = jwtTokenHandler.CreateJwtSecurityToken(tokenDescriptor);
-            var token = jwtTokenHandler.WriteToken(jwtToken);
+        public bool Authenticated()
+        {
+            var user = _httpContextAccessor.HttpContext.User;
+            return user == null ? false : true;
+        }
 
-            return token;
+        public string GetLoggedInUserId()
+        {
+            var user = _httpContextAccessor.HttpContext.User;
+            return user == null ? string.Empty : user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue(JwtRegisteredClaimNames.Sub);
         }
     }
 }

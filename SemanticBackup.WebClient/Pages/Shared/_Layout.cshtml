@@ -44,51 +44,57 @@
         <div class="aside-body">
 
             <div class="aside-loggedin">
-
                 @{
                     var activeDirectory = ResourceGroups.CurrentResourceGroup;
-                    if (ResourceGroups.All != null && ResourceGroups.All.Count > 0)
+                    if (User.Identity.IsAuthenticated)
                     {
+                        if (ResourceGroups.All != null && ResourceGroups.All.Count > 0)
+                        {
 
-                        <div class="aside-loggedin-user">
-                            <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
-                            <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name)</span>
-                                <i data-feather="chevron-down"></i>
-                            </a>
-                        </div>
+                            <div class="aside-loggedin-user">
+                                <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
+                                    <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name)</span>
+                                    <i data-feather="chevron-down"></i>
+                                </a>
+                            </div>
 
 
-                        <div class="collapse" id="loggedinMenu">
-                            <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
-                            <ul class="nav nav-aside mg-b-0">
-                                @{
-                                    foreach (var directory in ResourceGroups.All)
-                                    {
-                                        string class_style = "";
-                                        if (activeDirectory.Id == directory.Id)
+                            <div class="collapse" id="loggedinMenu">
+                                <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
+                                <ul class="nav nav-aside mg-b-0">
+                                    @{
+                                        foreach (var directory in ResourceGroups.All)
                                         {
-                                            class_style = "active";
+                                            string class_style = "";
+                                            if (activeDirectory.Id == directory.Id)
+                                            {
+                                                class_style = "active";
+                                            }
+                                            <li class="nav-item @(class_style)"><a href="~/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
                                         }
-                                        <li class="nav-item @(class_style)"><a href="~/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
                                     }
-                                }
+                                    <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <ul class="nav nav-aside mg-b-0">
                                 <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
                             </ul>
-                        </div>
+                            <script type="text/javascript">
+                                location.href="/resource-groups/";
+                            </script>
+                        }
+
                     }
                     else
                     {
-                        <ul class="nav nav-aside mg-b-0">
-                                 <li class="nav-item"><a href="~/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
-                        </ul>
                         <script type="text/javascript">
-                            location.href="/resource-groups/";
+                            location.href="/Account/Login";
                         </script>
                     }
-
                 }
-
-
             </div>
 
 

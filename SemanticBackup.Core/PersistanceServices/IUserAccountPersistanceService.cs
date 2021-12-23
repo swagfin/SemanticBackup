@@ -1,4 +1,5 @@
 ﻿using SemanticBackup.Core.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -13,5 +14,6 @@ namespace SemanticBackup.Core.PersistanceServices
         Task<bool> AddOrUpdateAsync(UserAccount record);
         Task<bool> UpdateAsync(UserAccount record);
         Task<int> GetAllCountAsync();
+        Task<bool> UpdateLastSeenAsync(string emailAddress, DateTime lastSeenUTC, string lastToken);
     }
 }

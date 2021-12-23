@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using SemanticBackup.API.Extensions;
 using SemanticBackup.API.Services;
 using SemanticBackup.API.SignalRHubs;
@@ -12,6 +14,8 @@ using SemanticBackup.Core.PersistanceServices;
 using SemanticBackup.Core.ProviderServices;
 using SemanticBackup.Core.ProviderServices.Implementations;
 using SemanticBackup.LiteDbPersistance;
+using System;
+using System.Text;
 
 namespace SemanticBackup.API
 {
@@ -83,6 +87,29 @@ namespace SemanticBackup.API
                 options.EnableDetailedErrors = true;
             });
 
+            //Auth
+            var _options = Configuration.GetSection(nameof(ApiConfigOptions)).Get<ApiConfigOptions>();
+            services
+                .AddAuthorization()
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.RequireHttpsMetadata = false;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidIssuer = _options.JWTIssuer,
+                        ValidAudience = _options.JWTIssuer,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.JWTSecret)),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
             services.AddCors(opt =>
             {
                 opt.AddDefaultPolicy(builder =>
@@ -103,7 +130,6 @@ namespace SemanticBackup.API
             //Ensure Lite Db Works
             app.EnsureLiteDbDirectoryExists();
             app.EnsureBackupDirectoryExists();
-
             //Start Background Service
             app.UseProcessorInitializables();
             //Proceed

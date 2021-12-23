@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("{resourcegroup}/api/[controller]")]
     [ApiController]
     public class UserAccountsController : ControllerBase
     {
@@ -29,22 +29,33 @@ namespace SemanticBackup.API.Controllers
             this._options = options.Value;
         }
 
-        [HttpPost("SignIn")]
-        public async Task<IActionResult> SignInAsync(SignInRequest signInRequest)
+        [HttpPost("login")]
+        public async Task<ActionResult> SignInAsync(SignInRequest signInRequest)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var userAccount = await _userAccountPersistanceService.GetByCredentialsAsync(signInRequest.Username, signInRequest.Password);
-                if (userAccount == null)
-                    return BadRequest("UserName/Email or Password is Incorrect");
-                //Update Last Login
-                userAccount.LastLoginUTC = DateTime.UtcNow;
-                userAccount.LastLoginToken = GenerateJwTToken(userAccount);
-                await _userAccountPersistanceService.UpdateAsync(userAccount);
-                //Proceed Generate Token
-                return Ok(new { Token = userAccount.LastLoginToken });
+                if (ModelState.IsValid)
+                {
+                    var userAccount = await _userAccountPersistanceService.GetByCredentialsAsync(signInRequest.Username, signInRequest.Password);
+                    if (userAccount == null)
+                        return BadRequest("UserName/Email or Password is Incorrect");
+                    //Update Last Login
+                    userAccount.LastLoginUTC = DateTime.UtcNow;
+                    userAccount.LastLoginToken = GenerateJwTToken(userAccount);
+                    bool updatedSuccess = await _userAccountPersistanceService.UpdateLastSeenAsync(userAccount.EmailAddress, userAccount.LastLoginUTC.Value, userAccount.LastLoginToken);
+                    if (!updatedSuccess)
+                        _logger.LogWarning("Unable to Update Last Seen for Account");
+                    //Proceed Generate Token
+                    return Ok(new { Token = userAccount.LastLoginToken });
+                }
+                return BadRequest(ModelState);
             }
-            return BadRequest(ModelState);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return BadRequest(ex.Message);
+            }
+
         }
 
         private string GenerateJwTToken(UserAccount user)

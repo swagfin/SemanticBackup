@@ -5,9 +5,12 @@ namespace SemanticBackup.Core.Models
 {
     public class UserAccount
     {
-        [Key]
-        public string EmailAddress { get; set; }
+        [Required, Key]
+        public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
         public string FullName { get; set; }
+        [Required]
+        public string EmailAddress { get; set; }
+        [Required]
         public string Password { get; set; }
         public UserAccountType UserAccountType { get; set; } = UserAccountType.ADMIN;
         public DateTime? LastLoginUTC { get; set; } = null;

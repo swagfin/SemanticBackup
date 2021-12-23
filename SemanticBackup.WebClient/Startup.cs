@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,6 +25,15 @@ namespace SemanticBackup.WebClient
         {
             services.Configure<WebClientOptions>(Configuration.GetSection(nameof(WebClientOptions)));
             services.AddTransient<IHttpService, HttpService>();
+
+            //Required 
+
+            services.AddHttpContextAccessor();
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+              .AddCookie(opt =>
+              {
+                  ///extra configs
+              });
 
             //Directory Services
             services.AddSingleton<TimeZoneHelper>(); //TimeZones
@@ -50,6 +61,19 @@ namespace SemanticBackup.WebClient
             app.UseRouting();
 
             app.UseAuthorization();
+
+            var cookiePolicyOptions = new CookiePolicyOptions
+            {
+                MinimumSameSitePolicy = SameSiteMode.Strict,
+                //https://docs.microsoft.com/en-us/aspnet/core/security/gdpr?view=aspnetcore-3.1
+                // This lambda determines whether user consent for non-essential 
+                // cookies is needed for a given request.
+                //CheckConsentNeeded = context => true
+
+                ///cookie configs
+                ///
+            };
+            app.UseCookiePolicy(cookiePolicyOptions);
 
             app.UseEndpoints(endpoints =>
             {
