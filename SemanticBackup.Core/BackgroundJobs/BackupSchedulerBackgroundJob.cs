@@ -5,6 +5,7 @@ using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -59,7 +60,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             if (dueSchedules != null && dueSchedules.Count > 0)
                             {
                                 List<string> scheduleToDelete = new List<string>();
-                                foreach (BackupSchedule schedule in dueSchedules)
+                                foreach (BackupSchedule schedule in dueSchedules.OrderBy(x => x.NextRunUTC).ToList())
                                 {
                                     _logger.LogInformation($"Queueing Scheduled Backup...");
                                     BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(schedule.BackupDatabaseInfoId);
