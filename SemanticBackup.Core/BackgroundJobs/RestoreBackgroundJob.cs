@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,33 +49,36 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //DI INJECTIONS
                             IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
                             IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                            IDatabaseInfoPersistanceService databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoPersistanceService>();
                             //Proceed
                             List<BackupRecord> backupRestores = await backupRecordPersistanceService.GetAllByRestoreStatusAsync(BackupRecordRestoreStatus.PENDING_RESTORE.ToString());
                             if (backupRestores != null && backupRestores.Count > 0)
                             {
-                                foreach (BackupRecord backupRecord in backupRestores)
+                                foreach (BackupRecord backupRecord in backupRestores.OrderBy(x => x.RegisteredDateUTC))
                                 {
-                                    //Check if valid Resource Group
+                                    _logger.LogInformation($"Processing Queued Backup RESTORE Record Key: #{backupRecord.Id}...");
+                                    BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
                                     ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
-                                    if (resourceGroup != null)
+                                    if (backupDatabaseInfo != null && resourceGroup != null)
                                     {
-                                        //Use Resource Group Threads
-                                        //Check Resource Group Maximum Threads
                                         if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                         {
-                                            _logger.LogInformation($"Queueing Restore Database Record Key: #{backupRecord.Id}...");
-                                            //Add to Queue
-                                            //!!!!!!!!!!!!!!!!!!!! NO BOT YET TO ADD !!!!! _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _serviceScopeFactory));
-                                            bool updated = await backupRecordPersistanceService.UpdateRestoreStatusFeedAsync(backupRecord.Id, BackupRecordRestoreStatus.EXECUTING_RESTORE.ToString());
-                                            if (updated)
-                                                _logger.LogInformation($"Queueing Restore Database Record Key: #{backupRecord.Id}...SUCCESS");
+                                            if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
+                                                _botsManagerBackgroundJob.AddBot(new SQLRestoreBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, _serviceScopeFactory));
+                                            else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
+                                                throw new Exception("No RESTORE Bot for MYSQL");
                                             else
-                                                _logger.LogWarning($"Queued for Restore Database Success But Failed to Restore Status for Backup Record Key: #{backupRecord.Id}");
+                                                throw new Exception($"No Bot is registered to Handle Database RESTORE of Type: {backupDatabaseInfo.DatabaseType}");
+                                            //Finally Update Status
+                                            bool updated = await backupRecordPersistanceService.UpdateRestoreStatusFeedAsync(backupRecord.Id, BackupRecordRestoreStatus.EXECUTING_RESTORE.ToString(), "Executing Restore....");
+                                            if (updated)
+                                                _logger.LogInformation($"Processing Queued Backup RESTORE Record Key: #{backupRecord.Id}...SUCCESS");
+                                            else
+                                                _logger.LogWarning($"Queued for Backup RESTORE but was unable to update backup record Key: #{backupRecord.Id} status");
                                         }
+                                        else
+                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} has Exceeded its Maximum Allocated Running Threads Count: {resourceGroup.MaximumRunningBots}");
                                     }
-                                    else
-                                        _logger.LogWarning($"The Backup Record Id: {backupRecord.Id}, doesn't seem to have been assigned to a valid Resource Group Id: {backupRecord.ResourceGroupId}, Restore Skipped");
-
                                 }
                             }
                         }

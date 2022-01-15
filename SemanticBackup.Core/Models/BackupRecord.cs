@@ -46,6 +46,7 @@ namespace SemanticBackup.Core.Models
         PENDING_CONFIRMATION,
         PENDING_RESTORE,
         EXECUTING_RESTORE,
+        RESTORE_COMPLETED,
         FAILED_RESTORE,
 
     }
