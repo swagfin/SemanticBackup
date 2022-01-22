@@ -1,11 +1,11 @@
-name: FTP Publish For SemanticBackup API and CLIENT
+name: FTP Publish Vance Web API and Client
 
 on:
   push:
     branches: [ master ]
     
 jobs:
-  deploy-api-coresoft:
+  deploy-api-vance:
 
     runs-on: ubuntu-latest
 
@@ -27,17 +27,17 @@ jobs:
       uses: SamKirkland/FTP-Deploy-Action@4.2.0
       with:
         # Deployment destination server & path. Formatted as protocol://domain.com:port/full/destination/path/
-        server: ${{ secrets.FTP_SERVER }}
+        server: ${{ secrets.FTP_SERVER_VANCE }}
         # FTP account username
-        username: ${{ secrets.FTP_USERNAME }}
+        username: ${{ secrets.FTP_USERNAME_VANCE }}
         # FTP account password
-        password: ${{ secrets.FTP_PASSWORD }}
+        password: ${{ secrets.FTP_PASSWORD_VANCE }}
         # The local folder to copy, defaults to root project folder 
         local-dir: ./Release/
         # Server Directory to Publish To
         server-dir: ${{ secrets.FTP_SITE_SEMANTICBACKUP_API }}
 
-  deploy-webclient-coresoft:
+  deploy-webclient-vance:
 
     runs-on: ubuntu-latest
 
@@ -59,12 +59,12 @@ jobs:
       uses: SamKirkland/FTP-Deploy-Action@4.2.0
       with:
         # Deployment destination server & path. Formatted as protocol://domain.com:port/full/destination/path/
-        server: ${{ secrets.FTP_SERVER }}
+        server: ${{ secrets.FTP_SERVER_VANCE }}
         # FTP account username
-        username: ${{ secrets.FTP_USERNAME }}
+        username: ${{ secrets.FTP_USERNAME_VANCE }}
         # FTP account password
-        password: ${{ secrets.FTP_PASSWORD }}
+        password: ${{ secrets.FTP_PASSWORD_VANCE }}
         # The local folder to copy, defaults to root project folder 
         local-dir: ./Release/
         # Server Directory to Publish To
-        server-dir: ${{ secrets.FTP_SITE_SEMANTICBACKUP_WEBCLIENT }}
+        server-dir: ${{ secrets.FTP_SITE_SEMANTICBACKUP_WEBCLIENT_VANCE }}
