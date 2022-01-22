@@ -28,6 +28,8 @@ jobs:
       with:
         # Deployment destination server & path. Formatted as protocol://domain.com:port/full/destination/path/
         server: ${{ secrets.FTP_SERVER }}
+        # Port
+        port: 32
         # FTP account username
         username: ${{ secrets.FTP_USERNAME }}
         # FTP account password
@@ -60,6 +62,8 @@ jobs:
       with:
         # Deployment destination server & path. Formatted as protocol://domain.com:port/full/destination/path/
         server: ${{ secrets.FTP_SERVER }}
+        # Port
+        port: 32
         # FTP account username
         username: ${{ secrets.FTP_USERNAME }}
         # FTP account password
