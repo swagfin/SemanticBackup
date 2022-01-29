@@ -47,5 +47,10 @@ namespace SemanticBackup.LiteDbPersistance
         {
             return await db.GetCollection<BackupDatabaseInfo>().UpdateAsync(record);
         }
+
+        public async Task<BackupDatabaseInfo> GetByDatabaseNameAsync(string databaseName, string databaseType)
+        {
+            return await db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.DatabaseName != null && x.DatabaseType != null).Where(x => x.DatabaseName.Trim() == databaseName.Trim() && x.DatabaseType.Trim() == databaseType.Trim()).OrderBy(x => x.Name).FirstOrDefaultAsync();
+        }
     }
 }

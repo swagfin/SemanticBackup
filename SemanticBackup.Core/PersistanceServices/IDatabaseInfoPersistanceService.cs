@@ -8,6 +8,7 @@ namespace SemanticBackup.Core.PersistanceServices
     {
         Task<List<BackupDatabaseInfo>> GetAllAsync(string resourceGroupId);
         Task<BackupDatabaseInfo> GetByIdAsync(string id);
+        Task<BackupDatabaseInfo> GetByDatabaseNameAsync(string databaseName, string databaseType);
         Task<bool> RemoveAsync(string id);
         Task<bool> AddOrUpdateAsync(BackupDatabaseInfo record);
         Task<bool> UpdateAsync(BackupDatabaseInfo record);

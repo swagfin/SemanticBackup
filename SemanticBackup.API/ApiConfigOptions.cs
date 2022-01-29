@@ -14,5 +14,6 @@ namespace SemanticBackup.API
         public int JWTExpirationInDays { get; set; } = 3;
         public string JWTIssuer { get; set; } = "issuer";
         public string JWTAudience { get; set; } = "audiences";
+        public string PublicAccessToken { get; set; } = Guid.NewGuid().ToString();
     }
 }

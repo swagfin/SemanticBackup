@@ -106,7 +106,7 @@ namespace SemanticBackup.LiteDbPersistance
 
         public async Task<ContentDeliveryRecord> GetByContentTypeByExecutionMessageAsync(string deliveryType, string executionMessage)
         {
-            return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage).FirstOrDefaultAsync();
+            return await db.GetCollection<ContentDeliveryRecord>().Query().Where(x => (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage) || (x.DeliveryType == deliveryType && x.BackupRecordId == executionMessage)).FirstOrDefaultAsync();
         }
 
         public async Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference)
