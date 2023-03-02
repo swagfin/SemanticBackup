@@ -1,13 +1,14 @@
 ﻿using MySql.Data.MySqlClient;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Core.ProviderServices.Implementations
+namespace SemanticBackup.Core.Logic
 {
-    public class MySQLServerBackupProviderService : IMySQLServerBackupProviderService
+    public class BackupProviderForMySQLServer : IBackupProviderForMySQLServer
     {
         public async Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
         {

@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,12 +15,12 @@ namespace SemanticBackup.API.Services
     {
         private readonly ILogger<StatusNotificationService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ApiConfigOptions _options;
-        public StatusNotificationService(ILogger<StatusNotificationService> logger, IOptions<ApiConfigOptions> options, IServiceScopeFactory scopeFactory)
+        private readonly SystemConfigOptions _options;
+        public StatusNotificationService(ILogger<StatusNotificationService> logger, SystemConfigOptions options, IServiceScopeFactory scopeFactory)
         {
             this._logger = logger;
             this._scopeFactory = scopeFactory;
-            this._options = options.Value;
+            this._options = options;
         }
 
         public void DispatchBackupRecordUpdatedStatus(BackupRecord backupRecord, bool isNewRecord = false)
@@ -45,7 +44,7 @@ namespace SemanticBackup.API.Services
                     return;
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
+                    IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                     //Info On Resource Group
                     ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
                     if (resourceGroup == null)
@@ -75,8 +74,8 @@ namespace SemanticBackup.API.Services
                     return;
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    IResourceGroupPersistanceService _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
-                    IBackupRecordPersistanceService _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                    IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
+                    IBackupRecordRepository _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                     //Info On Resource Group
                     ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(record.ResourceGroupId);
                     if (resourceGroup == null)

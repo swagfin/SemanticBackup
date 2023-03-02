@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
-using SemanticBackup.Core.ProviderServices;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -47,7 +46,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 bool backupedUp = false;
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    ISQLServerBackupProviderService backupProviderService = scope.ServiceProvider.GetRequiredService<ISQLServerBackupProviderService>();
+                    IBackupProviderForSQLServer backupProviderService = scope.ServiceProvider.GetRequiredService<IBackupProviderForSQLServer>();
                     backupedUp = await backupProviderService.BackupDatabaseAsync(_databaseInfo, _backupRecord);
                 }
                 stopwatch.Stop();
@@ -78,7 +77,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    IBackupRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                    IBackupRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                     _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
                 }
             }

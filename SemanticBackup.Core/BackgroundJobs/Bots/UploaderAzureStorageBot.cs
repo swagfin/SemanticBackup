@@ -4,7 +4,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -102,7 +102,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    IContentDeliveryRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
+                    IContentDeliveryRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                     _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
                 }
             }

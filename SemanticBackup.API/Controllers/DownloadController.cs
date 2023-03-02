@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,10 +16,10 @@ namespace SemanticBackup.API.Controllers
     public class DownloadController : ControllerBase
     {
         private readonly ILogger<DownloadController> _logger;
-        private readonly IContentDeliveryRecordPersistanceService _contentDeliveryRecordPersistanceService;
-        private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
+        private readonly IContentDeliveryRecordRepository _contentDeliveryRecordPersistanceService;
+        private readonly IBackupRecordRepository _backupRecordPersistanceService;
 
-        public DownloadController(ILogger<DownloadController> logger, IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService, IBackupRecordPersistanceService backupRecordPersistanceService)
+        public DownloadController(ILogger<DownloadController> logger, IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService, IBackupRecordRepository backupRecordPersistanceService)
         {
             this._logger = logger;
             this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;

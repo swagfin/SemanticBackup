@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Core.PersistanceServices
+namespace SemanticBackup.Core.Interfaces
 {
-    public interface IContentDeliveryConfigPersistanceService
+    public interface IContentDeliveryConfigRepository
     {
         Task<List<ContentDeliveryConfiguration>> GetAllAsync(string resourceGroupId);
         Task<ContentDeliveryConfiguration> GetByIdAsync(string id);

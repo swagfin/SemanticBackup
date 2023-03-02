@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Core.PersistanceServices
+namespace SemanticBackup.Core.Interfaces
 {
-    public interface IResourceGroupPersistanceService
+    public interface IResourceGroupRepository
     {
         Task<List<ResourceGroup>> GetAllAsync();
         Task<ResourceGroup> GetByIdAsync(string id);

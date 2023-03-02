@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.API", "Seman
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.Core", "SemanticBackup.Core\SemanticBackup.Core.csproj", "{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.LiteDbPersistance", "SemanticBackup.LiteDbPersistance\SemanticBackup.LiteDbPersistance.csproj", "{2A551EE9-B8DE-4F30-925E-96925DE31479}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.WebClient", "SemanticBackup.WebClient\SemanticBackup.WebClient.csproj", "{D701ADB1-914F-4114-8259-0F904CC34E6F}"
 EndProject
 Global
@@ -25,10 +23,6 @@ Global
 		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2A551EE9-B8DE-4F30-925E-96925DE31479}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D701ADB1-914F-4114-8259-0F904CC34E6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D701ADB1-914F-4114-8259-0F904CC34E6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D701ADB1-914F-4114-8259-0F904CC34E6F}.Release|Any CPU.ActiveCfg = Release|Any CPU

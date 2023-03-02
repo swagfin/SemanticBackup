@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,11 +19,11 @@ namespace SemanticBackup.API.Controllers
     public class BackupSchedulesController : ControllerBase
     {
         private readonly ILogger<BackupSchedulesController> _logger;
-        private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
-        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
-        private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
+        private readonly IBackupScheduleRepository _backupSchedulePersistanceService;
+        private readonly IResourceGroupRepository _resourceGroupPersistanceService;
+        private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
 
-        public BackupSchedulesController(ILogger<BackupSchedulesController> logger, IBackupSchedulePersistanceService persistanceService, IResourceGroupPersistanceService resourceGroupPersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
+        public BackupSchedulesController(ILogger<BackupSchedulesController> logger, IBackupScheduleRepository persistanceService, IResourceGroupRepository resourceGroupPersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
             _logger = logger;
             this._backupSchedulePersistanceService = persistanceService;

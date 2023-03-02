@@ -1,4 +1,5 @@
-﻿using SemanticBackup.Core.Models;
+﻿using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -6,23 +7,17 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Core.ProviderServices.Implementations
+namespace SemanticBackup.Core.Logic
 {
-    public class SQLServerBackupProviderService : ISQLServerBackupProviderService
+    public class BackupProviderForSQLServer : IBackupProviderForSQLServer
     {
-        public const string BackupCommandTemplate = @"
+        public async Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
+        {
+            string backupCommandTemplate = @"
 BACKUP DATABASE [{0}] 
 TO  DISK = N'{1}' 
 WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
 ";
-        public const string RestoreCommandTemplate = @"
-USE [master]
-RESTORE DATABASE [{0}] 
-FROM  DISK = N'{1}' 
-WITH NOUNLOAD, REPLACE, STATS = 5;
-";
-        public async Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
-        {
             if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
                 throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
             using (DbConnection connection = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
@@ -30,7 +25,7 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
                 await connection.OpenAsync();
                 DbCommand command = connection.CreateCommand();
                 command.CommandTimeout = 0; // Backups can take a long time for big databases
-                command.CommandText = string.Format(BackupCommandTemplate, backupDatabaseInfo.DatabaseName, backupRecord.Path.Trim());
+                command.CommandText = string.Format(backupCommandTemplate, backupDatabaseInfo.DatabaseName, backupRecord.Path.Trim());
                 //Execute
                 int queryRows = await command.ExecuteNonQueryAsync();
                 await connection.CloseAsync();
@@ -38,18 +33,24 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
             }
         }
 
-        public static async Task<bool> RestoreDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
+        public async Task<bool> RestoreDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
         {
+            string restoreCommandTemplate = @"
+USE [master]
+RESTORE DATABASE [{0}] 
+FROM  DISK = N'{1}' 
+WITH NOUNLOAD, REPLACE, STATS = 5;
+";
             if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
                 throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
             if (string.IsNullOrEmpty(backupRecord.Path))
-                throw new System.Exception("Source Location can't be NULL");
+                throw new Exception("Source Location can't be NULL");
             using (DbConnection connection = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
             {
                 await connection.OpenAsync();
                 DbCommand command = connection.CreateCommand();
                 command.CommandTimeout = 0; // Backups can take a long time for big databases
-                command.CommandText = string.Format(RestoreCommandTemplate, backupDatabaseInfo.DatabaseName, backupRecord.Path);
+                command.CommandText = string.Format(restoreCommandTemplate, backupDatabaseInfo.DatabaseName, backupRecord.Path);
                 //Execute
                 int queryRows = await command.ExecuteNonQueryAsync();
                 connection.Close();

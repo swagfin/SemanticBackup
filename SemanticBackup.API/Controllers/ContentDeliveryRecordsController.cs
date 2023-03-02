@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -17,9 +17,9 @@ namespace SemanticBackup.API.Controllers
     public class ContentDeliveryRecordsController : ControllerBase
     {
         private readonly ILogger<ContentDeliveryRecordsController> _logger;
-        private readonly IContentDeliveryRecordPersistanceService _contentDeliveryRecordPersistanceService;
+        private readonly IContentDeliveryRecordRepository _contentDeliveryRecordPersistanceService;
 
-        public ContentDeliveryRecordsController(ILogger<ContentDeliveryRecordsController> logger, IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService)
+        public ContentDeliveryRecordsController(ILogger<ContentDeliveryRecordsController> logger, IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService)
         {
             this._logger = logger;
             this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;

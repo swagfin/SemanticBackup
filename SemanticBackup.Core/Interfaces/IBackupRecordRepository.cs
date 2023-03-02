@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Core.PersistanceServices
+namespace SemanticBackup.Core.Interfaces
 {
-    public interface IBackupRecordPersistanceService
+    public interface IBackupRecordRepository
     {
         Task<List<BackupRecord>> GetAllAsync(string resourceGroupId);
         Task<BackupRecord> GetByIdAsync(string id);

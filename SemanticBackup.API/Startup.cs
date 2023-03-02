@@ -5,15 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using SemanticBackup.API.Extensions;
 using SemanticBackup.API.Services;
 using SemanticBackup.API.SignalRHubs;
 using SemanticBackup.Core;
-using SemanticBackup.Core.BackgroundJobs;
-using SemanticBackup.Core.PersistanceServices;
-using SemanticBackup.Core.ProviderServices;
-using SemanticBackup.Core.ProviderServices.Implementations;
-using SemanticBackup.LiteDbPersistance;
 using System;
 using System.Text;
 
@@ -34,51 +28,16 @@ namespace SemanticBackup.API
         {
 
             //Configure API Options
-            services.Configure<ApiConfigOptions>(Configuration.GetSection(nameof(ApiConfigOptions)));
+            SystemConfigOptions configOptions = new Core.SystemConfigOptions();
+            Configuration.GetSection(nameof(SystemConfigOptions)).Bind(configOptions);
 
-            LiteDbPersistanceOptions liteDbConfig = new LiteDbPersistanceOptions();
-            Configuration.GetSection(nameof(LiteDbPersistanceOptions)).Bind(liteDbConfig);
-            //Replace Variables
-            liteDbConfig.ConnectionString = liteDbConfig.ConnectionString.Replace("{{env}}", this.Environment.ContentRootPath);
-            //Add
-            services.AddSingleton(liteDbConfig);
-
-            PersistanceOptions persistanceOptions = new PersistanceOptions();
-            Configuration.GetSection(nameof(PersistanceOptions)).Bind(persistanceOptions);
-            //Replace Variables
-            persistanceOptions.DefaultBackupDirectory = persistanceOptions.DefaultBackupDirectory.Replace("{{env}}", this.Environment.ContentRootPath);
-            services.AddSingleton(persistanceOptions); //Configure Global Instance Reg
-
-            //Register Database Context
-            services.AddSingleton<ILiteDbContext, LiteDbContext>();
-
-            //Persistance
-            services.AddScoped<IDatabaseInfoPersistanceService, DatabaseInfoPersistanceService>();
-            services.AddScoped<IBackupRecordPersistanceService, BackupRecordPersistanceService>();
-            services.AddScoped<IBackupSchedulePersistanceService, BackupSchedulePersistanceService>();
-            services.AddScoped<IResourceGroupPersistanceService, ResourceGroupPersistanceService>();
-            services.AddScoped<IContentDeliveryConfigPersistanceService, ContentDeliveryConfigPersistanceService>();
-            services.AddScoped<IContentDeliveryRecordPersistanceService, ContentDeliveryRecordPersistanceService>();
-            services.AddScoped<IUserAccountPersistanceService, UserAccountPersistanceService>();
-
-            //Backup Provider Engines
-            services.AddScoped<ISQLServerBackupProviderService, SQLServerBackupProviderService>();
-            services.AddScoped<IMySQLServerBackupProviderService, MySQLServerBackupProviderService>();
-
-            //Background Jobs
-            services.AddSingleton<IProcessorInitializable, BackupSchedulerBackgroundJob>();
-            services.AddSingleton<IProcessorInitializable, BackupBackgroundJob>(); //Main Backup Thread Lunching Bots
-            services.AddSingleton<IProcessorInitializable, BackupBackgroundZIPJob>(); //Zipper Thread Lunching Bots
-            services.AddSingleton<IProcessorInitializable, ContentDeliverySchedulerBackgroundJob>(); //Schedules Backup for Deliveries
-            services.AddSingleton<IProcessorInitializable, ContentDeliveryDispatchBackgroundJob>(); //Dispatches out saved Scheduled Jobs
-            services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
-
+            //Use SemantiBackup Core Services
+            services.RegisterSemanticBackupCoreServices(configOptions);
+            //Notifications
             //Notifications
             services.AddSingleton<RecordStatusChangedHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
             services.AddSingleton<IRecordStatusChangedNotifier>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
-            //Email Notify
             services.AddSingleton<IRecordStatusChangedNotifier, StatusNotificationService>();
-
             //DASHBOARD SIGNAL DISPATCH
             services.AddSingleton<DashboardRefreshHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());
             //Signal R and Cors
@@ -88,7 +47,7 @@ namespace SemanticBackup.API
             });
 
             //Auth
-            var _options = Configuration.GetSection(nameof(ApiConfigOptions)).Get<ApiConfigOptions>();
+            var _options = Configuration.GetSection(nameof(SystemConfigOptions)).Get<SystemConfigOptions>();
             services
                 .AddAuthorization()
                 .AddAuthentication(options =>
@@ -127,20 +86,25 @@ namespace SemanticBackup.API
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //Ensure Lite Db Works
-            app.EnsureLiteDbDirectoryExists();
-            app.EnsureBackupDirectoryExists();
-            //Start Background Service
-            app.UseProcessorInitializables();
-            //Proceed
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+            //Init SemanticCore Services
+            app.UseSemanticBackupCoreServices();
+
+            app.UseCors(builder => builder
+                                   .AllowAnyHeader()
+                                   .AllowAnyMethod()
+                                   .SetIsOriginAllowed((x) => true)
+                                   .AllowCredentials()
+                                  );
+
+
+            app.UseStaticFiles();
             // app.UseHttpsRedirection();
             app.UseRouting();
 
-            app.UseCors();
             app.UseAuthentication();
             app.UseAuthorization();
 

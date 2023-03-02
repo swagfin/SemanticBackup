@@ -4,8 +4,7 @@ using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
-using SemanticBackup.Core.ProviderServices;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,12 +18,12 @@ namespace SemanticBackup.API.Controllers
     public class BackupDatabasesController : ControllerBase
     {
         private readonly ILogger<BackupDatabasesController> _logger;
-        private readonly IDatabaseInfoPersistanceService _backupDatabasePersistanceService;
-        private readonly IBackupSchedulePersistanceService _schedulePersistanceService;
-        private readonly IMySQLServerBackupProviderService _mySQLServerBackupProviderService;
-        private readonly ISQLServerBackupProviderService _sQLServerBackupProviderService;
+        private readonly IDatabaseInfoRepository _backupDatabasePersistanceService;
+        private readonly IBackupScheduleRepository _schedulePersistanceService;
+        private readonly IBackupProviderForMySQLServer _mySQLServerBackupProviderService;
+        private readonly IBackupProviderForSQLServer _sQLServerBackupProviderService;
 
-        public BackupDatabasesController(ILogger<BackupDatabasesController> logger, IDatabaseInfoPersistanceService databaseInfoPersistanceService, IBackupSchedulePersistanceService schedulePersistanceService, IMySQLServerBackupProviderService mySQLServerBackupProviderService, ISQLServerBackupProviderService sQLServerBackupProviderService)
+        public BackupDatabasesController(ILogger<BackupDatabasesController> logger, IDatabaseInfoRepository databaseInfoPersistanceService, IBackupScheduleRepository schedulePersistanceService, IBackupProviderForMySQLServer mySQLServerBackupProviderService, IBackupProviderForSQLServer sQLServerBackupProviderService)
         {
             _logger = logger;
             this._backupDatabasePersistanceService = databaseInfoPersistanceService;

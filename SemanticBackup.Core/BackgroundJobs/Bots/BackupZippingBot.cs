@@ -1,8 +1,8 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -91,7 +91,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    IBackupRecordPersistanceService _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                    IBackupRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                     _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed, newZIPPath);
                 }
             }

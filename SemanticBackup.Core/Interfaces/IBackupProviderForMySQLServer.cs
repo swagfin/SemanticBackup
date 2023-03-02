@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Core.ProviderServices
+namespace SemanticBackup.Core.Interfaces
 {
-    public interface ISQLServerBackupProviderService
+    public interface IBackupProviderForMySQLServer
     {
         Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
-        Task<bool> RestoreDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
         Task<IEnumerable<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo);
     }
 }
