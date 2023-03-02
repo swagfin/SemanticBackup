@@ -1,4 +1,4 @@
-﻿namespace SemanticBackup.Core
+﻿namespace SemanticBackup.Core.Interfaces
 {
     public interface IProcessorInitializable
     {

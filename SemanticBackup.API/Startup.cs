@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using SemanticBackup.API.Services;
 using SemanticBackup.API.SignalRHubs;
 using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Text;
 

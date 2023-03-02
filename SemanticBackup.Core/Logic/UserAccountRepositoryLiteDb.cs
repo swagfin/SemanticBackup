@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.Logic
 {
-    public class UserAccountPersistanceService : IUserAccountRepository
+    public class UserAccountRepositoryLiteDb : IUserAccountRepository
     {
         private readonly LiteDatabaseAsync _db;
 
-        public UserAccountPersistanceService()
+        public UserAccountRepositoryLiteDb()
         {
 #if DEBUG
             this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "user-accounts.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });

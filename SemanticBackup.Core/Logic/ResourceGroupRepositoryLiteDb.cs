@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.Logic
 {
-    public class ResourceGroupPersistanceService : IResourceGroupRepository
+    public class ResourceGroupRepositoryLiteDb : IResourceGroupRepository
     {
         private LiteDatabaseAsync _db;
         private readonly IBackupRecordRepository _backupRecordPersistanceService;
@@ -17,7 +17,7 @@ namespace SemanticBackup.Core.Logic
         private readonly IBackupScheduleRepository _backupSchedulePersistanceService;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
 
-        public ResourceGroupPersistanceService(IBackupRecordRepository backupRecordPersistanceService, IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
+        public ResourceGroupRepositoryLiteDb(IBackupRecordRepository backupRecordPersistanceService, IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
 #if DEBUG
             this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });

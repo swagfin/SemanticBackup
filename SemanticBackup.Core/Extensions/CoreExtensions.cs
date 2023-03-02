@@ -19,17 +19,17 @@ namespace SemanticBackup.API
             //Register Core
 
             //Repositories
-            services.AddScoped<IDatabaseInfoRepository, DatabaseInfoRepositoryLiteDb>();
-            services.AddScoped<IBackupRecordRepository, BackupRecordRepositoryLiteDb>();
-            services.AddScoped<IBackupScheduleRepository, BackupScheduleRepositoryLiteDb>();
-            services.AddScoped<IResourceGroupRepository, ResourceGroupPersistanceService>();
-            services.AddScoped<IContentDeliveryConfigRepository, ContentDeliveryConfigRepositoryLiteDb>();
-            services.AddScoped<IContentDeliveryRecordRepository, ContentDeliveryRecordRepositoryLiteDb>();
-            services.AddScoped<IUserAccountRepository, UserAccountPersistanceService>();
+            services.AddSingleton<IDatabaseInfoRepository, DatabaseInfoRepositoryLiteDb>();
+            services.AddSingleton<IBackupRecordRepository, BackupRecordRepositoryLiteDb>();
+            services.AddSingleton<IBackupScheduleRepository, BackupScheduleRepositoryLiteDb>();
+            services.AddSingleton<IResourceGroupRepository, ResourceGroupRepositoryLiteDb>();
+            services.AddSingleton<IContentDeliveryConfigRepository, ContentDeliveryConfigRepositoryLiteDb>();
+            services.AddSingleton<IContentDeliveryRecordRepository, ContentDeliveryRecordRepositoryLiteDb>();
+            services.AddSingleton<IUserAccountRepository, UserAccountRepositoryLiteDb>();
 
             //Backup Provider Engines
-            services.AddScoped<IBackupProviderForSQLServer, BackupProviderForSQLServer>();
-            services.AddScoped<IBackupProviderForMySQLServer, BackupProviderForMySQLServer>();
+            services.AddSingleton<IBackupProviderForSQLServer, BackupProviderForSQLServer>();
+            services.AddSingleton<IBackupProviderForMySQLServer, BackupProviderForMySQLServer>();
 
             //Background Jobs
             services.AddSingleton<IProcessorInitializable, BackupSchedulerBackgroundJob>();

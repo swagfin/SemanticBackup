@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
