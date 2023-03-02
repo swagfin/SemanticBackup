@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Concurrent;

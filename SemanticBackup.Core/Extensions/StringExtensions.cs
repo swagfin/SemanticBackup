@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace SemanticBackup.Core.Extensions
+namespace SemanticBackup.Core
 {
     public static class StringExtensions
     {

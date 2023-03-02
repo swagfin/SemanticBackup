@@ -8,7 +8,6 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
 WORKDIR /src
 COPY ["SemanticBackup.API/SemanticBackup.API.csproj", "SemanticBackup.API/"]
-COPY ["SemanticBackup.LiteDbPersistance/SemanticBackup.LiteDbPersistance.csproj", "SemanticBackup.LiteDbPersistance/"]
 COPY ["SemanticBackup.Core/SemanticBackup.Core.csproj", "SemanticBackup.Core/"]
 RUN dotnet restore "SemanticBackup.API/SemanticBackup.API.csproj"
 COPY . .

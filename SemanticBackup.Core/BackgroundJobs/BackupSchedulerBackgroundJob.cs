@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,13 +14,13 @@ namespace SemanticBackup.Core.BackgroundJobs
     public class BackupSchedulerBackgroundJob : IProcessorInitializable
     {
         private readonly ILogger<BackupSchedulerBackgroundJob> _logger;
-        private readonly PersistanceOptions _persistanceOptions;
+        private readonly SystemConfigOptions _persistanceOptions;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public BackupSchedulerBackgroundJob(
             ILogger<BackupSchedulerBackgroundJob> logger,
-            PersistanceOptions persistanceOptions,
+            SystemConfigOptions persistanceOptions,
             IServiceScopeFactory serviceScopeFactory,
             BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
@@ -50,10 +50,10 @@ namespace SemanticBackup.Core.BackgroundJobs
                         using (var scope = _serviceScopeFactory.CreateScope())
                         {
                             //DI INJECTIONS
-                            IBackupSchedulePersistanceService backupSchedulePersistanceService = scope.ServiceProvider.GetRequiredService<IBackupSchedulePersistanceService>();
-                            IDatabaseInfoPersistanceService databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoPersistanceService>();
-                            IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
-                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                            IBackupScheduleRepository backupSchedulePersistanceService = scope.ServiceProvider.GetRequiredService<IBackupScheduleRepository>();
+                            IDatabaseInfoRepository databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
+                            IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
+                            IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                             //Proceed
                             DateTime currentTimeUTC = DateTime.UtcNow;
                             List<BackupSchedule> dueSchedules = await backupSchedulePersistanceService.GetAllDueByDateAsync();
@@ -90,7 +90,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                                 BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                                                 ExpiryDateUTC = RecordExpiryUTC,
                                                 Name = backupDatabaseInfo.Name,
-                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
+                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, backupDatabaseInfo.GetSavingPathFromFormat(_persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
                                                 StatusUpdateDateUTC = currentTimeUTC,
                                                 RegisteredDateUTC = currentTimeUTC,
                                                 ExecutedDeliveryRun = false
@@ -143,8 +143,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                         using (var scope = _serviceScopeFactory.CreateScope())
                         {
                             //DI INJECTIONS
-                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
-                            IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
+                            IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
+                            IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                             //Proceed
                             List<string> botsToRemove = new List<string>();
                             //REMOVE BACKUP RECORDS

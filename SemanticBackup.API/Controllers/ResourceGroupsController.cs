@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -18,11 +18,11 @@ namespace SemanticBackup.API.Controllers
     public class ResourceGroupsController : ControllerBase
     {
         private readonly ILogger<ResourceGroupsController> _logger;
-        private readonly IResourceGroupPersistanceService _activeResourcegroupService;
-        private readonly IContentDeliveryConfigPersistanceService _contentDeliveryConfigPersistanceService;
-        private readonly PersistanceOptions _persistanceOptions;
+        private readonly IResourceGroupRepository _activeResourcegroupService;
+        private readonly IContentDeliveryConfigRepository _contentDeliveryConfigPersistanceService;
+        private readonly Core.SystemConfigOptions _persistanceOptions;
 
-        public ResourceGroupsController(ILogger<ResourceGroupsController> logger, IResourceGroupPersistanceService resourceGroupPersistance, IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService, PersistanceOptions persistanceOptions)
+        public ResourceGroupsController(ILogger<ResourceGroupsController> logger, IResourceGroupRepository resourceGroupPersistance, IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService, Core.SystemConfigOptions persistanceOptions)
         {
             _logger = logger;
             this._activeResourcegroupService = resourceGroupPersistance;

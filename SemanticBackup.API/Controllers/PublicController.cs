@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,16 +17,16 @@ namespace SemanticBackup.API.Controllers
     public class PublicController : ControllerBase
     {
         private readonly ILogger<PublicController> _logger;
-        private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
-        private readonly IResourceGroupPersistanceService _resourceGroupPersistanceService;
-        private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
-        private readonly PersistanceOptions _persistanceOptions;
-        private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
-        private readonly ApiConfigOptions _options;
+        private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
+        private readonly IResourceGroupRepository _resourceGroupPersistanceService;
+        private readonly IBackupRecordRepository _backupRecordPersistanceService;
+        private readonly Core.SystemConfigOptions _persistanceOptions;
+        private readonly IBackupScheduleRepository _backupSchedulePersistanceService;
+        private readonly SystemConfigOptions _options;
 
         public PublicController(ILogger<PublicController> logger,
-            IDatabaseInfoPersistanceService databaseInfoPersistanceService,
-            IResourceGroupPersistanceService resourceGroupPersistanceService, IBackupRecordPersistanceService backupRecordPersistanceService, PersistanceOptions persistanceOptions, IBackupSchedulePersistanceService backupSchedulePersistanceService, IOptions<ApiConfigOptions> options)
+            IDatabaseInfoRepository databaseInfoPersistanceService,
+            IResourceGroupRepository resourceGroupPersistanceService, IBackupRecordRepository backupRecordPersistanceService, Core.SystemConfigOptions persistanceOptions, IBackupScheduleRepository backupSchedulePersistanceService, SystemConfigOptions options)
         {
             this._logger = logger;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
@@ -35,7 +34,7 @@ namespace SemanticBackup.API.Controllers
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._persistanceOptions = persistanceOptions;
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
-            this._options = options.Value;
+            this._options = options;
         }
 
         private void VerifyAuthTokenProvided(string token)

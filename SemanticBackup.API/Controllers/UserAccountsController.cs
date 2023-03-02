@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SemanticBackup.API.Models.Requests;
+using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -21,14 +21,14 @@ namespace SemanticBackup.API.Controllers
     public class UserAccountsController : ControllerBase
     {
         private readonly ILogger<UserAccountsController> _logger;
-        private readonly IUserAccountPersistanceService _userAccountPersistanceService;
-        private readonly ApiConfigOptions _options;
+        private readonly IUserAccountRepository _userAccountPersistanceService;
+        private readonly SystemConfigOptions _options;
 
-        public UserAccountsController(ILogger<UserAccountsController> logger, IUserAccountPersistanceService userAccountPersistanceService, IOptions<ApiConfigOptions> options)
+        public UserAccountsController(ILogger<UserAccountsController> logger, IUserAccountRepository userAccountPersistanceService, SystemConfigOptions options)
         {
             this._logger = logger;
             this._userAccountPersistanceService = userAccountPersistanceService;
-            this._options = options.Value;
+            this._options = options;
         }
 
         [AllowAnonymous]

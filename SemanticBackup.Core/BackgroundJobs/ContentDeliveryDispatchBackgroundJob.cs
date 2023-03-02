@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,10 +47,10 @@ namespace SemanticBackup.Core.BackgroundJobs
                         using (var scope = _serviceScopeFactory.CreateScope())
                         {
                             //DI INJECTIONS
-                            IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
-                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
-                            IResourceGroupPersistanceService resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupPersistanceService>();
-                            IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigPersistanceService>();
+                            IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
+                            IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
+                            IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
+                            IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
 
                             //Proceed
                             List<ContentDeliveryRecord> contentDeliveryRecords = await contentDeliveryRecordPersistanceService.GetAllByStatusAsync(ContentDeliveryRecordStatus.QUEUED.ToString());
@@ -157,7 +157,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                         using (var scope = _serviceScopeFactory.CreateScope())
                         {
                             //DI INJECTIONS
-                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
+                            IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                             //Proceed
                             List<BackupRecord> expiredBackups = await backupRecordPersistanceService.GetAllExpiredAsync();
                             if (expiredBackups != null && expiredBackups.Count > 0)

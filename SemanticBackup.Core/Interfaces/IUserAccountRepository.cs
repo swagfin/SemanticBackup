@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Core.PersistanceServices
+namespace SemanticBackup.Core.Interfaces
 {
-    public interface IUserAccountPersistanceService
+    public interface IUserAccountRepository
     {
         Task<List<UserAccount>> GetAllAsync();
         Task<UserAccount> GetByEmailAsync(string emailAddress);

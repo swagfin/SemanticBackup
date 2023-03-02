@@ -1,8 +1,8 @@
-name: Docker Publish For SemanticBackup.API
+name: Release Docker Image On Release Published
 
 on:
-  push:
-    branches: [ master ]
+  release:
+    types: [published]
     
 jobs:
 

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Extensions;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,9 +42,9 @@ namespace SemanticBackup.Core.BackgroundJobs
                         using (var scope = _serviceScopeFactory.CreateScope())
                         {
                             //DI INJECTIONS
-                            IBackupRecordPersistanceService backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordPersistanceService>();
-                            IContentDeliveryRecordPersistanceService contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordPersistanceService>();
-                            IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigPersistanceService>();
+                            IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
+                            IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
+                            IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
                             //Proceed
                             List<BackupRecord> pendingExecutionRecords = await backupRecordPersistanceService.GetAllReadyAndPendingDeliveryAsync();
                             if (pendingExecutionRecords != null && pendingExecutionRecords.Count > 0)

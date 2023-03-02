@@ -1,25 +1,32 @@
 ﻿using LiteDB;
 using LiteDB.Async;
-using SemanticBackup.Core;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.LiteDbPersistance
+namespace SemanticBackup.Core.Logic
 {
-    public class ResourceGroupPersistanceService : IResourceGroupPersistanceService
+    public class ResourceGroupRepositoryLiteDb : IResourceGroupRepository
     {
-        private LiteDatabaseAsync db;
-        private readonly IBackupRecordPersistanceService _backupRecordPersistanceService;
-        private readonly IContentDeliveryConfigPersistanceService _contentDeliveryConfigPersistanceService;
-        private readonly IBackupSchedulePersistanceService _backupSchedulePersistanceService;
-        private readonly IDatabaseInfoPersistanceService _databaseInfoPersistanceService;
+        private LiteDatabaseAsync _db;
+        private readonly IBackupRecordRepository _backupRecordPersistanceService;
+        private readonly IContentDeliveryConfigRepository _contentDeliveryConfigPersistanceService;
+        private readonly IBackupScheduleRepository _backupSchedulePersistanceService;
+        private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
 
-        public ResourceGroupPersistanceService(ILiteDbContext context, IBackupRecordPersistanceService backupRecordPersistanceService, IContentDeliveryConfigPersistanceService contentDeliveryConfigPersistanceService, IBackupSchedulePersistanceService backupSchedulePersistanceService, IDatabaseInfoPersistanceService databaseInfoPersistanceService)
+        public ResourceGroupRepositoryLiteDb(IBackupRecordRepository backupRecordPersistanceService, IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
-            this.db = context.Database;
+#if DEBUG
+            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
+#else
+            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.db")) { Password = "12345678", Connection = ConnectionType.Shared });
+#endif
+            //Init
+            this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
+            //Proceed
             this._backupRecordPersistanceService = backupRecordPersistanceService;
             this._contentDeliveryConfigPersistanceService = contentDeliveryConfigPersistanceService;
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
@@ -27,22 +34,22 @@ namespace SemanticBackup.LiteDbPersistance
         }
         public async Task<bool> AddAsync(ResourceGroup record)
         {
-            return await db.GetCollection<ResourceGroup>().UpsertAsync(record);
+            return await _db.GetCollection<ResourceGroup>().UpsertAsync(record);
         }
 
         public async Task<List<ResourceGroup>> GetAllAsync()
         {
-            return await db.GetCollection<ResourceGroup>().Query().OrderBy(x => x.Name).ToListAsync();
+            return await _db.GetCollection<ResourceGroup>().Query().OrderBy(x => x.Name).ToListAsync();
         }
 
         public async Task<ResourceGroup> GetByIdAsync(string id)
         {
-            return await db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == id).OrderBy(x => x.Name).FirstOrDefaultAsync();
+            return await _db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == id).OrderBy(x => x.Name).FirstOrDefaultAsync();
         }
 
         public async Task<bool> RemoveAsync(string id)
         {
-            var collection = db.GetCollection<ResourceGroup>();
+            var collection = _db.GetCollection<ResourceGroup>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
@@ -55,7 +62,7 @@ namespace SemanticBackup.LiteDbPersistance
 
         public async Task<bool> SwitchAsync(string id)
         {
-            var collection = db.GetCollection<ResourceGroup>();
+            var collection = _db.GetCollection<ResourceGroup>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
@@ -68,7 +75,7 @@ namespace SemanticBackup.LiteDbPersistance
 
         public async Task<bool> UpdateAsync(ResourceGroup record)
         {
-            return await db.GetCollection<ResourceGroup>().UpdateAsync(record);
+            return await _db.GetCollection<ResourceGroup>().UpdateAsync(record);
         }
 
         private async Task TryDeleteAllResourcesForGroupAsync(string resourceGroupId)

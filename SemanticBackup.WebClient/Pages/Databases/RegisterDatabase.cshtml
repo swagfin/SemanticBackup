@@ -72,62 +72,62 @@
 </div><!-- content -->
 @section Scripts{
 
-<script type="text/javascript">
-    var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-    var directoryId = @Html.Raw(Json.Serialize(ResourceGroups.CurrentResourceGroup?.Id));
-            function setDbPort()
-            {
-                         var value = $(".set-db-port").val();
-                            if(value.includes("MARIADB") || value.includes("MYSQL")){
-                                $(".set-db-port-val").val('3306');
-                            }
-                            else if(value.includes("SQLSERVER")){
-                                $(".set-db-port-val").val('1433');
-                            }
-            };
-            //Initi
-           setDbPort();
-           $(".database-dropdown-search").dropdown({allowAdditions: true});
+    <script type="text/javascript">
+        var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
+        var directoryId = @Html.Raw(Json.Serialize(ResourceGroups.CurrentResourceGroup?.Id));
+        var _authToken = @Html.Raw(Json.Serialize(Model.AuthToken));
+        //Set Db Default Ports
+        function setDbPort() {
+            var value = $(".set-db-port").val();
+            if (value.includes("MARIADB") || value.includes("MYSQL")) {
+                $(".set-db-port-val").val('3306');
+            }
+            else if (value.includes("SQLSERVER")) {
+                $(".set-db-port-val").val('1433');
+            }
+        };
+        //Initi
+        setDbPort();
+        $(".database-dropdown-search").dropdown({ allowAdditions: true });
 
-           function refreshDbList()
-           {
-               //loading
-               console.log("Refreshing Db Collection");
-               //Create Request Object
-               var dataObj = {type:$(".refresh-db-type").val(), server: $(".refresh-db-server").val(), username:$(".refresh-db-username").val(), password: $(".refresh-db-password").val(), port: $(".refresh-db-port").val()};
-               //Valid
-               if(dataObj.server.length==0 || dataObj.username.length==0 || dataObj.password.length==0)
-               {
-                  // console.log("Skipped Query, Missing required params");
-                   return;
-               }
-               $(".database-dropdown-search").addClass("loading");
-               //Proceed
-               $.ajax({
-                       type: 'POST',
-                       url: baseUrl + directoryId + '/api/BackupDatabases/pre-get-database-collection',
-                       data: dataObj,
-                       success: function(msg)
-                       {
-                         //console.log(msg);
-                         var elementOptions = "";
-                           if(msg!=null)
-                           {
-                                msg.forEach(function (item, index){
-                                    elementOptions += '<option value="'+ item +'">'+ item +'</option>';
-                                });
-                           }
-                           //Append
-                           $(".database-dropdown-container").html('<select autofocus class="ui fluid search dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames">'+ elementOptions +'</select>');
-                           $(".database-dropdown-search").dropdown({allowAdditions: true});
-                       },
-                       error: function(xhr, status, error)
-                       {
-                           console.log(status);
-                           $(".database-dropdown-search").removeClass("loading");
-                       }
+        function refreshDbList() {
+            //loading
+            console.log("Refreshing Db Collection");
+            //Create Request Object
+            var dataObj = { type: $(".refresh-db-type").val(), server: $(".refresh-db-server").val(), username: $(".refresh-db-username").val(), password: $(".refresh-db-password").val(), port: $(".refresh-db-port").val() };
+            //Valid
+            if (dataObj.server.length == 0 || dataObj.username.length == 0 || dataObj.password.length == 0) {
+                // console.log("Skipped Query, Missing required params");
+                return;
+            }
+            $(".database-dropdown-search").addClass("loading");
+            //Proceed
+            $.ajax({
+                type: 'POST',
+                url: baseUrl + directoryId + '/api/BackupDatabases/pre-get-database-collection',
+                contentType: "application/json",
+                headers: {
+                    'Authorization': 'Bearer ' + _authToken
+                },
+                data: JSON.stringify(dataObj),
+                success: function (msg) {
+                    //console.log(msg);
+                    var elementOptions = "";
+                    if (msg != null) {
+                        msg.forEach(function (item, index) {
+                            elementOptions += '<option value="' + item + '">' + item + '</option>';
+                        });
+                    }
+                    //Append
+                    $(".database-dropdown-container").html('<select autofocus class="ui fluid search dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames">' + elementOptions + '</select>');
+                    $(".database-dropdown-search").dropdown({ allowAdditions: true });
+                },
+                error: function (xhr, status, error) {
+                    console.log(status);
+                    $(".database-dropdown-search").removeClass("loading");
+                }
 
-                   });
-           };
-</script>
+            });
+        };
+    </script>
 }
