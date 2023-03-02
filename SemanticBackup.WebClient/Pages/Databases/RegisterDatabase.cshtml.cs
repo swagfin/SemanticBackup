@@ -17,6 +17,9 @@ namespace SemanticBackup.WebClient.Pages.Databases
     public class RegisterDatabaseModel : PageModel
     {
         private readonly IHttpService _httpService;
+
+        public string AuthToken { get; }
+
         private readonly ILogger<IndexModel> _logger;
 
         public string ApiEndPoint { get; }
@@ -28,6 +31,7 @@ namespace SemanticBackup.WebClient.Pages.Databases
         public RegisterDatabaseModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
         {
             this._httpService = httpService;
+            this.AuthToken = _httpService.GetToken();
             this._logger = logger;
             ApiEndPoint = options.Value?.ApiUrl;
         }

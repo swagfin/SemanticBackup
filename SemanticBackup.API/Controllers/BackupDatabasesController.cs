@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Models.Requests;
 using SemanticBackup.API.Models.Response;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -219,7 +219,7 @@ namespace SemanticBackup.API.Controllers
         }
 
         [HttpPost("pre-get-database-collection")]
-        public async Task<IEnumerable<string>> GetPreGetDbCollectionAsync([FromForm] DatabaseCollectionRequest request)
+        public async Task<IEnumerable<string>> GetPreGetDbCollectionAsync([FromBody] DatabaseCollectionRequest request)
         {
             try
             {
@@ -228,13 +228,14 @@ namespace SemanticBackup.API.Controllers
                 //Checks
                 if (string.IsNullOrWhiteSpace(request.Server) || string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
                     return null;
+                int.TryParse(request.Port, out int _validPort);
                 var dbInfo = new BackupDatabaseInfo
                 {
                     Server = request.Server,
                     Username = request.Username,
                     Password = request.Password,
                     DatabaseType = request.Type,
-                    Port = request.Port,
+                    Port = _validPort,
                 };
 
                 if (request.Type.Contains("SQLSERVER"))
