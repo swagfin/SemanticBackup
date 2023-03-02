@@ -40,6 +40,10 @@ namespace SemanticBackup.LiteDbPersistance
         {
             return await db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
         }
+        public async Task<List<BackupRecord>> GetAllByRestoreStatusAsync(string status)
+        {
+            return await db.GetCollection<BackupRecord>().Query().Where(x => x.RestoreStatus == status).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
+        }
         public async Task<List<BackupRecord>> GetAllExpiredAsync()
         {
             return await db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDateUTC != null).Where(x => x.ExpiryDateUTC <= DateTime.UtcNow).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
@@ -106,6 +110,24 @@ namespace SemanticBackup.LiteDbPersistance
             return false;
         }
 
+        public async Task<bool> UpdateRestoreStatusFeedAsync(string id, string status, string message = null, string confirmationToken = null)
+        {
+            var collection = db.GetCollection<BackupRecord>();
+            var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
+            if (objFound != null)
+            {
+                objFound.RestoreStatus = status;
+                if (!string.IsNullOrEmpty(message))
+                    objFound.RestoreExecutionMessage = message;
+                if (!string.IsNullOrEmpty(confirmationToken))
+                    objFound.RestoreConfirmationToken = confirmationToken;
+                bool updatedSuccess = await collection.UpdateAsync(objFound);
+                if (updatedSuccess)
+                    this.DispatchUpdatedStatus(objFound, false);
+                return updatedSuccess;
+            }
+            return false;
+        }
         public async Task<BackupRecord> GetByIdAsync(string id)
         {
             return await db.GetCollection<BackupRecord>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();

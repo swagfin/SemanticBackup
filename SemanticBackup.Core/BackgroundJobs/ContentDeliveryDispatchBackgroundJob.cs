@@ -5,6 +5,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -56,7 +57,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             if (contentDeliveryRecords != null && contentDeliveryRecords.Count > 0)
                             {
                                 List<string> scheduleToDeleteRecords = new List<string>();
-                                foreach (ContentDeliveryRecord contentDeliveryRecord in contentDeliveryRecords)
+                                foreach (ContentDeliveryRecord contentDeliveryRecord in contentDeliveryRecords.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
                                     _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
                                     BackupRecord backupRecordInfo = await backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId);

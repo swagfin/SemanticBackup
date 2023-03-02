@@ -5,6 +5,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Core.PersistanceServices;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -52,7 +53,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             List<BackupRecord> queuedBackups = await backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.COMPLETED.ToString());
                             if (queuedBackups != null && queuedBackups.Count > 0)
                             {
-                                foreach (BackupRecord backupRecord in queuedBackups)
+                                foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
                                     //Check if valid Resource Group
                                     ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);

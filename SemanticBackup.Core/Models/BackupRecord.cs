@@ -21,6 +21,9 @@ namespace SemanticBackup.Core.Models
         public bool ExecutedDeliveryRun { get; set; } = false;
         public string ExecutedDeliveryRunStatus { get; set; } = BackupRecordExecutedDeliveryRunStatus.PENDING_EXECUTION.ToString();
         public DateTime RegisteredDateUTC { get; set; } = DateTime.UtcNow;
+        public string RestoreStatus { get; set; } = BackupRecordRestoreStatus.NONE.ToString();
+        public string RestoreExecutionMessage { get; set; } = string.Empty;
+        public string RestoreConfirmationToken { get; set; } = string.Empty;
     }
     public enum BackupRecordBackupStatus
     {
@@ -36,5 +39,15 @@ namespace SemanticBackup.Core.Models
         PENDING_EXECUTION,
         SKIPPED_EXECUTION,
         SUCCESSFULLY_EXECUTED
+    }
+    public enum BackupRecordRestoreStatus
+    {
+        NONE,
+        PENDING_CONFIRMATION,
+        PENDING_RESTORE,
+        EXECUTING_RESTORE,
+        RESTORE_COMPLETED,
+        FAILED_RESTORE,
+
     }
 }

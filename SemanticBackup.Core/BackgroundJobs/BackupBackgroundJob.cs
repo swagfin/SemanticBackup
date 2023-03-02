@@ -58,7 +58,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             if (queuedBackups != null && queuedBackups.Count > 0)
                             {
                                 List<string> scheduleToDelete = new List<string>();
-                                foreach (BackupRecord backupRecord in queuedBackups)
+                                foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
                                     _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
                                     BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
