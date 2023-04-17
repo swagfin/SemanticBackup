@@ -9,6 +9,7 @@ jobs:
   publish_linux_image:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v2
@@ -22,6 +23,7 @@ jobs:
   publish_windows_image:
 
     runs-on: windows-2019
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v2
