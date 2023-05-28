@@ -16,7 +16,7 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupService _resourceGroupService;
         public string ErrorResponse { get; set; } = null;
-        public List<TimeZoneRecord> TimeZoneCollections { get; }
+        public List<string> TimeZoneCollections { get; }
         [BindProperty]
         public ResourceGroupRequest RGRequest { get; set; }
 
@@ -59,6 +59,12 @@ namespace SemanticBackup.WebClient.Pages.ResourceGroups
         {
             try
             {
+                //Check Supported Timezone
+                if (string.IsNullOrEmpty(RGRequest.TimeZone) || !this.TimeZoneCollections.Contains(RGRequest.TimeZone))
+                {
+                    ErrorResponse = "Enter a valid Timezone from the List";
+                    return false;
+                }
                 if (RGRequest.RSFTPSetting != null && RGRequest.RSFTPSetting.IsEnabled)
                     if (string.IsNullOrEmpty(RGRequest.RSFTPSetting.Password) || string.IsNullOrEmpty(RGRequest.RSFTPSetting.Username) || string.IsNullOrEmpty(RGRequest.RSFTPSetting.Server))
                     {

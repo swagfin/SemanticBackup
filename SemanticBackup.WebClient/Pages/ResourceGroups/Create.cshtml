@@ -34,13 +34,13 @@
                             @{
                                 if (Model.TimeZoneCollections != null && Model.TimeZoneCollections.Count > 0)
                                 {
-                                    foreach (var timezone in Model.TimeZoneCollections)
+                                    foreach (string timezone in Model.TimeZoneCollections)
                                     {
-                                        <option value="@(timezone.Value)">@(timezone.Text)  (@(timezone.Value))</option>
+                                        <option value="@(timezone)">@(timezone)</option>
                                     }
                                 }
+                                <option selected>--SELECT TIMEZONE ---</option>
                             }
-                            <option selected value="E. Africa Standard Time">(UTC+03:00) Nairobi (E. Africa Standard Time) (Default)</option>
                         </select>
                     </div>
 
@@ -245,9 +245,9 @@
     </div>
 </div>
 @section Scripts{
-<script type="text/javascript">
-    $(".dropdown").dropdown({allowAdditions: false});
-    $(".destinations-dropdown-search").dropdown({allowAdditions: true});
-    $('.menu .item').tab();
-</script>
+    <script type="text/javascript">
+        $(".dropdown").dropdown({ allowAdditions: false });
+        $(".destinations-dropdown-search").dropdown({ allowAdditions: true });
+        $('.menu .item').tab();
+    </script>
 }
