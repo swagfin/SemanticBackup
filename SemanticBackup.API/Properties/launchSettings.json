@@ -1,37 +1,13 @@
 {
   "$schema": "http://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:34782",
-      "sslPort": 44351
-    }
-  },
   "profiles": {
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchUrl": "api/BackupSchedules",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
     "SemanticBackup.API": {
       "commandName": "Project",
       "launchUrl": "api/BackupSchedules",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:5000"
-    },
-    "Docker": {
-      "commandName": "Docker",
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/api/BackupSchedules",
-      "publishAllPorts": true,
-      "useSSL": false,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Docker"
-      }
+      "applicationUrl": "http://localhost:8000"
     }
   }
 }
