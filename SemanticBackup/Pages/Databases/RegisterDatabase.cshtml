@@ -74,7 +74,7 @@
 
     <script type="text/javascript">
         var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-        var directoryId = @Html.Raw(Json.Serialize(ResourceGroups.CurrentResourceGroup?.Id));
+        var directoryId = @Html.Raw(Json.Serialize("1"));
         var _authToken = @Html.Raw(Json.Serialize(Model.AuthToken));
         //Set Db Default Ports
         function setDbPort() {

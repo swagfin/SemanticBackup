@@ -22,5 +22,6 @@ namespace SemanticBackup.Core
         public string JWTIssuer { get; set; } = "issuer";
         public string JWTAudience { get; set; } = "audiences";
         public string PublicAccessToken { get; set; } = Guid.NewGuid().ToString();
+        public bool IsLinuxEnv { get; set; }
     }
 }

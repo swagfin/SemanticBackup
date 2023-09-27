@@ -36,7 +36,7 @@
                                 <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
                                 <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
                                 <td>@(record.LastRunPreviewable)</td>
-                                <td>@string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRun)</td>
+                                <td>@string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRunUTC)</td>
                             </tr>
                         }
                     else

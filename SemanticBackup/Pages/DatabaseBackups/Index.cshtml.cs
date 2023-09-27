@@ -29,8 +29,8 @@ namespace SemanticBackup.Pages.DatabaseBackups
         {
             try
             {
-                BackupRecordsResponse = await _backupRecordPersistanceService.GetAllAsync(Common.Shared.CurrentResourceGroup?.Id);
-                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(Common.Shared.CurrentResourceGroup?.Id);
+                BackupRecordsResponse = await _backupRecordPersistanceService.GetAllAsync("1");
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync("1");
             }
             catch (Exception ex)
             {

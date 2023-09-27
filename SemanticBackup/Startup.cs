@@ -36,6 +36,10 @@ namespace SemanticBackup
             services.AddSingleton<IRecordStatusChangedNotifier, StatusNotificationService>();
             //DASHBOARD SIGNAL DISPATCH
             services.AddSingleton<DashboardRefreshHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());
+
+            //timezone Helper
+            services.AddSingleton<TimeZoneHelper>();
+
             //Signal R and Cors
             services.AddSignalR(options =>
             {

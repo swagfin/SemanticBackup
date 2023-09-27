@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Services;
 using System;
 using System.Threading.Tasks;
 
@@ -11,12 +10,10 @@ namespace SemanticBackup.Pages.DatabaseBackups
     [Authorize]
     public class RerunModel : PageModel
     {
-        private readonly IHttpService _httpService;
         private readonly ILogger<IndexModel> _logger;
 
-        public RerunModel(IHttpService httpService, ILogger<IndexModel> logger)
+        public RerunModel(ILogger<IndexModel> logger)
         {
-            this._httpService = httpService;
             this._logger = logger;
         }
 
@@ -34,7 +31,7 @@ namespace SemanticBackup.Pages.DatabaseBackups
             {
                 //Proceeed 
                 var rerunUrl = $"api/BackupRecords/re-run/{id}";
-                var rerunSuccess = await _httpService.GetAsync<bool>(rerunUrl);
+                //var rerunSuccess = await _httpService.GetAsync<bool>(rerunUrl);
                 return Redirect($"/databasebackups/{id2}/?re-run=success");
             }
             catch (Exception ex)
@@ -51,7 +48,7 @@ namespace SemanticBackup.Pages.DatabaseBackups
                 //Proceeed 
 
                 var rerunUrl = $"api/ContentDeliveryRecords/re-run/{id}";
-                var rerunSuccess = await _httpService.GetAsync<bool>(rerunUrl);
+                //var rerunSuccess = await _httpService.GetAsync<bool>(rerunUrl);
                 return Redirect($"/databasebackups/{id2}/?content-delivery-re-run=success");
             }
             catch (Exception ex)

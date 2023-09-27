@@ -33,6 +33,21 @@ namespace SemanticBackup.Core.Models
             }
         }
         public DateTime DateRegisteredUTC { get; set; } = DateTime.UtcNow;
+
+        public string ColorCode
+        {
+            get
+            {
+                if (DatabaseType.Contains("SQLSERVER"))
+                    return "orange";
+                else if (DatabaseType.Contains("MYSQL"))
+                    return "teal";
+                else if (DatabaseType.Contains("MARIADB"))
+                    return "blue";
+                else
+                    return "gray";
+            }
+        }
     }
     public enum BackupDatabaseInfoDbType
     {

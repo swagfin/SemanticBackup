@@ -2,9 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Models.Requests;
-using SemanticBackup.Models.Response;
-using SemanticBackup.Services;
+using SemanticBackup.Core.Models;
+using SemanticBackup.Core.Models.Requests;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,15 +13,13 @@ namespace SemanticBackup.Pages.DatabaseBackupSchedules
     [Authorize]
     public class RegisterScheduleModel : PageModel
     {
-        private readonly IHttpService _httpService;
         private readonly ILogger<RegisterScheduleModel> _logger;
 
         [BindProperty]
         public BackupScheduleRequest backupScheduleRequest { get; set; }
-        public List<BackupDatabaseInfoResponse> databaseInfoSelectList { get; set; }
-        public RegisterScheduleModel(IHttpService httpService, ILogger<RegisterScheduleModel> logger)
+        public List<BackupDatabaseInfo> databaseInfoSelectList { get; set; }
+        public RegisterScheduleModel(ILogger<RegisterScheduleModel> logger)
         {
-            this._httpService = httpService;
             this._logger = logger;
         }
         public string ErrorResponse { get; set; } = null;
@@ -51,9 +48,9 @@ namespace SemanticBackup.Pages.DatabaseBackupSchedules
                     ErrorResponse = "First select Database Backup Schedule Type";
                 else
                 {
-                    //Proceed
-                    var url = "api/BackupSchedules/";
-                    var result = await _httpService.PostAsync<StatusResponseModel>(url, backupScheduleRequest);
+                    ////Proceed
+                    //var url = "api/BackupSchedules/";
+                    //var result = await _httpService.PostAsync<StatusResponseModel>(url, backupScheduleRequest);
                     return RedirectToPage("Index");
                 }
             }
@@ -66,11 +63,13 @@ namespace SemanticBackup.Pages.DatabaseBackupSchedules
             return Page();
         }
 
-        private async Task<List<BackupDatabaseInfoResponse>> GetBackupDatabaseInfoAsync()
+        private async Task<List<BackupDatabaseInfo>> GetBackupDatabaseInfoAsync()
         {
-            var url = "api/BackupDatabases/";
-            var DatabaseResponse = await _httpService.GetAsync<List<BackupDatabaseInfoResponse>>(url);
-            return DatabaseResponse;
+            //var url = "api/BackupDatabases/";
+            //var DatabaseResponse = await _httpService.GetAsync<List<BackupDatabaseInfoResponse>>(url);
+            //return DatabaseResponse;
+            await Task.Delay(1);
+            return null;
         }
     }
 }

@@ -2,10 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using SemanticBackup.Models.Requests;
-using SemanticBackup.Models.Response;
-using SemanticBackup.Services;
+using SemanticBackup.Core.Models.Requests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,8 +13,6 @@ namespace SemanticBackup.Pages.Databases
     [Authorize]
     public class RegisterDatabaseModel : PageModel
     {
-        private readonly IHttpService _httpService;
-
         public string AuthToken { get; }
 
         private readonly ILogger<IndexModel> _logger;
@@ -28,12 +23,9 @@ namespace SemanticBackup.Pages.Databases
         [BindProperty]
         public IEnumerable<string> DatabaseNames { get; set; }
         public string ErrorResponse { get; set; } = null;
-        public RegisterDatabaseModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
+        public RegisterDatabaseModel(ILogger<IndexModel> logger)
         {
-            this._httpService = httpService;
-            this.AuthToken = _httpService.GetToken();
             this._logger = logger;
-            ApiEndPoint = options.Value?.ApiUrl;
         }
         public void OnGet()
         {
@@ -63,8 +55,8 @@ namespace SemanticBackup.Pages.Databases
                     backupDatabaseRequest.DatabaseName = string.Join(",", DatabaseNames.Select(x => x));
                 }
                 //Proceed
-                var url = "api/BackupDatabases/";
-                var result = await _httpService.PostAsync<StatusResponseModel>(url, backupDatabaseRequest);
+                //var url = "api/BackupDatabases/";
+                //var result = await _httpService.PostAsync<StatusResponseModel>(url, backupDatabaseRequest);
                 return RedirectToPage("Index");
             }
             catch (Exception ex)

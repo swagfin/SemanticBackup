@@ -5,8 +5,8 @@
 }
 @{
     <script type="text/javascript">
-        var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-        var directoryId = @Html.Raw(Json.Serialize(ResourceGroups.CurrentResourceGroup?.Id));
+        var baseUrl = @Html.Raw(Json.Serialize("/"));
+        var directoryId = @Html.Raw(Json.Serialize(1));
     </script>
 }
 <div class="container pd-x-0">
@@ -39,8 +39,8 @@
                             <tr id="record_for_@(record.Id)" onclick="location.href='/databasebackups/@(record.Id)'">
                                 <td>@string.Format("{0:N0}", count)</td>
                                 <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.Name</td>
-                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.RegisteredDate)</td>
-                                <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDate)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.StatusUpdateDate)</td>
+                                <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.RegisteredDateUTC)</td>
+                                <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDateUTC)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.StatusUpdateDateUTC)</td>
                                 <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
 
                                 @{

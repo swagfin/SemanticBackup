@@ -120,8 +120,8 @@
 <script src="~/lib/signalr/dist/browser/signalr.js"></script>
 <script type="text/javascript" src=~/assets/js/dashboard-two_v3.js></script>
 <script type="text/javascript">
-    var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-    var resourcegroupId = @Html.Raw(Json.Serialize(WebClient.ResourceGroups.CurrentResourceGroup?.Id));
+    var baseUrl = @Html.Raw(Json.Serialize("/"));
+    var resourcegroupId = @Html.Raw(Json.Serialize(1));
 </script>
 }
 

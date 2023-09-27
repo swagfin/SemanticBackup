@@ -77,7 +77,7 @@ namespace SemanticBackup.Pages.ResourceGroups
                     if (!addedSuccess)
                         _logger.LogWarning("Resource Group Content Delivery Settings were not Saved");
                 }
-                return Page();
+                return Redirect("/resource-groups");
             }
             catch (Exception ex)
             {
