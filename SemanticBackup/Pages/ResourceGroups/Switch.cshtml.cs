@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Services;
+using SemanticBackup.Core.Interfaces;
 using System;
 using System.Threading.Tasks;
 
@@ -12,9 +12,9 @@ namespace SemanticBackup.Pages.ResourceGroups
     public class SwitchModel : PageModel
     {
         private readonly ILogger<SwitchModel> _logger;
-        private readonly IResourceGroupService _resourceGroupsService;
+        private readonly IResourceGroupRepository _resourceGroupsService;
 
-        public SwitchModel(ILogger<SwitchModel> logger, IResourceGroupService resourceGroupsService)
+        public SwitchModel(ILogger<SwitchModel> logger, IResourceGroupRepository resourceGroupsService)
         {
             this._logger = logger;
             this._resourceGroupsService = resourceGroupsService;

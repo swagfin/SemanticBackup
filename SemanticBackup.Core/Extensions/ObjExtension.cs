@@ -1,5 +1,7 @@
 ﻿using SemanticBackup.Core.Models;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SemanticBackup.Core
 {
@@ -14,6 +16,11 @@ namespace SemanticBackup.Core
                                          .Replace("{{date}}", $"{currentTime:yyyy-MM-dd}")
                                          .Replace("{{datetime}}", $"{currentTime:yyyy-MM-dd-HHmmssffff}")
                                          .Replace("{{databasetype}}", backupDatabaseInfo.DatabaseType);
+        }
+
+        public static ResourceGroup GetDefaultGroup(this List<ResourceGroup> resourceGroups)
+        {
+            return resourceGroups?.Where(x => !string.IsNullOrWhiteSpace(x.Id)).OrderByDescending(x => x.LastAccess).FirstOrDefault();
         }
     }
 }

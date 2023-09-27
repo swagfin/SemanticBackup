@@ -28,7 +28,6 @@
     <link rel="stylesheet" href="~/assets/css/dashforge.dashboard.css">
 
     @RenderSection("Styles", required: false)
-
 </head>
 <body>
 
@@ -44,11 +43,14 @@
 
             <div class="aside-loggedin">
                 @{
-                    var activeDirectory = ResourceGroups.CurrentResourceGroup;
+                    //get resource groups
                     if (User.Identity.IsAuthenticated)
                     {
-                        if (ResourceGroups.All != null && ResourceGroups.All.Count > 0)
+                        List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
+                        ResourceGroup activeDirectory = allResourceGroups.GetDefaultGroup();
+                        if (allResourceGroups != null && allResourceGroups.Count > 0)
                         {
+                            //proceed
 
                             <div class="aside-loggedin-user">
                                 <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
@@ -62,7 +64,7 @@
                                 <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
                                 <ul class="nav nav-aside mg-b-0">
                                     @{
-                                        foreach (var directory in ResourceGroups.All)
+                                        foreach (ResourceGroup directory in allResourceGroups)
                                         {
                                             string class_style = "";
                                             if (activeDirectory.Id == directory.Id)

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Models.Response;
-using SemanticBackup.Services;
+using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Threading.Tasks;
 
@@ -12,11 +12,11 @@ namespace SemanticBackup.Pages.ResourceGroups
     {
 
         private readonly ILogger<DeleteModel> _logger;
-        private readonly IResourceGroupService _resourceGroupsService;
-        public ResourceGroupResponse CurrentRecord { get; private set; }
+        private readonly IResourceGroupRepository _resourceGroupsService;
+        public ResourceGroup CurrentRecord { get; private set; }
         public string ErrorMessage { get; set; } = string.Empty;
 
-        public DeleteModel(ILogger<DeleteModel> logger, IResourceGroupService resourceGroupsService)
+        public DeleteModel(ILogger<DeleteModel> logger, IResourceGroupRepository resourceGroupsService)
         {
             this._logger = logger;
             this._resourceGroupsService = resourceGroupsService;

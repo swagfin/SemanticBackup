@@ -37,7 +37,6 @@
                                 </div>
                                 <div class="extra meta">
                                     <div class="ui divider"></div>
-                                    <span><b><i class="server icon"></i> Server:</b> @(Model.ApiEndPoint)</span><br />
                                     <span><b><i class="clock icon"></i> Timezone:</b> @(Model.CurrentResourceGroup.TimeZone)</span><br />
                                     <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", Model.CurrentResourceGroup.MaximumRunningBots)</span><br />
                                     <span><b><i class="file archive outline icon"></i> Compression:</b> @string.Format("{0}", Model.CurrentResourceGroup.CompressBackupFiles ? "ZIP" : "(none)")</span>
@@ -63,7 +62,6 @@
                                         </div>
                                         <div class="extra meta">
                                             <div class="ui divider"></div>
-                                            <span><b><i class="server icon"></i> Server:</b> @(Model.ApiEndPoint)</span><br />
                                             <span><b><i class="clock icon"></i> Timezone:</b> @(resourceGrp.TimeZone)</span><br />
                                             <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", resourceGrp.MaximumRunningBots)</span><br />
                                             <span><b><i class="file archive outline icon"></i> Compression:</b> @string.Format("{0}", resourceGrp.CompressBackupFiles ? "ZIP" : "(none)")</span>
