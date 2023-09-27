@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using SemanticBackup.Core;
 using SemanticBackup.Core.BackgroundJobs;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Logic;
@@ -8,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace SemanticBackup.API
+namespace SemanticBackup.Core
 {
     public static class CoreExtensions
     {
