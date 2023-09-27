@@ -2,9 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using SemanticBackup.Models.Response;
-using SemanticBackup.Services;
+using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,24 +13,24 @@ namespace SemanticBackup.Pages.DatabaseBackups
     [Authorize]
     public class IndexModel : PageModel
     {
-        public string ApiEndPoint { get; }
-
-        private readonly IHttpService _httpService;
         private readonly ILogger<IndexModel> _logger;
-        public List<BackupRecordResponse> BackupRecordsResponse { get; set; }
-        public IndexModel(IHttpService httpService, ILogger<IndexModel> logger, IOptions<WebClientOptions> options)
+        private readonly IBackupRecordRepository _backupRecordPersistanceService;
+        private readonly IResourceGroupRepository _resourceGroupPersistanceService;
+
+        public List<BackupRecord> BackupRecordsResponse { get; set; }
+        public IndexModel(ILogger<IndexModel> logger, IBackupRecordRepository backupRecordPersistanceService, IResourceGroupRepository resourceGroupPersistanceService)
         {
-            this._httpService = httpService;
             this._logger = logger;
-            ApiEndPoint = options.Value?.ApiUrl;
+            this._backupRecordPersistanceService = backupRecordPersistanceService;
+            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
             try
             {
-                var url = "api/BackupRecords/";
-                BackupRecordsResponse = await _httpService.GetAsync<List<BackupRecordResponse>>(url);
+                BackupRecordsResponse = await _backupRecordPersistanceService.GetAllAsync("1");
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync("1");
             }
             catch (Exception ex)
             {
