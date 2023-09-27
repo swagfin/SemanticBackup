@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Models.Requests;
+using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models.Requests;
 using SemanticBackup.Services;
 using System;
 using System.Collections.Generic;
@@ -14,16 +15,16 @@ namespace SemanticBackup.Pages.ResourceGroups
     public class CreateModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
-        private readonly IResourceGroupService _resourceGroupService;
+        private readonly IResourceGroupRepository _resourceGroupPersistance;
         public string ErrorResponse { get; set; } = null;
         public List<string> TimeZoneCollections { get; }
         [BindProperty]
         public ResourceGroupRequest RGRequest { get; set; }
 
-        public CreateModel(ILogger<IndexModel> logger, IResourceGroupService resourceGroupService, TimeZoneHelper timeZoneHelper)
+        public CreateModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupPersistance, TimeZoneHelper timeZoneHelper)
         {
             this._logger = logger;
-            this._resourceGroupService = resourceGroupService;
+            this._resourceGroupPersistance = resourceGroupPersistance;
             this.TimeZoneCollections = timeZoneHelper.GetAll();
         }
         public void OnGet()

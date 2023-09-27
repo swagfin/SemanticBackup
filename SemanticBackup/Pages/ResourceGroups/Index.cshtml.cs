@@ -2,12 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using SemanticBackup.Models.Response;
-using SemanticBackup.Services;
+using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Pages.ResourceGroups
@@ -16,26 +14,23 @@ namespace SemanticBackup.Pages.ResourceGroups
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
-        private readonly IResourceGroupService _resourceGroupService;
-        public string ApiEndPoint { get; }
-        public ResourceGroupResponse CurrentResourceGroup { get; private set; }
-        public List<ResourceGroupResponse> OtherResourceGroups { get; private set; }
+        private readonly IResourceGroupRepository _resourceGroupPersistance;
+        public ResourceGroup CurrentResourceGroup { get; private set; }
+        public List<ResourceGroup> OtherResourceGroups { get; private set; }
 
-        public IndexModel(ILogger<IndexModel> logger, IResourceGroupService resourceGroupService, IOptions<WebClientOptions> options)
+        public IndexModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupPersistance)
         {
             this._logger = logger;
-            this._resourceGroupService = resourceGroupService;
-            ApiEndPoint = options.Value?.ApiUrl;
+            this._resourceGroupPersistance = resourceGroupPersistance;
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
             try
             {
-                var allDirectories = await this._resourceGroupService.GetAllAsync();
-                CurrentResourceGroup = WebClient.ResourceGroups.CurrentResourceGroup;
-                if (allDirectories != null && CurrentResourceGroup != null)
-                    this.OtherResourceGroups = allDirectories.Where(x => x.Id != CurrentResourceGroup.Id).ToList();
+                OtherResourceGroups = await _resourceGroupPersistance.GetAllAsync();
+                Common.Shared.All = OtherResourceGroups;
+                CurrentResourceGroup = Common.Shared.CurrentResourceGroup;
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }
             return Page();
