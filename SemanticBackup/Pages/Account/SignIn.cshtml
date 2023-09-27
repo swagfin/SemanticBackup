@@ -1,0 +1,63 @@
+﻿@page "/account/login"
+@model SemanticBackup.Pages.Account.SignInModel
+@{
+    ViewData["Title"] = "Account | Sign In";
+    Layout = "_LayoutNotLoggedIn";
+}
+<div class="container">
+
+
+
+    <div class="row">
+        <div class="col-md-8">
+            <section id="loginForm">
+                <form asp-page="SignInModel" method="post" role="form">
+                    <div class="sign-wrapper mg-lg-l-50 mg-xl-l-60">
+                        <div class="wd-100p">
+                            <h3 class="tx-color-01 mg-b-5">Sign In</h3>
+                            <p class="tx-color-02 tx-16 mg-b-30">Welcome back! Please sign in to continue.</p>
+
+                            @{
+                                if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
+                                {
+                                    <div class="ui tiny negative message"><b>@(Model.ErrorResponse)</b></div>
+                                }
+                            }
+                            <div class="form-group">
+                                <label class="mg-b-0-f" for="Email">Email</label>
+                                <input class="form-control" asp-for="signInRequest.Username" autofocus="true" placeholder="Email Address" type="text" value="" autocomplete="off" required />
+                            </div>
+                            <div class="form-group">
+                                    <label class="mg-b-0-f">Password</label>                            
+                                <input class="form-control" asp-for="signInRequest.Password" placeholder="xxxxxxxxx" type="password" autocomplete="off" required />
+                            </div>
+
+                            <input type="submit" value="Sign in" class="btn btn-brand-02 btn-block" />
+
+                            <div class="tx-13 mg-t-20 tx-center">Don't have an account? <br /> Contact Administrator to create an account for you</div>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </div>
+        <div class="col-md-4">
+            <section id="socialLoginForm">
+
+                <h4>Use another service to log in.</h4>
+                <hr />
+                <div>
+                    <p>
+                        There are no external authentication services supported yet. Will be updating Social Logins soon to allow you login easily without having to provide your password
+                    </p>
+                </div>
+                <div class="divider-text">Social Logins</div>
+                <button class="btn btn-outline-facebook btn-block">Sign In With LinkedIn</button>
+                <button class="btn btn-outline-facebook btn-block">Sign In With Facebook</button>
+
+
+            </section>
+        </div>
+    </div>
+
+
+</div>

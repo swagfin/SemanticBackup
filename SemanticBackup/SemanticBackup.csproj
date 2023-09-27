@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\SemanticBackup.Core\SemanticBackup.Core.csproj" />
   </ItemGroup>
 

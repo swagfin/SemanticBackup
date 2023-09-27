@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SemanticBackup.API.Models.Response
+namespace SemanticBackup.Core.Models.Response
 {
     public class BackupScheduleResponse
     {

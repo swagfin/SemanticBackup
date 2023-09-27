@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +42,13 @@ namespace SemanticBackup
                 options.EnableDetailedErrors = true;
             });
 
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                    .AddCookie(opt =>
+                    {
+                        ///extra configs
+                    });
+
+            services.AddHttpContextAccessor();
             services.AddRazorPages();
         }
 
