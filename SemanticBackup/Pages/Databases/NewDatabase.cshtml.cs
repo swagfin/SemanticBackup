@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models.Requests;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ namespace SemanticBackup.Pages.Databases
         public string AuthToken { get; }
 
         private readonly ILogger<IndexModel> _logger;
+        private readonly IResourceGroupRepository _resourceGroupRepository;
 
         public string ApiEndPoint { get; }
         [BindProperty]
@@ -23,12 +25,19 @@ namespace SemanticBackup.Pages.Databases
         [BindProperty]
         public IEnumerable<string> DatabaseNames { get; set; }
         public string ErrorResponse { get; set; } = null;
-        public NewDatabaseModel(ILogger<IndexModel> logger)
+        public NewDatabaseModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository)
         {
             this._logger = logger;
+            this._resourceGroupRepository = resourceGroupRepository;
         }
         public void OnGet(string resourceGroupId)
         {
+            try
+            {
+                //get resource group
+                CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
+            }
+            catch { }
         }
         public async Task<IActionResult> OnPostAsync(string resourceGroupId)
         {

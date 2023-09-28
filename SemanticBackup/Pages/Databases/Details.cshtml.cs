@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace SemanticBackup.Pages.Databases
 {
     [Authorize]
-    public class InfoModel : PageModel
+    public class DetailsModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
@@ -21,7 +21,7 @@ namespace SemanticBackup.Pages.Databases
         public List<BackupRecord> BackupRecordsResponse { get; private set; }
         public List<BackupSchedule> BackupSchedulesResponse { get; private set; }
 
-        public InfoModel(ILogger<IndexModel> logger, IDatabaseInfoRepository databaseInfoPersistanceService)
+        public DetailsModel(ILogger<IndexModel> logger, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
             this._logger = logger;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;

@@ -34,12 +34,13 @@ namespace SemanticBackup.Pages.Databases
                 //get resource group
                 CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
                 DatabaseResponse = await _databaseInfoPersistanceService.GetAllAsync(resourceGroupId);
+                return Page();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
+                return Redirect("/");
             }
-            return Page();
         }
 
     }

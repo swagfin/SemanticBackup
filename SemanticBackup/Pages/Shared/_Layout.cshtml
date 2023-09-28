@@ -101,14 +101,13 @@
                     if (User.Identity.IsAuthenticated)
                     {
                         <li class="nav-label">Dashboards</li>
-                        <li class="nav-item active"><a href="@($"/resource-groups/{activeResourceGroupId}/dashboard")" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
+                        <li class="nav-item active"><a href="/resource-groups/@(activeResourceGroupId)/dashboard")" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
 
                         <li class="nav-label mg-t-25">Backup Menu</li>
 
-                        <li class="nav-item"><a href="@($"/resource-groups/{activeResourceGroupId}/databases")" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
-                        <li class="nav-item"><a href="@($"/resource-groups/{activeResourceGroupId}/schedule-backups")" class="nav-link"><i data-feather="clock"></i> <span>Schedule Backups</span></a></li>
-                        <li class="nav-item"><a href="@($"/resource-groups/{activeResourceGroupId}/database-backups")" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
-
+                        <li class="nav-item"><a href="/resource-groups/@(activeResourceGroupId)/databases" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
+                        <li class="nav-item"><a href="/resource-groups/@(activeResourceGroupId)/schedule-backups" class="nav-link"><i data-feather="clock"></i> <span>Schedule Backups</span></a></li>
+                        <li class="nav-item"><a href="/resource-groups/@(activeResourceGroupId)/database-backups" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
 
 
                         <li class="nav-label mg-t-25">RESOURCE GROUPS</li>

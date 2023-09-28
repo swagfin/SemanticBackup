@@ -5,7 +5,7 @@
 }
 <div class="container pd-x-0">
     <div class="ui container">
-        <a class="btn btn-primary" href="@($"/resource-groups/{Model.CurrentResourceGroup.Key}/databases/new-database")">Register new Database</a>
+        <a class="btn btn-primary" href="/resource-groups/@(Model.CurrentResourceGroup.Key)/databases/new-database">Register new Database</a>
         <div class="ui header large">Registered Databases</div>
         <div class="ui divider"></div>
 
@@ -30,7 +30,7 @@
                         foreach (var record in Model.DatabaseResponse)
                         {
                             count++;
-                            <tr onclick="location.href='/databases/@(record.Id)'" title="Click to View Database Info">
+                            <tr onclick="location.href='/resource-groups/@(Model.CurrentResourceGroup.Key)/details/@(record.Id)'" title="Click to View Database Info">
                                 <td>@string.Format("{0:N0}", count)</td>
                                 <td class="positive" style="font-weight:bold;font-size:12px"> <i class="database icon"></i> @record.DatabaseName</td>
                                 <td>@record.Server</td>
