@@ -56,7 +56,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
                                     //Check if valid Resource Group
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecord.ResourceGroupId);
                                     if (resourceGroup != null)
                                     {
                                         //Use Resource Group Threads

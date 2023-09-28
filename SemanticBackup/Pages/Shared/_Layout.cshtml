@@ -50,9 +50,9 @@
                     {
                         List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
                         ResourceGroup activeDirectory = allResourceGroups.GetDefaultGroup();
+                        activeResourceGroupId = (activeDirectory != null) ? activeDirectory.Key : "#";
                         if (allResourceGroups != null && allResourceGroups.Count > 0)
                         {
-                            //proceed
 
                             <div class="aside-loggedin-user">
                                 <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">

@@ -30,7 +30,7 @@ namespace SemanticBackup.Pages
                 ResourceGroup activeResourceGroup = resourceGroups.GetDefaultGroup();
                 if (activeResourceGroup != null)
                 {
-                    return LocalRedirect($"/resource-groups/{activeResourceGroup.Id}/dashboard");
+                    return LocalRedirect($"/resource-groups/{activeResourceGroup.Key}/dashboard");
                 }
             }
             catch (Exception ex)

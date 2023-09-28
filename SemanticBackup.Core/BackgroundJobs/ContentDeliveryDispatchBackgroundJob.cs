@@ -61,7 +61,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 {
                                     _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
                                     BackupRecord backupRecordInfo = await backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId);
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecordInfo?.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordInfo?.ResourceGroupId);
                                     ContentDeliveryConfiguration contentDeliveryConfiguration = await contentDeliveryConfigPersistanceService.GetByIdAsync(contentDeliveryRecord?.ContentDeliveryConfigurationId);
 
                                     if (backupRecordInfo == null)

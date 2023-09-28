@@ -52,7 +52,7 @@ namespace SemanticBackup.API.Controllers
             {
                 if (string.IsNullOrWhiteSpace(id))
                     throw new Exception("Id can't be NULL");
-                var record = await _activeResourcegroupService.GetByIdAsync(id);
+                var record = await _activeResourcegroupService.GetByIdOrKeyAsync(id);
                 if (record == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 return record;
@@ -119,7 +119,7 @@ namespace SemanticBackup.API.Controllers
                     throw new Exception("Id can't be NULL");
                 //Verify Database Info Exists
                 //Proceed
-                var savedObj = await _activeResourcegroupService.GetByIdAsync(id);
+                var savedObj = await _activeResourcegroupService.GetByIdOrKeyAsync(id);
                 if (savedObj == null)
                     return new NotFoundObjectResult($"No Data Found with Key: {id}");
                 //Update Params

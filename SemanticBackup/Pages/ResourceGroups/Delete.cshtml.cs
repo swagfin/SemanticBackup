@@ -30,7 +30,7 @@ namespace SemanticBackup.Pages.ResourceGroups
                 ErrorMessage = null;
                 if (string.IsNullOrWhiteSpace(id))
                     return Redirect("/resource-groups/");
-                this.CurrentRecord = await this._resourceGroupsService.GetByIdAsync(id);
+                this.CurrentRecord = await this._resourceGroupsService.GetByIdOrKeyAsync(id);
                 if (this.CurrentRecord == null)
                     return Redirect("/resource-groups");
                 return Page();
@@ -49,7 +49,7 @@ namespace SemanticBackup.Pages.ResourceGroups
                 ErrorMessage = null;
                 if (string.IsNullOrWhiteSpace(id))
                     return Redirect("/resource-groups/");
-                this.CurrentRecord = await this._resourceGroupsService.GetByIdAsync(id);
+                this.CurrentRecord = await this._resourceGroupsService.GetByIdOrKeyAsync(id);
                 if (this.CurrentRecord == null)
                     return Redirect("/resource-groups");
                 //Confirm Delete

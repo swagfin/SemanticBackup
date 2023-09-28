@@ -120,7 +120,7 @@ namespace SemanticBackup.SignalRHubs
                     IDatabaseInfoRepository databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
 
                     //Proceed
-                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(resourcegroup);
+                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(resourcegroup);
                     DateTime currentTimeUTC = DateTime.UtcNow;
 
                     DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);

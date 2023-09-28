@@ -70,7 +70,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     else
                                     {
                                         //Check if valid Resource Group
-                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
+                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
                                         if (resourceGroup == null)
                                         {
                                             _logger.LogWarning($"The Database Id: {backupRecord.BackupDatabaseInfoId}, doesn't seem to have been assigned to a valid Resource Group Id: {backupDatabaseInfo.ResourceGroupId}, Record will be Deleted");
@@ -173,7 +173,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     IContentDeliveryRecordRepository contentDeliveryRecordsService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                     IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
                     BotsManagerBackgroundJob botsManagerBackgroundJob = scope.ServiceProvider.GetRequiredService<BotsManagerBackgroundJob>();
-                    ResourceGroup backRecordResourceGrp = await resourceGroupPersistanceService.GetByIdAsync(rm.ResourceGroupId);
+                    ResourceGroup backRecordResourceGrp = await resourceGroupPersistanceService.GetByIdOrKeyAsync(rm.ResourceGroupId);
                     if (backRecordResourceGrp == null)
                     {
                         _logger.LogWarning($"InDepth Deletion Failed, the Database Record has no valid Resource Group, Id: {rm.ResourceGroupId}, resource Group: {rm.ResourceGroupId}");

@@ -8,6 +8,8 @@ namespace SemanticBackup.Core.Models
         [Key, Required]
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
         [Required]
+        public string Key { get { return Name.FormatToUrlStyle(); } }
+        [Required]
         public string Name { get; set; }
         public long LastAccess { get; set; } = 0;
         public string TimeZone { get; set; }

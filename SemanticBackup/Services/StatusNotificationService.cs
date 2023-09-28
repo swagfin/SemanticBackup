@@ -46,7 +46,7 @@ namespace SemanticBackup.Services
                 {
                     IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                     //Info On Resource Group
-                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
+                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecord.ResourceGroupId);
                     if (resourceGroup == null)
                         return; //No Valid Resource Group
                     if (!resourceGroup.NotifyOnErrorBackups)
@@ -77,7 +77,7 @@ namespace SemanticBackup.Services
                     IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                     IBackupRecordRepository _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                     //Info On Resource Group
-                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(record.ResourceGroupId);
+                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(record.ResourceGroupId);
                     if (resourceGroup == null)
                         return; //No Valid Resource Group
                     if (!resourceGroup.NotifyOnErrorBackupDelivery)

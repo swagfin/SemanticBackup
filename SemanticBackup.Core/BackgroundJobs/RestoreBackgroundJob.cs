@@ -58,7 +58,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 {
                                     _logger.LogInformation($"Processing Queued Backup RESTORE Record Key: #{backupRecord.Id}...");
                                     BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecord.ResourceGroupId);
                                     if (backupDatabaseInfo != null && resourceGroup != null)
                                     {
                                         if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))

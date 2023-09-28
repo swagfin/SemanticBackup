@@ -72,7 +72,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     else
                                     {
                                         //Proceed
-                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
+                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
                                         if (resourceGroup == null)
                                         {
                                             _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");

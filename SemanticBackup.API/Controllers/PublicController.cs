@@ -83,7 +83,7 @@ namespace SemanticBackup.API.Controllers
                 var validDatabase = await _databaseInfoPersistanceService.GetByDatabaseNameAsync(db, type.ToString());
                 if (validDatabase == null)
                     return new List<BackupRecordResponse>();
-                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(validDatabase.ResourceGroupId);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(validDatabase.ResourceGroupId);
                 //Get Records By Database Id
                 List<BackupRecord> records = await _backupRecordPersistanceService.GetAllByDatabaseIdAsync(validDatabase.Id);
                 return records.Select(x => new BackupRecordResponse
@@ -129,7 +129,7 @@ namespace SemanticBackup.API.Controllers
                     return queuedExisting.FirstOrDefault();
                 }
                 //Resource Group
-                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo?.ResourceGroupId);
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo?.ResourceGroupId);
                 //Proceed Otherwise
                 DateTime currentTimeUTC = DateTime.UtcNow;
                 DateTime currentTimeLocal = currentTimeUTC.ConvertFromUTC(resourceGroup?.TimeZone);
