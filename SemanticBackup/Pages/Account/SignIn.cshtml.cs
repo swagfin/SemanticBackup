@@ -59,14 +59,14 @@ namespace SemanticBackup.Pages.Account
                         new Claim(ClaimTypes.PrimarySid, userAccount.Id),
                         new Claim(ClaimTypes.Hash, userAccount.LastLoginToken),
                         new Claim(ClaimTypes.NameIdentifier, userAccount.EmailAddress),
-                        new Claim("preference-timezone", "E. Africa Standard Time"),
-                        new Claim("preference-timezone-offset", "+03:00"),
+                        new Claim(nameof(userAccount.Timezone), userAccount.Timezone),
+                        new Claim(nameof(userAccount.TimezoneOffset), userAccount.TimezoneOffset),
                     };
                     //Prepare Selft Claims Identity
                     ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
                     AuthenticationProperties authProperties = new AuthenticationProperties
                     {
-                        ExpiresUtc = DateTime.UtcNow.AddDays(7),
+                        ExpiresUtc = DateTime.UtcNow.AddDays(24),
                         IsPersistent = true,
                     };
                     //Sign In User

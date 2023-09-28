@@ -12,6 +12,10 @@ namespace SemanticBackup.Core.Models
         public string EmailAddress { get; set; }
         [Required]
         public string Password { get; set; }
+
+        public string TimezoneOffset { get; set; } = "+03:00";
+        public string Timezone { get; set; } = "Africa/Nairobi";
+
         public UserAccountType UserAccountType { get; set; } = UserAccountType.ADMIN;
         public DateTime? LastLoginUTC { get; set; } = null;
         public string LastLoginToken { get; set; } = null;
