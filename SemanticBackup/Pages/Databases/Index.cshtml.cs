@@ -14,13 +14,16 @@ namespace SemanticBackup.Pages.Databases
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
+        private readonly IResourceGroupRepository _resourceGroupRepository;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
 
+        public ResourceGroup CurrentResourceGroup { get; private set; }
         public List<BackupDatabaseInfo> DatabaseResponse { get; set; }
 
-        public IndexModel(ILogger<IndexModel> logger, IDatabaseInfoRepository databaseInfoPersistanceService)
+        public IndexModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
             this._logger = logger;
+            this._resourceGroupRepository = resourceGroupRepository;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
 
@@ -28,6 +31,8 @@ namespace SemanticBackup.Pages.Databases
         {
             try
             {
+                //get resource group
+                CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
                 DatabaseResponse = await _databaseInfoPersistanceService.GetAllAsync(resourceGroupId);
             }
             catch (Exception ex)

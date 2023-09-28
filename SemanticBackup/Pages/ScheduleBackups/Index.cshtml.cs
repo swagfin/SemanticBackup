@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Pages.BackupSchedules
+namespace SemanticBackup.Pages.ScheduleBackups
 {
     [Authorize]
     public class IndexModel : PageModel

@@ -66,7 +66,7 @@ namespace SemanticBackup.Pages.Account
                     ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
                     AuthenticationProperties authProperties = new AuthenticationProperties
                     {
-                        ExpiresUtc = DateTime.UtcNow.AddMinutes(30),
+                        ExpiresUtc = DateTime.UtcNow.AddDays(7),
                         IsPersistent = true,
                     };
                     //Sign In User

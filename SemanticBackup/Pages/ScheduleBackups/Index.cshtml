@@ -1,11 +1,11 @@
-﻿@page
-@model SemanticBackup.Pages.BackupSchedules.IndexModel
+﻿@page "/resource-groups/{resourceGroupId}/schedule-backups"
+@model SemanticBackup.Pages.ScheduleBackups.IndexModel
 @{
     ViewData["Title"] = "Database Backups Schedules | All";
 }
 <div class="container pd-x-0">
     <div class="ui container">
-         <a class="btn btn-primary" asp-page="/DatabaseBackupSchedules/RegisterSchedule">Setup new Schedule</a>
+        <a class="btn btn-primary" href="">Setup new Schedule</a>
         <div class="ui header large">Database Backup Schedules</div>
         <div class="ui divider"></div>
 

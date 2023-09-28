@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Pages.Dashboard
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
@@ -30,7 +32,7 @@ namespace SemanticBackup.Pages.Dashboard
             catch (Exception ex)
             {
                 _logger.LogWarning(ex.Message);
-                return NotFound();
+                return Redirect("/");
             }
         }
     }

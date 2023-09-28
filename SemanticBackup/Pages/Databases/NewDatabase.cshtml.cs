@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace SemanticBackup.Pages.Databases
 {
     [Authorize]
-    public class RegisterDatabaseModel : PageModel
+    public class NewDatabaseModel : PageModel
     {
         public string AuthToken { get; }
 
@@ -23,7 +23,7 @@ namespace SemanticBackup.Pages.Databases
         [BindProperty]
         public IEnumerable<string> DatabaseNames { get; set; }
         public string ErrorResponse { get; set; } = null;
-        public RegisterDatabaseModel(ILogger<IndexModel> logger)
+        public NewDatabaseModel(ILogger<IndexModel> logger)
         {
             this._logger = logger;
         }
