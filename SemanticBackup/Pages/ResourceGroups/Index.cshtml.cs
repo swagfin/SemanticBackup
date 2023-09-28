@@ -16,8 +16,8 @@ namespace SemanticBackup.Pages.ResourceGroups
     {
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupRepository _resourceGroupPersistance;
-        public ResourceGroup CurrentResourceGroup { get { return OtherResourceGroups.GetDefaultGroup(); } }
-        public List<ResourceGroup> OtherResourceGroups { get; private set; }
+        public ResourceGroup CurrentResourceGroup { get { return ResourceGroups.GetDefaultGroup(); } }
+        public List<ResourceGroup> ResourceGroups { get; private set; }
 
         public IndexModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupPersistance)
         {
@@ -29,7 +29,7 @@ namespace SemanticBackup.Pages.ResourceGroups
         {
             try
             {
-                OtherResourceGroups = await _resourceGroupPersistance.GetAllAsync();
+                ResourceGroups = await _resourceGroupPersistance.GetAllAsync();
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }
             return Page();

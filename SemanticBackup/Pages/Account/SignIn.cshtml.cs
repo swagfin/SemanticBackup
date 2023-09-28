@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Models.Requests;
 using System;
 using System.Collections.Generic;
@@ -41,9 +42,9 @@ namespace SemanticBackup.Pages.Account
                     ErrorResponse = "Password is required to Login";
                 else
                 {
-                    var userAccount = await _userAccountRepository.GetByCredentialsAsync(signInRequest.Username, signInRequest.Password);
+                    UserAccount userAccount = await _userAccountRepository.GetByCredentialsAsync(signInRequest.Username, signInRequest.Password);
                     if (userAccount == null)
-                        return BadRequest("UserName/Email or Password is Incorrect");
+                        throw new Exception("UserName/Email or Password is Incorrect");
                     //Update Last Login
                     userAccount.LastLoginUTC = DateTime.UtcNow;
                     userAccount.LastLoginToken = Guid.NewGuid().ToString().ToUpper();
@@ -53,7 +54,13 @@ namespace SemanticBackup.Pages.Account
 
                     List<Claim> claims = new List<Claim>
                     {
-                        new Claim("userId", userAccount.Id)
+                        new Claim(ClaimTypes.Name, userAccount.FullName),
+                        new Claim(ClaimTypes.Email, userAccount.EmailAddress),
+                        new Claim(ClaimTypes.PrimarySid, userAccount.Id),
+                        new Claim(ClaimTypes.Hash, userAccount.LastLoginToken),
+                        new Claim(ClaimTypes.NameIdentifier, userAccount.EmailAddress),
+                        new Claim("preference-timezone", "E. Africa Standard Time"),
+                        new Claim("preference-timezone-offset", "+03:00"),
                     };
                     //Prepare Selft Claims Identity
                     ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);

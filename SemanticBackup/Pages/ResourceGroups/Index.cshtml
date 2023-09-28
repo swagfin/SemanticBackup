@@ -50,9 +50,7 @@
                             </div>
                         </div>
 
-                        @if (Model.OtherResourceGroups != null && Model.OtherResourceGroups.Count > 0)
-                        {
-                            foreach (var resourceGrp in Model.OtherResourceGroups)
+                        @foreach (var resourceGrp in Model.ResourceGroups.Where(x=>x.Id != Model.CurrentResourceGroup.Id))
                             {
                                 <div class="card">
                                     <div class="content">
@@ -75,7 +73,6 @@
                                     </div>
                                 </div>
                             }
-                        }
                     </section>
 
                 }
