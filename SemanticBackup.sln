@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.Core", "Sema
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.WebClient", "SemanticBackup.WebClient\SemanticBackup.WebClient.csproj", "{D701ADB1-914F-4114-8259-0F904CC34E6F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticBackup", "SemanticBackup\SemanticBackup.csproj", "{7378609A-3DA4-4B26-AFDB-5C7C16CF6DEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup", "SemanticBackup\SemanticBackup.csproj", "{7378609A-3DA4-4B26-AFDB-5C7C16CF6DEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -24,11 +24,11 @@ namespace SemanticBackup.Pages.Databases
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(string resourceGroupId)
         {
             try
             {
-                DatabaseResponse = await _databaseInfoPersistanceService.GetAllAsync("1");
+                DatabaseResponse = await _databaseInfoPersistanceService.GetAllAsync(resourceGroupId);
             }
             catch (Exception ex)
             {

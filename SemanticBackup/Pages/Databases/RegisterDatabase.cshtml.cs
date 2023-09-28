@@ -27,10 +27,10 @@ namespace SemanticBackup.Pages.Databases
         {
             this._logger = logger;
         }
-        public void OnGet()
+        public void OnGet(string resourceGroupId)
         {
         }
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(string resourceGroupId)
         {
             try
             {

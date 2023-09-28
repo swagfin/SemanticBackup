@@ -27,7 +27,7 @@ namespace SemanticBackup.Pages.Databases
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(string resourceGroupId, string id)
         {
             try
             {
