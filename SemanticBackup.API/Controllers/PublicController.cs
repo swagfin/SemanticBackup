@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.API.Models.Requests;
-using SemanticBackup.API.Models.Response;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
+using SemanticBackup.Core.Models.Response;
 using System;
 using System.Collections.Generic;
 using System.Linq;

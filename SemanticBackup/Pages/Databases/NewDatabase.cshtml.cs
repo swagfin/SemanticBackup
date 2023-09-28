@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Models.Requests;
 using System;
 using System.Collections.Generic;
@@ -25,19 +26,25 @@ namespace SemanticBackup.Pages.Databases
         [BindProperty]
         public IEnumerable<string> DatabaseNames { get; set; }
         public string ErrorResponse { get; set; } = null;
+        public ResourceGroup CurrentResourceGroup { get; private set; }
+
         public NewDatabaseModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository)
         {
             this._logger = logger;
             this._resourceGroupRepository = resourceGroupRepository;
         }
-        public void OnGet(string resourceGroupId)
+        public async Task<IActionResult> OnGetAsync(string resourceGroupId)
         {
             try
             {
-                //get resource group
                 CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
+                return Page();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex.Message);
+                return Redirect("/");
+            }
         }
         public async Task<IActionResult> OnPostAsync(string resourceGroupId)
         {

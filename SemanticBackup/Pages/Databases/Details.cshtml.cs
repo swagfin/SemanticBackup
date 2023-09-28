@@ -16,7 +16,6 @@ namespace SemanticBackup.Pages.Databases
         private readonly ILogger<IndexModel> _logger;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
 
-        public string ApiEndPoint { get; }
         public BackupDatabaseInfo DatabaseResponse { get; set; }
         public List<BackupRecord> BackupRecordsResponse { get; private set; }
         public List<BackupSchedule> BackupSchedulesResponse { get; private set; }
@@ -31,7 +30,6 @@ namespace SemanticBackup.Pages.Databases
         {
             try
             {
-                var url = $"api/BackupDatabases/{id}";
                 DatabaseResponse = await _databaseInfoPersistanceService.GetByIdAsync(id);
                 //Get Backups
                 await GetBackupRecordsForDatabaseAsync(id);
