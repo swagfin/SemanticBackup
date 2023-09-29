@@ -41,7 +41,7 @@ namespace SemanticBackup.Core.Logic
         {
             return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.Id == id.Trim()).OrderBy(x => x.Name).FirstOrDefaultAsync();
         }
-        public async Task<BackupDatabaseInfo> VerifyByIdOrDbNameThrowIfNotExistAsync(string resourceGroupId, string databaseIdentifier)
+        public async Task<BackupDatabaseInfo> VerifyDatabaseInResourceGroupThrowIfNotExistAsync(string resourceGroupId, string databaseIdentifier)
         {
             return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId && (x.Id == databaseIdentifier.Trim() || x.DatabaseName == databaseIdentifier.Trim())).FirstOrDefaultAsync() ?? throw new Exception($"unknown database with identity key {databaseIdentifier} under resource group id: {resourceGroupId}");
         }

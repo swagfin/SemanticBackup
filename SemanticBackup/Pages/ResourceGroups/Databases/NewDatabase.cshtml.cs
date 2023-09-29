@@ -19,19 +19,23 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
 
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupRepository _resourceGroupRepository;
+        private readonly IDatabaseInfoRepository _databaseInfoRepository;
+        private readonly IBackupScheduleRepository _backupScheduleRepository;
 
         public string ApiEndPoint { get; }
         [BindProperty]
-        public BackupDatabaseRequest backupDatabaseRequest { get; set; }
+        public DatabaseInfoRequest backupDatabaseRequest { get; set; }
         [BindProperty]
         public IEnumerable<string> DatabaseNames { get; set; }
         public string ErrorResponse { get; set; } = null;
         public ResourceGroup CurrentResourceGroup { get; private set; }
 
-        public NewDatabaseModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository)
+        public NewDatabaseModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoRepository, IBackupScheduleRepository backupScheduleRepository)
         {
             this._logger = logger;
             this._resourceGroupRepository = resourceGroupRepository;
+            this._databaseInfoRepository = databaseInfoRepository;
+            this._backupScheduleRepository = backupScheduleRepository;
         }
         public async Task<IActionResult> OnGetAsync(string resourceGroupId)
         {
@@ -51,6 +55,9 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
             try
             {
                 ErrorResponse = null;
+                //re-attemp to get resource group
+                CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
+                //proceed
                 if (string.IsNullOrWhiteSpace(backupDatabaseRequest.DatabaseType))
                 {
                     ErrorResponse = "First Select the Database Type";
@@ -66,14 +73,29 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                     ErrorResponse = "Select or add atlist one Database";
                     return Page();
                 }
-                else
+
+                foreach (string database in DatabaseNames.ToList())
                 {
-                    backupDatabaseRequest.DatabaseName = string.Join(",", DatabaseNames.Select(x => x));
+                    BackupDatabaseInfo saveObj = new BackupDatabaseInfo
+                    {
+                        ResourceGroupId = CurrentResourceGroup.Id,
+                        Server = backupDatabaseRequest.Server,
+                        DatabaseName = database.Trim(),
+                        Username = backupDatabaseRequest.Username,
+                        Password = backupDatabaseRequest.Password,
+                        DatabaseType = backupDatabaseRequest.DatabaseType,
+                        Port = backupDatabaseRequest.Port,
+                        Description = backupDatabaseRequest.Description,
+                        DateRegisteredUTC = DateTime.UtcNow
+                    };
+                    bool savedSuccess = await _databaseInfoRepository.AddOrUpdateAsync(saveObj);
+                    if (!savedSuccess)
+                        throw new Exception($"unable to save database: {saveObj.Name}");
+                    if (backupDatabaseRequest.AutoCreateSchedule)
+                        await CreateScheduleForAsync(saveObj);
                 }
-                //Proceed
-                //var url = "api/BackupDatabases/";
-                //var result = await _httpService.PostAsync<StatusResponseModel>(url, backupDatabaseRequest);
-                return RedirectToPage("Index");
+                //redirect to databases
+                return Redirect($"/resource-groups/{resourceGroupId}/databases");
             }
             catch (Exception ex)
             {
@@ -81,7 +103,28 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 ErrorResponse = ex.Message;
                 return Page();
             }
+        }
 
+        private async Task CreateScheduleForAsync(BackupDatabaseInfo databaseInfo)
+        {
+            try
+            {
+                DateTime currentTimeUTC = DateTime.UtcNow;
+                BackupSchedule saveObj = new BackupSchedule
+                {
+                    BackupDatabaseInfoId = databaseInfo.Id,
+                    ResourceGroupId = databaseInfo.ResourceGroupId,
+                    ScheduleType = BackupScheduleType.FULLBACKUP.ToString(),
+                    EveryHours = 24,
+                    StartDateUTC = new DateTime(currentTimeUTC.Year, currentTimeUTC.Month, currentTimeUTC.Day + 1),
+                    CreatedOnUTC = currentTimeUTC,
+                    Name = databaseInfo.Name
+                };
+                bool savedSuccess = await _backupScheduleRepository.AddOrUpdateAsync(saveObj);
+                if (!savedSuccess)
+                    throw new Exception("Data was not Saved");
+            }
+            catch (Exception ex) { _logger.LogWarning($"Unable to Auto Create Daily Backup for Database Key: {databaseInfo.Id},Error: {ex.Message}"); }
         }
     }
 }

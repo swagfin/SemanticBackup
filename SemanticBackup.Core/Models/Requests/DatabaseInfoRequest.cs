@@ -2,7 +2,7 @@
 
 namespace SemanticBackup.Core.Models.Requests
 {
-    public class BackupDatabaseRequest
+    public class DatabaseInfoRequest
     {
         [Required]
         public string Server { get; set; } = "127.0.0.1";

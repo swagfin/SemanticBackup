@@ -13,6 +13,6 @@ namespace SemanticBackup.Core.Interfaces
         Task<bool> AddOrUpdateAsync(BackupDatabaseInfo record);
         Task<bool> UpdateAsync(BackupDatabaseInfo record);
         Task<int> GetAllCountAsync(string resourceGroupId);
-        Task<BackupDatabaseInfo> VerifyByIdOrDbNameThrowIfNotExistAsync(string resourceGroupId, string databaseIdentifier);
+        Task<BackupDatabaseInfo> VerifyDatabaseInResourceGroupThrowIfNotExistAsync(string resourceGroupId, string databaseIdentifier);
     }
 }

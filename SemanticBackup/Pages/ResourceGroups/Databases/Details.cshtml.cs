@@ -6,6 +6,7 @@ using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Pages.ResourceGroups.Databases
@@ -16,17 +17,21 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupRepository _resourceGroupRepository;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
+        private readonly IBackupRecordRepository _backupRecordRepository;
+        private readonly IBackupScheduleRepository _backupScheduleRepository;
 
         public ResourceGroup CurrentResourceGroup { get; private set; }
         public BackupDatabaseInfo DatabaseResponse { get; set; }
         public List<BackupRecord> BackupRecordsResponse { get; private set; }
         public List<BackupSchedule> BackupSchedulesResponse { get; private set; }
 
-        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService)
+        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService, IBackupRecordRepository backupRecordRepository, IBackupScheduleRepository backupScheduleRepository)
         {
             this._logger = logger;
             this._resourceGroupRepository = resourceGroupRepository;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
+            this._backupRecordRepository = backupRecordRepository;
+            this._backupScheduleRepository = backupScheduleRepository;
         }
 
         public async Task<IActionResult> OnGetAsync(string resourceGroupId, string id)
@@ -34,10 +39,10 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
             try
             {
                 CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
-                DatabaseResponse = await _databaseInfoPersistanceService.GetByIdAsync(id);
+                DatabaseResponse = await _databaseInfoPersistanceService.VerifyDatabaseInResourceGroupThrowIfNotExistAsync(CurrentResourceGroup.Id, id);
                 //Get Backups
-                await GetBackupRecordsForDatabaseAsync(id);
-                await GetBackupSchedulesForDatabaseAsync(id);
+                await GetBackupRecordsForDatabaseAsync(DatabaseResponse.Id);
+                await GetBackupSchedulesForDatabaseAsync(DatabaseResponse.Id);
                 return Page();
             }
             catch (Exception ex)
@@ -94,10 +99,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
         {
             try
             {
-                //var url = $"api/BackupRecords/ByDatabaseId/{id}";
-                //var records = await _httpService.GetAsync<List<BackupRecordResponse>>(url);
-                //if (records != null)
-                //    BackupRecordsResponse = records.Take(10).ToList();
+                BackupRecordsResponse = (await _backupRecordRepository.GetAllByDatabaseIdAsync(id))?.Take(10).ToList();
             }
             catch (Exception ex) { _logger.LogWarning($"Unable to Get Database Backup Records for Db: {id}, Error: {ex.Message}"); }
 
@@ -106,8 +108,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
         {
             try
             {
-                //var url = $"api/BackupSchedules/ByDatabaseId/{id}";
-                //BackupSchedulesResponse = await _httpService.GetAsync<List<BackupScheduleResponse>>(url);
+                BackupSchedulesResponse = await _backupScheduleRepository.GetAllByDatabaseIdAsync(id);
             }
             catch (Exception ex) { _logger.LogWarning($"Unable to Get Database Schedules for Db: {id}, Error: {ex.Message}"); }
         }

@@ -33,7 +33,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
             {
                 //get resource group
                 CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
-                DatabaseResponse = await _databaseInfoPersistanceService.GetAllAsync(resourceGroupId);
+                DatabaseResponse = await _databaseInfoPersistanceService.GetAllAsync(CurrentResourceGroup.Id);
                 return Page();
             }
             catch (Exception ex)
