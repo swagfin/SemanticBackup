@@ -34,6 +34,7 @@ namespace SemanticBackup.Core.Logic
         public async Task<bool> AddAsync(ResourceGroup record)
         {
             record.Id = Guid.NewGuid().ToString().ToUpper();
+            record.Name = record.Name.Trim();
             //attempt to check if exists
             ResourceGroup preExistingRecord = await GetByIdOrKeyAsync(record.Id);
             if (preExistingRecord != null)
@@ -48,7 +49,7 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<ResourceGroup> GetByIdOrKeyAsync(string resourceGroupIdentifier)
         {
-            return await _db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == resourceGroupIdentifier || x.Key == resourceGroupIdentifier).FirstOrDefaultAsync();
+            return await _db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == resourceGroupIdentifier.Trim() || x.Key == resourceGroupIdentifier.Trim()).FirstOrDefaultAsync();
         }
         public async Task<ResourceGroup> VerifyByIdOrKeyThrowIfNotExistAsync(string resourceGroupIdentifier)
         {

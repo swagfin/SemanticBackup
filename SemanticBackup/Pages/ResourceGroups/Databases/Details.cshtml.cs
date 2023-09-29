@@ -8,21 +8,24 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Pages.Databases
+namespace SemanticBackup.Pages.ResourceGroups.Databases
 {
     [Authorize]
     public class DetailsModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
+        private readonly IResourceGroupRepository _resourceGroupRepository;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
 
+        public ResourceGroup CurrentResourceGroup { get; private set; }
         public BackupDatabaseInfo DatabaseResponse { get; set; }
         public List<BackupRecord> BackupRecordsResponse { get; private set; }
         public List<BackupSchedule> BackupSchedulesResponse { get; private set; }
 
-        public DetailsModel(ILogger<IndexModel> logger, IDatabaseInfoRepository databaseInfoPersistanceService)
+        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
             this._logger = logger;
+            this._resourceGroupRepository = resourceGroupRepository;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
 
@@ -30,17 +33,18 @@ namespace SemanticBackup.Pages.Databases
         {
             try
             {
+                CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
                 DatabaseResponse = await _databaseInfoPersistanceService.GetByIdAsync(id);
                 //Get Backups
                 await GetBackupRecordsForDatabaseAsync(id);
                 await GetBackupSchedulesForDatabaseAsync(id);
+                return Page();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return RedirectToPage("Index");
+                return Redirect("/");
             }
-            return Page();
         }
         public async Task<IActionResult> OnPostAsync(string id)
         {

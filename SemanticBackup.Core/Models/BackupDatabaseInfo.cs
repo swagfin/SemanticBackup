@@ -16,7 +16,7 @@ namespace SemanticBackup.Core.Models
         public string Username { get; set; }
         public string Password { get; set; }
         public int Port { get; set; } = 0;
-        [Required]
+        [Required, MinLength(3)]
         public string DatabaseName { get; set; }
         [Required]
         public string DatabaseType { get; set; } = BackupDatabaseInfoDbType.SQLSERVER2019.ToString();

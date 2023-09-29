@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Pages.Databases
+namespace SemanticBackup.Pages.ResourceGroups.Databases
 {
     [Authorize]
     public class IndexModel : PageModel

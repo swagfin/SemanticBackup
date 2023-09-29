@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Pages.Databases
+namespace SemanticBackup.Pages.ResourceGroups.Databases
 {
     [Authorize]
     public class NewDatabaseModel : PageModel
