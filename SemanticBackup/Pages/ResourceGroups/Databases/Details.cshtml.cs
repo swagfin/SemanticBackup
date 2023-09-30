@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,22 +19,24 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
     {
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupRepository _resourceGroupRepository;
-        private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
+        private readonly IDatabaseInfoRepository _databaseInfoRepository;
         private readonly IBackupRecordRepository _backupRecordRepository;
         private readonly IBackupScheduleRepository _backupScheduleRepository;
+        private readonly SystemConfigOptions _options;
 
         public ResourceGroup CurrentResourceGroup { get; private set; }
-        public BackupDatabaseInfo DatabaseResponse { get; set; }
+        public BackupDatabaseInfo DatabaseInfoResponse { get; set; }
         public List<BackupRecord> BackupRecordsResponse { get; private set; }
         public List<BackupSchedule> BackupSchedulesResponse { get; private set; }
 
-        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService, IBackupRecordRepository backupRecordRepository, IBackupScheduleRepository backupScheduleRepository)
+        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService, IBackupRecordRepository backupRecordRepository, IBackupScheduleRepository backupScheduleRepository, IOptions<SystemConfigOptions> options)
         {
             this._logger = logger;
             this._resourceGroupRepository = resourceGroupRepository;
-            this._databaseInfoPersistanceService = databaseInfoPersistanceService;
+            this._databaseInfoRepository = databaseInfoPersistanceService;
             this._backupRecordRepository = backupRecordRepository;
             this._backupScheduleRepository = backupScheduleRepository;
+            this._options = options.Value;
         }
 
         public async Task<IActionResult> OnGetAsync(string resourceGroupId, string id)
@@ -39,10 +44,24 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
             try
             {
                 CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
-                DatabaseResponse = await _databaseInfoPersistanceService.VerifyDatabaseInResourceGroupThrowIfNotExistAsync(CurrentResourceGroup.Id, id);
+                DatabaseInfoResponse = await _databaseInfoRepository.VerifyDatabaseInResourceGroupThrowIfNotExistAsync(CurrentResourceGroup.Id, id);
+                //get instant backups
+                if (Request.Query.ContainsKey("request"))
+                {
+                    string responseCode = "unknown-request";
+                    switch (Request.Query["request"].ToString()?.Trim().ToLower())
+                    {
+                        case "backup":
+                            //rerun backup
+                            responseCode = await InitiateDatabaseBackupAsync(DatabaseInfoResponse.Id);
+                            break;
+                    }
+                    //redirect to avoid multi-click
+                    return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?response={responseCode}");
+                }
                 //Get Backups
-                await GetBackupRecordsForDatabaseAsync(DatabaseResponse.Id);
-                await GetBackupSchedulesForDatabaseAsync(DatabaseResponse.Id);
+                await GetBackupRecordsForDatabaseAsync(DatabaseInfoResponse.Id);
+                await GetBackupSchedulesForDatabaseAsync(DatabaseInfoResponse.Id);
                 return Page();
             }
             catch (Exception ex)
@@ -51,49 +70,41 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 return Redirect("/");
             }
         }
-        public async Task<IActionResult> OnPostAsync(string id)
+
+        private async Task<string> InitiateDatabaseBackupAsync(string id)
         {
             try
             {
-                //    if (string.IsNullOrWhiteSpace(id))
-                //        throw new Exception("Id can't be NULL");
-                //    var backupDatabaseInfo = await _databaseInfoPersistanceService.GetByIdAsync(id);
-                //    if (backupDatabaseInfo == null)
-                //        return new NotFoundObjectResult($"No Data Found with Key: {id}");
-                //    //Check if an Existing Queued
-                //    var queuedExisting = await this._backupRecordPersistanceService.GetAllByDatabaseIdByStatusAsync(backupDatabaseInfo.ResourceGroupId, backupDatabaseInfo.Id, BackupRecordBackupStatus.QUEUED.ToString());
-                //    if (queuedExisting != null && queuedExisting.Count > 0)
-                //    {
-                //        //No Need to Create another Just Return
-                //        return queuedExisting.FirstOrDefault();
-                //    }
-                //    //Resource Group
-                //    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo?.ResourceGroupId);
-                //    //Proceed Otherwise
-                //    DateTime currentTimeUTC = DateTime.UtcNow;
-                //    DateTime currentTimeLocal = currentTimeUTC.ConvertFromUTC(resourceGroup?.TimeZone);
-                //    DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
-                //    BackupRecord newRecord = new BackupRecord
-                //    {
-                //        BackupDatabaseInfoId = backupDatabaseInfo.Id,
-                //        ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
-                //        BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
-                //        ExpiryDateUTC = RecordExpiryUTC,
-                //        Name = backupDatabaseInfo.Name,
-                //        Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeLocal)),
-                //        StatusUpdateDateUTC = currentTimeUTC,
-                //        RegisteredDateUTC = currentTimeUTC,
-                //        ExecutedDeliveryRun = false
-                //    };
-                //    bool addedSuccess = await this._backupRecordPersistanceService.AddOrUpdateAsync(newRecord);
-                //    return Redirect($"/databasebackups/{backupRecord.Id}");
+                //Check if an Existing Queued
+                List<BackupRecord> queuedExisting = await this._backupRecordRepository.GetAllByDatabaseIdByStatusAsync(CurrentResourceGroup.Id, DatabaseInfoResponse.Id, BackupRecordBackupStatus.QUEUED.ToString());
+                if (queuedExisting != null && queuedExisting.Count > 0)
+                    return "queued";
+                //init requeue db
+                DateTime currentTimeUTC = DateTime.UtcNow;
+                DateTime currentTimeLocal = DateTime.Now;
+                DateTime RecordExpiryUTC = currentTimeUTC.AddDays(CurrentResourceGroup.BackupExpiryAgeInDays);
+                BackupRecord newRecord = new BackupRecord
+                {
+                    BackupDatabaseInfoId = DatabaseInfoResponse.Id,
+                    ResourceGroupId = CurrentResourceGroup.Id,
+                    BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
+                    ExpiryDateUTC = RecordExpiryUTC,
+                    Name = DatabaseInfoResponse.Name,
+                    Path = Path.Combine(_options.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(DatabaseInfoResponse, _options.BackupFileSaveFormat, currentTimeLocal)),
+                    StatusUpdateDateUTC = currentTimeUTC,
+                    RegisteredDateUTC = currentTimeUTC,
+                    ExecutedDeliveryRun = false
+                };
+                bool addedSuccess = await this._backupRecordRepository.AddOrUpdateAsync(newRecord);
+                return addedSuccess ? "success" : throw new Exception("could not save queue for a instant backup");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogWarning($"Unable to request for backup for database: {id}, Error: {ex.Message}");
+                return "failed";
             }
-            return Redirect($"/databases/{id}");
         }
+
 
         private async Task GetBackupRecordsForDatabaseAsync(string id)
         {

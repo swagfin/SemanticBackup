@@ -1,13 +1,13 @@
 ﻿@page "/resource-groups/{resourceGroupId}/databases/details/{id}"
 @model SemanticBackup.Pages.ResourceGroups.Databases.DetailsModel
 @{
-    ViewData["Title"] = $"Databases | Info #{Model.DatabaseResponse?.DatabaseName}";
+    ViewData["Title"] = $"Databases | Info #{Model.DatabaseInfoResponse?.DatabaseName}";
 }
 <div class="container pd-x-0">
     <div class="ui container">
 
         <div class="ui header large">
-            Info #@(Model.DatabaseResponse?.DatabaseName)
+            Info #@(Model.DatabaseInfoResponse?.DatabaseName)
         </div>
 
         <div class="ui celled list">
@@ -15,35 +15,35 @@
                 <i class="database blue icon"></i>
                 <div class="content">
                     <div class="header">DATABASE NAME</div>
-                    @Model.DatabaseResponse.DatabaseName
+                    @Model.DatabaseInfoResponse.DatabaseName
                 </div>
             </div>
             <div class="item">
                 <i class="desktop blue icon"></i>
                 <div class="content">
                     <div class="header">SERVER</div>
-                    @Model.DatabaseResponse.Server
+                    @Model.DatabaseInfoResponse.Server
                 </div>
             </div>
             <div class="item">
                 <i class="key blue icon"></i>
                 <div class="content">
                     <div class="header">CREDENTIALS</div>
-                    <span> <b>Username:</b>@Model.DatabaseResponse.Username</span>  <span style="margin-left:7px"> <b>Password:</b>   @Model.DatabaseResponse.Password</span>
+                    <span> <b>Username:</b>@Model.DatabaseInfoResponse.Username</span>  <span style="margin-left:7px"> <b>Password:</b>   @Model.DatabaseInfoResponse.Password</span>
                 </div>
             </div>
             <div class="item">
                 <i class="database blue icon"></i>
                 <div class="content">
                     <div class="header">DATABASE TYPE</div>
-                    <span class="ui mini basic @(Model.DatabaseResponse.ColorCode) label">@(Model.DatabaseResponse.DatabaseType)</span>
+                    <span class="ui mini basic @(Model.DatabaseInfoResponse.ColorCode) label">@(Model.DatabaseInfoResponse.DatabaseType)</span>
                 </div>
             </div>
             <div class="item">
                 <i class="info blue icon"></i>
                 <div class="content">
                     <div class="header">Description</div>
-                    @(string.Format("{0:N0} DAYS", Model.DatabaseResponse.Description))
+                    @(string.Format("{0:N0} DAYS", Model.DatabaseInfoResponse.Description))
                 </div>
             </div>
         </div>
@@ -58,9 +58,7 @@
                     <h3>Recent 10 Backups</h3>
                 </div>
                 <div class="eight wide column">
-                    <form asp-page="Info" method="post">
-                        <button class="ui tiny green button right floated" href="/databasebackupschedules/RegisterSchedule/"><i class="cloud upload icon"></i>Get Instant Backup</button>
-                    </form>
+                    <a class="ui tiny green button right floated" href="?request=backup"><i class="cloud upload icon"></i>Get Instant Backup</a>
                 </div>
             </section>
 
@@ -196,7 +194,7 @@
             $('.menu .item').tab();
 
             //Create Main Obersavable
-            var currentRecordId = @(Html.Raw(Json.Serialize(Model.DatabaseResponse?.Id)));
+            var currentRecordId = @(Html.Raw(Json.Serialize(Model.DatabaseInfoResponse?.Id)));
             _ = getListenerAsync(baseUrl + "BackupRecordsNotify", currentRecordId, "ReceiveNotification", function (response) {
                 console.log("Received Database Backup Status Update");
                 //console.log(response);

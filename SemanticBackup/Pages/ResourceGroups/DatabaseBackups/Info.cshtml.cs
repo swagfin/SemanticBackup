@@ -48,7 +48,6 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 this.RerunStatusReason = null;
                 //check if re-run selection
                 if (Request.Query.ContainsKey("re-run") && Request.Query.ContainsKey("job"))
-                {
                     switch (Request.Query["re-run"].ToString()?.Trim().ToLower())
                     {
                         case "backup":
@@ -58,10 +57,9 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                         case "delivery":
                             //rerun delivery
                             await InitiateRerunForDeliveryAsync(Request.Query["job"].ToString()?.Trim().ToLower());
-
                             break;
                     }
-                }
+                //return page
                 return Page();
             }
             catch (Exception ex)
