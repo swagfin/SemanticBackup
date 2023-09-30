@@ -68,6 +68,8 @@ namespace SemanticBackup
                 app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
+            //Init SemanticCore Services
+            app.UseSemanticBackupCoreServices();
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +18,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
-        public BackupBackgroundJob(
-            ILogger<BackupBackgroundJob> logger,
-            SystemConfigOptions persistanceOptions,
-            IServiceScopeFactory serviceScopeFactory,
-            BotsManagerBackgroundJob botsManagerBackgroundJob)
+        public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger, SystemConfigOptions persistanceOptions, IServiceScopeFactory serviceScopeFactory, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;

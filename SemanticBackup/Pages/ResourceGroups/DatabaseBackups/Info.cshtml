@@ -12,7 +12,7 @@
         <div class="eight wide column">
             @if (Model.BackupRecordResponse.BackupStatus == "ERROR")
             {
-                <a class="ui small blue button right floated can-reque-enabled" href="?re-run=backup&job=@(Model.CurrentResourceGroup.Id)"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small blue button right floated can-reque-enabled" href="?re-run=backup&job=current"><i class="refresh icon"></i>Re-run Backup Job</a>
                 <a class="ui small button disabled right floated can-reque-disabled" hidden onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
             }
             else

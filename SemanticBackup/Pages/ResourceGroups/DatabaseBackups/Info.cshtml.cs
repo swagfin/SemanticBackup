@@ -49,16 +49,15 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 //check if re-run selection
                 if (Request.Query.ContainsKey("re-run") && Request.Query.ContainsKey("job"))
                 {
-                    string rerunJobId = Request.Query["job"].ToString()?.Trim().ToLower();
                     switch (Request.Query["re-run"].ToString()?.Trim().ToLower())
                     {
                         case "backup":
                             //rerun backup
-                            await InitiateRerunForBackupAsync(rerunJobId);
+                            await InitiateRerunForBackupAsync(BackupRecordResponse.Id);
                             break;
                         case "delivery":
                             //rerun delivery
-                            await InitiateRerunForDeliveryAsync(rerunJobId);
+                            await InitiateRerunForDeliveryAsync(Request.Query["job"].ToString()?.Trim().ToLower());
 
                             break;
                     }
