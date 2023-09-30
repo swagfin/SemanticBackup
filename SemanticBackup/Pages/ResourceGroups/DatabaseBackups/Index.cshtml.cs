@@ -8,35 +8,38 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SemanticBackup.Pages.DatabaseBackups
+namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
 {
     [Authorize]
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
+        private readonly IResourceGroupRepository _resourceGroupRepository;
         private readonly IBackupRecordRepository _backupRecordPersistanceService;
-        private readonly IResourceGroupRepository _resourceGroupPersistanceService;
 
+        public ResourceGroup CurrentResourceGroup { get; private set; }
         public List<BackupRecord> BackupRecordsResponse { get; set; }
-        public IndexModel(ILogger<IndexModel> logger, IBackupRecordRepository backupRecordPersistanceService, IResourceGroupRepository resourceGroupPersistanceService)
+        public IndexModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IBackupRecordRepository backupRecordPersistanceService)
         {
             this._logger = logger;
+            this._resourceGroupRepository = resourceGroupRepository;
             this._backupRecordPersistanceService = backupRecordPersistanceService;
-            this._resourceGroupPersistanceService = resourceGroupPersistanceService;
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(string resourceGroupId)
         {
             try
             {
-                BackupRecordsResponse = await _backupRecordPersistanceService.GetAllAsync("1");
-                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync("1");
+                //get resource group
+                CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
+                BackupRecordsResponse = await _backupRecordPersistanceService.GetAllAsync(CurrentResourceGroup.Id);
+                return Page();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
+                return Redirect("/");
             }
-            return Page();
         }
     }
 }

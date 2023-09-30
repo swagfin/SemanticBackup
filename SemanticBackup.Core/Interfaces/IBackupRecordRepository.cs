@@ -25,5 +25,6 @@ namespace SemanticBackup.Core.Interfaces
         Task<List<string>> GetAllNoneResponsiveIdsAsync(List<string> statusChecks, int minuteDifference);
         Task<int> GetAllCountAsync(string resourcegroup);
         Task<List<BackupRecord>> GetAllByRestoreStatusAsync(string status);
+        Task<BackupRecord> VerifyBackupRecordInResourceGroupThrowIfNotExistAsync(string resourceGroupId, string backupRecordIdentifier);
     }
 }

@@ -135,7 +135,10 @@ namespace SemanticBackup.Core.Logic
         {
             return await _db.GetCollection<BackupRecord>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();
         }
-
+        public async Task<BackupRecord> VerifyBackupRecordInResourceGroupThrowIfNotExistAsync(string resourceGroupId, string backupRecordIdentifier)
+        {
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId && (x.Id == backupRecordIdentifier.Trim() || x.Name == backupRecordIdentifier.Trim())).FirstOrDefaultAsync() ?? throw new Exception($"unknown backup record with identity key {backupRecordIdentifier} under resource group id: {resourceGroupId}");
+        }
         public async Task<bool> RemoveAsync(string id)
         {
             var collection = _db.GetCollection<BackupRecord>();
@@ -231,6 +234,7 @@ namespace SemanticBackup.Core.Logic
             }
             catch (Exception) { }
         }
+
 
     }
 }
