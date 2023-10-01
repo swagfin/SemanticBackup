@@ -163,8 +163,8 @@
                                     <td class="positive" style="font-weight:bold;font-size:12px"> <i class="clock icon"></i> @record.Name</td>
                                     <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
                                     <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
-                                    <td>@(record.LastRunPreviewable)</td>
-                                    <td>@string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRunUTC)</td>
+                                    <td>@(record.LastRunUTC.ToLastRunPreviewableWithTimezone(User.GetUserTimeZoneOffset()))</td>
+                                    <td>@string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRunUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))</td>
                                 </tr>
                             }
                         else

@@ -52,6 +52,66 @@
         }
     return time;
 }
+//convert date from YYYY-MM-DD HH:mm to Local Time
+function adjustDateWithTimezoneOffset(dateString, timezoneOffset = "00:00") {
+    const utcDate = new Date(dateString + "Z"); // Append 'Z' to indicate UTC time
+
+    if (isNaN(utcDate.getTime())) {
+        throw new Error("Invalid date format.");
+    }
+    //offets cals
+    let sign = 1;
+    let hours = 0;
+    let minutes = 0;
+
+    //retrive timezone parts
+    const offsetParts = timezoneOffset.match(/([+-])(\d{2}|00):(\d{2}|00)/);
+    if (offsetParts) {
+        //use offets
+        sign = offsetParts[1] === "+" ? 1 : -1;
+        hours = parseInt(offsetParts[2], 10);
+        minutes = parseInt(offsetParts[3], 10);
+    }
+
+    // Calculate the offset in milliseconds
+    const offsetMilliseconds = (hours * 60 + minutes) * 60 * 1000 * sign;
+
+    // Adjust the date with the offset
+    const adjustedDate = new Date(utcDate.getTime() + offsetMilliseconds);
+
+    return adjustedDate;
+}
+//format date
+function DateToString(adjustedDate) {
+    // Format the adjusted date as "YYYY-MM-DD hh:mm tt"
+    const formattedDate =
+        adjustedDate.getUTCFullYear().toString().padStart(4, "0") +
+        "-" +
+        (adjustedDate.getUTCMonth() + 1).toString().padStart(2, "0") +
+        "-" +
+        adjustedDate.getUTCDate().toString().padStart(2, "0") +
+        " " +
+        (adjustedDate.getUTCHours() % 12 || 12) +
+        ":" +
+        adjustedDate.getUTCMinutes().toString().padStart(2, "0") +
+        ":" +
+        adjustedDate.getUTCSeconds().toString().padStart(2, "0") +
+        " " +
+        (adjustedDate.getUTCHours() < 12 ? "AM" : "PM");
+
+    return formattedDate;
+}
+function DateToTimeString(adjustedDate) {
+    // Format the adjusted date as "YYYY-MM-DD hh:mm tt"
+    const formattedDate =
+        (adjustedDate.getUTCHours() % 12 || 12) +
+        ":" +
+        adjustedDate.getUTCMinutes().toString().padStart(2, "0") +
+        " " +
+        (adjustedDate.getUTCHours() < 12 ? "AM" : "PM");
+
+    return formattedDate;
+}
 jQuery(document).ready(function ($) {
     //Refresh Interval
     function refreshUITimeAgo() {

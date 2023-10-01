@@ -81,7 +81,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         else
                                         {
                                             //has valid Resource Group Proceed
-                                            DateTime resourceGroupLocalTime = DateTime.UtcNow.ConvertFromUTC(resourceGroup?.TimeZone);
                                             DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
                                             BackupRecord newRecord = new BackupRecord
                                             {
@@ -90,7 +89,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                                 BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                                                 ExpiryDateUTC = RecordExpiryUTC,
                                                 Name = backupDatabaseInfo.Name,
-                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, backupDatabaseInfo.GetSavingPathFromFormat(_persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
+                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, backupDatabaseInfo.GetSavingPathFromFormat(_persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
                                                 StatusUpdateDateUTC = currentTimeUTC,
                                                 RegisteredDateUTC = currentTimeUTC,
                                                 ExecutedDeliveryRun = false
