@@ -25,17 +25,6 @@ namespace SemanticBackup.Core.Models
         }
         public DateTime LastRunUTC { get; set; } = new DateTime(2000, 1, 1).Date;
         public DateTime CreatedOnUTC { get; set; } = DateTime.UtcNow;
-
-        public string LastRunPreviewable
-        {
-            get
-            {
-                if ((DateTime.UtcNow.Date - LastRunUTC.Date).TotalDays > 1000)
-                    return "Never";
-                else
-                    return string.Format("{0:yyyy-MM-dd HH:mm}", LastRunUTC);
-            }
-        }
     }
     public enum BackupScheduleType
     {

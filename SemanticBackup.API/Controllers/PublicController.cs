@@ -96,9 +96,9 @@ namespace SemanticBackup.API.Controllers
                     ExecutionMilliseconds = x.ExecutionMilliseconds,
                     Path = x.Path,
                     ExecutedDeliveryRun = x.ExecutedDeliveryRun,
-                    ExpiryDate = x.ExpiryDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
-                    RegisteredDate = x.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
-                    StatusUpdateDate = x.StatusUpdateDateUTC.ConvertFromUTC(resourceGroup?.TimeZone),
+                    ExpiryDate = x.ExpiryDateUTC,
+                    RegisteredDate = x.RegisteredDateUTC,
+                    StatusUpdateDate = x.StatusUpdateDateUTC,
                 }).Take(limit).ToList();
             }
             catch (Exception ex)
@@ -132,7 +132,6 @@ namespace SemanticBackup.API.Controllers
                 ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo?.ResourceGroupId);
                 //Proceed Otherwise
                 DateTime currentTimeUTC = DateTime.UtcNow;
-                DateTime currentTimeLocal = currentTimeUTC.ConvertFromUTC(resourceGroup?.TimeZone);
                 DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
                 BackupRecord newRecord = new BackupRecord
                 {
@@ -141,7 +140,7 @@ namespace SemanticBackup.API.Controllers
                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                     ExpiryDateUTC = RecordExpiryUTC,
                     Name = backupDatabaseInfo.Name,
-                    Path = System.IO.Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeLocal)),
+                    Path = System.IO.Path.Combine(_persistanceOptions.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(backupDatabaseInfo, _persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
                     StatusUpdateDateUTC = currentTimeUTC,
                     RegisteredDateUTC = currentTimeUTC,
                     ExecutedDeliveryRun = false

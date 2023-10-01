@@ -51,13 +51,11 @@ namespace SemanticBackup.Services
                         return; //No Valid Resource Group
                     if (!resourceGroup.NotifyOnErrorBackups)
                         return; //Disabled
-                    DateTime resourceLocalTime = backupRecord.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone);
                     string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] Database Backup Failed";
-                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] Backup Run</h3> <br/> <p> <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date: </b> {resourceLocalTime:yyyy-MM-dd HH:mm:ss} <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{backupRecord.BackupStatus}</span> <br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{backupRecord.Id}</span> </p> <p> Execution Message: <b><i>{backupRecord.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
+                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] Backup Run</h3> <br/> <p> <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date Utc: </b> {backupRecord.RegisteredDateUTC:yyyy-MM-dd HH:mm:ss} <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{backupRecord.BackupStatus}</span> <br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{backupRecord.Id}</span> </p> <p> Execution Message: <b><i>{backupRecord.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
                     List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
                     await SendEmailAsync(subject, emailBody, destinations);
                 }
-
             }
             catch (Exception ex)
             {
@@ -85,9 +83,8 @@ namespace SemanticBackup.Services
                     BackupRecord backupRecord = await _backupRecordPersistanceService.GetByIdAsync(record.BackupRecordId);
                     if (backupRecord == null)
                         return; //No Valid Backup File
-                    DateTime resourceLocalTime = backupRecord.RegisteredDateUTC.ConvertFromUTC(resourceGroup?.TimeZone);
                     string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed";
-                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed</h3> <br/> <p> <b>DELIVERY TYPE: </b> {record.DeliveryType} <br/>   <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date: </b> {resourceLocalTime:yyyy-MM-dd HH:mm:ss} <br/>  <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{record.CurrentStatus}</span> <br/><br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{record.Id}</span> <br/> </p> <p> Execution Message: <b><i>{record.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
+                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed</h3> <br/> <p> <b>DELIVERY TYPE: </b> {record.DeliveryType} <br/>   <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date Utc: </b> {backupRecord.RegisteredDateUTC:yyyy-MM-dd HH:mm:ss} <br/>  <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{record.CurrentStatus}</span> <br/><br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{record.Id}</span> <br/> </p> <p> Execution Message: <b><i>{record.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
                     List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
                     await SendEmailAsync(subject, emailBody, destinations);
                 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace SemanticBackup.Core
 {
@@ -40,6 +41,38 @@ namespace SemanticBackup.Core
         {
             int diff = (7 + (startOfWeek - dt.DayOfWeek)) % 7;
             return dt.AddDays(diff).Date;
+        }
+        public static DateTime AdjustWithTimezoneOffset(this DateTime dateTime, string timezoneOffset = "00:00")
+        {
+            try
+            {
+                DateTime utcDate = TimeZoneInfo.ConvertTimeToUtc(dateTime);
+                // Parse and calculate timezone offset
+                int sign = 1;
+                int hours = 0;
+                int minutes = 0;
+
+                Match offsetMatch = Regex.Match(timezoneOffset ?? "00:00", @"([+-])(\d{2}|00):(\d{2}|00)");
+                if (offsetMatch.Success)
+                {
+                    sign = offsetMatch.Groups[1].Value == "+" ? 1 : -1;
+                    hours = int.Parse(offsetMatch.Groups[2].Value);
+                    minutes = int.Parse(offsetMatch.Groups[3].Value);
+                }
+                // Calculate the offset in milliseconds
+                int offsetMilliseconds = (hours * 60 + minutes) * 60 * 1000 * sign;
+                // Adjust the date with the offset
+                DateTime adjustedDate = utcDate.AddMilliseconds(offsetMilliseconds);
+                return adjustedDate;
+            }
+            catch { return dateTime; }
+        }
+        public static string ToLastRunPreviewableWithTimezone(this DateTime lastRunDateUtc, string timezoneOffset = "00:00")
+        {
+            if ((DateTime.UtcNow.Date - lastRunDateUtc.Date).TotalDays > 1000)
+                return "Never";
+            else
+                return string.Format("{0:yyyy-MM-dd HH:mm}", lastRunDateUtc.AdjustWithTimezoneOffset(timezoneOffset));
         }
     }
 }

@@ -2,8 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -175,8 +175,8 @@ namespace SemanticBackup.SignalRHubs
                     {
                         ErrorsCount = x.ErrorsCount,
                         SuccessCount = x.SuccessCount,
-                        TimeStamp = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone),
-                        TimeStampCurrent = x.TimeStamp.ConvertFromUTC(resourceGroup?.TimeZone).IgnoreSeconds(false).ToString("hh tt")
+                        TimeStamp = x.TimeStamp,
+                        TimeStampCurrent = x.TimeStamp.IgnoreSeconds(false).ToString("hh tt")
                     }).OrderBy(x => x.TimeStamp).ToList();
 
                     clientGrp.Metric.TotalBackupSchedules = await backupSchedulePersistanceService.GetAllCountAsync(resourcegroup);

@@ -8,7 +8,6 @@ using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Models.Requests;
-using SemanticBackup.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -24,17 +23,15 @@ namespace SemanticBackup.Pages.ResourceGroups
         private readonly IContentDeliveryConfigRepository _contentDeliveryConfigRepository;
 
         public string ErrorResponse { get; set; } = null;
-        public List<string> TimeZoneCollections { get; }
         [BindProperty]
         public ResourceGroupRequest request { get; set; }
 
-        public CreateModel(ILogger<IndexModel> logger, IOptions<SystemConfigOptions> options, IResourceGroupRepository resourceGroupPersistance, IContentDeliveryConfigRepository contentDeliveryConfigRepository, TimeZoneHelper timeZoneHelper)
+        public CreateModel(ILogger<IndexModel> logger, IOptions<SystemConfigOptions> options, IResourceGroupRepository resourceGroupPersistance, IContentDeliveryConfigRepository contentDeliveryConfigRepository)
         {
             this._logger = logger;
             this._persistanceOptions = options.Value;
             this._resourceGroupPersistance = resourceGroupPersistance;
             this._contentDeliveryConfigRepository = contentDeliveryConfigRepository;
-            this.TimeZoneCollections = timeZoneHelper.GetAll();
         }
         public void OnGet()
         {
@@ -50,14 +47,12 @@ namespace SemanticBackup.Pages.ResourceGroups
                 if (!IsValidationPassed())
                     return Page();
                 //Check TimeZone Provided
-                request.TimeZone = (string.IsNullOrWhiteSpace(request.TimeZone)) ? _persistanceOptions.ServerDefaultTimeZone : request.TimeZone;
                 request.MaximumRunningBots = (request.MaximumRunningBots < 1) ? 1 : request.MaximumRunningBots;
                 //Proceed
                 ResourceGroup saveObj = new ResourceGroup
                 {
                     Name = request.Name,
                     LastAccess = DateTime.UtcNow.ConvertLongFormat(),
-                    TimeZone = request.TimeZone,
                     MaximumRunningBots = request.MaximumRunningBots,
                     CompressBackupFiles = request.CompressBackupFiles,
                     BackupExpiryAgeInDays = request.BackupExpiryAgeInDays,
@@ -92,12 +87,6 @@ namespace SemanticBackup.Pages.ResourceGroups
         {
             try
             {
-                //Check Supported Timezone
-                if (string.IsNullOrEmpty(request.TimeZone) || !this.TimeZoneCollections.Contains(request.TimeZone))
-                {
-                    ErrorResponse = "Enter a valid Timezone from the List";
-                    return false;
-                }
                 if (request.RSFTPSetting != null && request.RSFTPSetting.IsEnabled)
                     if (string.IsNullOrEmpty(request.RSFTPSetting.Password) || string.IsNullOrEmpty(request.RSFTPSetting.Username) || string.IsNullOrEmpty(request.RSFTPSetting.Server))
                     {

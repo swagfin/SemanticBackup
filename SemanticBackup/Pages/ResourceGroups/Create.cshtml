@@ -29,28 +29,12 @@
                         <input asp-for="request.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Group" type="text" required>
                     </div>
                     <div class="field">
-                        <label>Resource Group Timezone</label>
-                        <select asp-for="request.TimeZone" class="ui fluid search small dropdown timezone-dropdown-search" required>
-                            @{
-                                if (Model.TimeZoneCollections != null && Model.TimeZoneCollections.Count > 0)
-                                {
-                                    foreach (string timezone in Model.TimeZoneCollections)
-                                    {
-                                        <option value="@(timezone)">@(timezone)</option>
-                                    }
-                                }
-                                <option selected>--SELECT TIMEZONE ---</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="field">
                         <label>Maximum Running Worker Bots</label>
                         <select asp-for="request.MaximumRunningBots" class="ui fluid small dropdown threads-dropdown-search" required>
                             <option value="1">1 Single Worker Bot (Unlimited CPU/RAM)</option>
-                            <option value="2">2 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option selected value="4" value="2">2 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
                             <option value="3">3 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
-                            <option selected value="4">4 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
+                            <option>4 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
                             <option value="5">5 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
                             <option value="6">6 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
                             <option value="7">7 Concurrent Worker Bots (Unlimited CPU/RAM)</option>
