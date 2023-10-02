@@ -48,15 +48,21 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 //get instant backups
                 if (Request.Query.ContainsKey("request"))
                 {
-                    string responseCode = "unknown-request";
+                    string responseCode = "failed-request";
                     switch (Request.Query["request"].ToString()?.Trim().ToLower())
                     {
                         case "backup":
                             //rerun backup
-                            responseCode = await InitiateDatabaseBackupAsync(DatabaseInfoResponse.Id);
+                            string backupKeyId = await InitiateDatabaseBackupAsync(DatabaseInfoResponse.Id);
+                            //redirect to backup page
+                            if (!string.IsNullOrWhiteSpace(backupKeyId))
+                                return Redirect($"/resource-groups/{resourceGroupId}/database-backups/info/{backupKeyId}");
+                            break;
+
+                        default:
+                            responseCode = "unknown-request";
                             break;
                     }
-                    //redirect to avoid multi-click
                     return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?response={responseCode}");
                 }
                 //Get Backups
@@ -78,7 +84,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 //Check if an Existing Queued
                 List<BackupRecord> queuedExisting = await this._backupRecordRepository.GetAllByDatabaseIdByStatusAsync(CurrentResourceGroup.Id, DatabaseInfoResponse.Id, BackupRecordBackupStatus.QUEUED.ToString());
                 if (queuedExisting != null && queuedExisting.Count > 0)
-                    return "queued";
+                    return queuedExisting.FirstOrDefault()?.Id;
                 //init requeue db
                 DateTime currentTimeUTC = DateTime.UtcNow;
                 DateTime currentTimeLocal = DateTime.Now;
@@ -96,12 +102,12 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                     ExecutedDeliveryRun = false
                 };
                 bool addedSuccess = await this._backupRecordRepository.AddOrUpdateAsync(newRecord);
-                return addedSuccess ? "success" : throw new Exception("could not save queue for a instant backup");
+                return addedSuccess ? newRecord.Id : throw new Exception("could not save queue for a instant backup");
             }
             catch (Exception ex)
             {
                 _logger.LogWarning($"Unable to request for backup for database: {id}, Error: {ex.Message}");
-                return "failed";
+                return null;
             }
         }
 
