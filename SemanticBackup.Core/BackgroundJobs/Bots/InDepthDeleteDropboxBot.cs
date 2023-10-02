@@ -23,9 +23,9 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
-        public InDepthDeleteDropboxBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public InDepthDeleteDropboxBot(string resourceGroupId, BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = backupRecord.ResourceGroupId;
+            this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
             this._backupRecord = backupRecord;
             this._contentDeliveryConfiguration = contentDeliveryConfiguration;

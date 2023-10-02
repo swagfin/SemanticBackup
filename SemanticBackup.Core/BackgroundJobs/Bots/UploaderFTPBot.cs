@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -26,9 +26,9 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
 
-        public UploaderFTPBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public UploaderFTPBot(string resourceGroupId, BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = backupRecord.ResourceGroupId;
+            this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
             this._backupRecord = backupRecord;
             this._contentDeliveryConfiguration = contentDeliveryConfiguration;

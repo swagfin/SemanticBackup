@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +51,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                             IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                             IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
-
+                            IDatabaseInfoRepository databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                             //Proceed
                             List<ContentDeliveryRecord> contentDeliveryRecords = await contentDeliveryRecordPersistanceService.GetAllByStatusAsync(ContentDeliveryRecordStatus.QUEUED.ToString());
                             if (contentDeliveryRecords != null && contentDeliveryRecords.Count > 0)
@@ -61,7 +61,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 {
                                     _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
                                     BackupRecord backupRecordInfo = await backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId);
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordInfo?.ResourceGroupId);
+                                    BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(backupRecordInfo?.BackupDatabaseInfoId);
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo?.ResourceGroupId);
                                     ContentDeliveryConfiguration contentDeliveryConfiguration = await contentDeliveryConfigPersistanceService.GetByIdAsync(contentDeliveryRecord?.ContentDeliveryConfigurationId);
 
                                     if (backupRecordInfo == null)
@@ -89,27 +90,27 @@ namespace SemanticBackup.Core.BackgroundJobs
                                             if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DIRECT_LINK.ToString())
                                             {
                                                 //Download Link Generator
-                                                _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
                                             }
                                             else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.FTP_UPLOAD.ToString())
                                             {
                                                 //FTP Uploader
-                                                _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
                                             }
                                             else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.EMAIL_SMTP.ToString())
                                             {
                                                 //Email Send and Uploader
-                                                _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
                                             }
                                             else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
                                             {
                                                 //Email Send and Uploader
-                                                _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
                                             }
                                             else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
                                             {
                                                 //Azure Blob Storage
-                                                _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
                                             }
                                             else
                                             {

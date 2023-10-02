@@ -169,12 +169,13 @@ namespace SemanticBackup.Core.BackgroundJobs
                     IContentDeliveryRecordRepository contentDeliveryRecordsService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                     IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
                     BotsManagerBackgroundJob botsManagerBackgroundJob = scope.ServiceProvider.GetRequiredService<BotsManagerBackgroundJob>();
-                    ResourceGroup backRecordResourceGrp = await resourceGroupPersistanceService.GetByIdOrKeyAsync(rm.ResourceGroupId);
-                    if (backRecordResourceGrp == null)
-                    {
-                        _logger.LogWarning($"InDepth Deletion Failed, the Database Record has no valid Resource Group, Id: {rm.ResourceGroupId}, resource Group: {rm.ResourceGroupId}");
+                    IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
+                    //get db information
+                    BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(rm.BackupDatabaseInfoId);
+                    //Check if valid Resource Group
+                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
+                    if (resourceGroup == null)
                         return;
-                    }
                     //Proceed
                     var dbRecords = await contentDeliveryRecordsService.GetAllByBackupRecordIdAsync(rm.Id); //database record content delivery
                     if (dbRecords == null)
@@ -189,17 +190,15 @@ namespace SemanticBackup.Core.BackgroundJobs
                         if (rec.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
                         {
                             //In Depth Remove From DropBox
-                            botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(rm, rec, config, _serviceScopeFactory));
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(resourceGroup.Id, rm, rec, config, _serviceScopeFactory));
                         }
                         else if (rec.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
                         {
                             //In Depth remove From Azure Storage
-                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(rm, rec, config, _serviceScopeFactory));
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(resourceGroup.Id, rm, rec, config, _serviceScopeFactory));
                         }
-
                     }
                 }
-
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }
         }

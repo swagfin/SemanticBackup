@@ -92,7 +92,6 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 BackupRecord newRecord = new BackupRecord
                 {
                     BackupDatabaseInfoId = DatabaseInfoResponse.Id,
-                    ResourceGroupId = CurrentResourceGroup.Id,
                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                     ExpiryDateUTC = RecordExpiryUTC,
                     Name = DatabaseInfoResponse.Name,
