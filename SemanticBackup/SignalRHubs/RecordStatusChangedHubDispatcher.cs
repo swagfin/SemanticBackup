@@ -110,9 +110,9 @@ namespace SemanticBackup.SignalRHubs
                                 if (databaseGrp != null)
                                     SendNotification(databaseGrp, backupMetricRecord);
                                 //All Groups Joined
-                                ClientGroup allClientGroups = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupMetricRecord.Metric.ResourceGroupId);
-                                if (allClientGroups != null)
-                                    SendNotification(allClientGroups, backupMetricRecord);
+                                //ClientGroup allClientGroups = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupMetricRecord.Metric.ResourceGroupId);
+                                //if (allClientGroups != null)
+                                //    SendNotification(allClientGroups, backupMetricRecord);
                             }
                             else
                             {

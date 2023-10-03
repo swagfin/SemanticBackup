@@ -39,7 +39,7 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<BackupDatabaseInfo> GetByIdAsync(string id)
         {
-            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.Id == id.Trim()).OrderBy(x => x.Name).FirstOrDefaultAsync();
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.Id == id.Trim()).FirstOrDefaultAsync();
         }
         public async Task<BackupDatabaseInfo> VerifyDatabaseInResourceGroupThrowIfNotExistAsync(string resourceGroupId, string databaseIdentifier)
         {
@@ -63,6 +63,10 @@ namespace SemanticBackup.Core.Logic
         public async Task<BackupDatabaseInfo> GetByDatabaseNameAsync(string databaseName, string databaseType)
         {
             return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.DatabaseName != null && x.DatabaseType != null).Where(x => x.DatabaseName.Trim() == databaseName.Trim() && x.DatabaseType.Trim() == databaseType.Trim()).OrderBy(x => x.Name).FirstOrDefaultAsync();
+        }
+        public async Task<List<string>> GetDatabaseIdsForResourceGroupAsync(string resourceGroupId)
+        {
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Select(x => x.Id).ToListAsync();
         }
     }
 }

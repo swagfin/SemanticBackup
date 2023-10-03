@@ -53,7 +53,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                     {
                         case "backup":
                             //rerun backup
-                            string backupKeyId = await InitiateDatabaseBackupAsync(DatabaseInfoResponse.Id);
+                            string backupKeyId = await InitiateDatabaseBackupAsync();
                             //redirect to backup page
                             if (!string.IsNullOrWhiteSpace(backupKeyId))
                                 return Redirect($"/resource-groups/{resourceGroupId}/database-backups/info/{backupKeyId}");
@@ -77,12 +77,14 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
             }
         }
 
-        private async Task<string> InitiateDatabaseBackupAsync(string id)
+        private async Task<string> InitiateDatabaseBackupAsync()
         {
             try
             {
+                if (DatabaseInfoResponse == null)
+                    return null;
                 //Check if an Existing Queued
-                List<BackupRecord> queuedExisting = await this._backupRecordRepository.GetAllByDatabaseIdByStatusAsync(CurrentResourceGroup.Id, DatabaseInfoResponse.Id, BackupRecordBackupStatus.QUEUED.ToString());
+                List<BackupRecord> queuedExisting = await this._backupRecordRepository.GetAllByDatabaseIdByStatusAsync(DatabaseInfoResponse.Id, BackupRecordBackupStatus.QUEUED.ToString());
                 if (queuedExisting != null && queuedExisting.Count > 0)
                     return queuedExisting.FirstOrDefault()?.Id;
                 //init requeue db
@@ -105,7 +107,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"Unable to request for backup for database: {id}, Error: {ex.Message}");
+                _logger.LogWarning($"Unable to request for backup for database: {DatabaseInfoResponse.Id}, Error: {ex.Message}");
                 return null;
             }
         }
