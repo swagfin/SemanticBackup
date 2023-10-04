@@ -80,7 +80,7 @@ namespace SemanticBackup.Core.Logic
         {
             return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
         }
-        public async Task<List<string>> GetAllNoneResponsiveIdsAsync(List<string> statusChecks, int minuteDifference)
+        public async Task<List<long>> GetAllNoneResponsiveIdsAsync(List<string> statusChecks, int minuteDifference)
         {
             if (statusChecks == null || statusChecks.Count == 0)
                 return null;
@@ -95,7 +95,7 @@ namespace SemanticBackup.Core.Logic
             return savedSuccess;
         }
 
-        public async Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
+        public async Task<bool> UpdateStatusFeedAsync(long id, string status, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -120,7 +120,7 @@ namespace SemanticBackup.Core.Logic
             return false;
         }
 
-        public async Task<bool> UpdateRestoreStatusFeedAsync(string id, string status, string message = null, string confirmationToken = null)
+        public async Task<bool> UpdateRestoreStatusFeedAsync(long id, string status, string message = null, string confirmationToken = null)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -138,18 +138,18 @@ namespace SemanticBackup.Core.Logic
             }
             return false;
         }
-        public async Task<BackupRecord> GetByIdAsync(string id)
+        public async Task<BackupRecord> GetByIdAsync(long id)
         {
             return await _db.GetCollection<BackupRecord>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();
         }
-        public async Task<BackupRecord> VerifyBackupRecordInResourceGroupThrowIfNotExistAsync(string resourceGroupId, string backupRecordId)
+        public async Task<BackupRecord> VerifyBackupRecordInResourceGroupThrowIfNotExistAsync(string resourceGroupId, long backupRecordId)
         {
-            BackupRecord backupRecordResponse = await _db.GetCollection<BackupRecord>().Query().Where(x => x.Id == backupRecordId.Trim()).FirstOrDefaultAsync() ?? throw new Exception($"unknown backup record with identity key {backupRecordId} under resource group id: {resourceGroupId}");
+            BackupRecord backupRecordResponse = await _db.GetCollection<BackupRecord>().Query().Where(x => x.Id == backupRecordId).FirstOrDefaultAsync() ?? throw new Exception($"unknown backup record with identity key {backupRecordId} under resource group id: {resourceGroupId}");
             //retrive the Database Information
             _ = await _databaseInfoRepository.VerifyDatabaseInResourceGroupThrowIfNotExistAsync(resourceGroupId, backupRecordResponse.BackupDatabaseInfoId ?? string.Empty);
             return backupRecordResponse;
         }
-        public async Task<bool> RemoveAsync(string id)
+        public async Task<bool> RemoveAsync(long id)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -167,7 +167,7 @@ namespace SemanticBackup.Core.Logic
             return false;
         }
 
-        private async void TryDeleteContentDispatchRecordsAsync(string id)
+        private async void TryDeleteContentDispatchRecordsAsync(long id)
         {
             try
             {
@@ -190,7 +190,7 @@ namespace SemanticBackup.Core.Logic
         {
             return await _db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordBackupStatus.READY.ToString()).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
         }
-        public async Task<bool> UpdateDeliveryRunnedAsync(string backupRecordId, bool hasRun, string executedDeliveryRunStatus)
+        public async Task<bool> UpdateDeliveryRunnedAsync(long backupRecordId, bool hasRun, string executedDeliveryRunStatus)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == backupRecordId).FirstOrDefaultAsync();

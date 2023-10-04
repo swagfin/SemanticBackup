@@ -9,7 +9,7 @@ namespace SemanticBackup.Core.Models
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
         public string ResourceGroupId { get; set; }
         [Required]
-        public string BackupRecordId { get; set; }
+        public long BackupRecordId { get; set; }
         [Required]
         public string ContentDeliveryConfigurationId { get; set; }
         [Required]

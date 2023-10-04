@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
 {
     [Authorize]
-    public class InfoModel : PageModel
+    public class DetailsModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupRepository _resourceGroupRepository;
@@ -25,7 +25,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
         public List<ContentDeliveryRecord> ContentDeliveryRecordsResponse { get; private set; }
         public ResourceGroup CurrentResourceGroup { get; private set; }
 
-        public InfoModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository contentDeliveryRecordRepository)
+        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository contentDeliveryRecordRepository)
         {
             this._logger = logger;
             this._resourceGroupRepository = resourceGroupRepository;
@@ -33,7 +33,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             this._contentDeliveryRecordRepository = contentDeliveryRecordRepository;
         }
 
-        public async Task<IActionResult> OnGetAsync(string resourceGroupId, string id)
+        public async Task<IActionResult> OnGetAsync(string resourceGroupId, long id)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 //get backup record under resource group
                 BackupRecordResponse = await _backupRecordRepository.VerifyBackupRecordInResourceGroupThrowIfNotExistAsync(CurrentResourceGroup.Id, id);
                 //get content delivery records
-                await GetContentDeliveryRecordsAsync(BackupRecordResponse.Id);
+                await GetContentDeliveryRecordsAsync();
                 //reset re-runs params
                 this.RerunStatus = null;
                 this.RerunStatusReason = null;
@@ -52,7 +52,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                     {
                         case "backup":
                             //rerun backup
-                            await InitiateRerunForBackupAsync(BackupRecordResponse.Id);
+                            await InitiateRerunForBackupAsync();
                             break;
                         case "delivery":
                             //rerun delivery
@@ -68,16 +68,16 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 return Redirect($"/resource-groups/{id}/database-backups");
             }
         }
-        private async Task GetContentDeliveryRecordsAsync(string backupRecordId)
+        private async Task GetContentDeliveryRecordsAsync()
         {
             try
             {
-                ContentDeliveryRecordsResponse = await _contentDeliveryRecordRepository.GetAllByBackupRecordIdAsync(backupRecordId);
+                ContentDeliveryRecordsResponse = await _contentDeliveryRecordRepository.GetAllByBackupRecordIdAsync(BackupRecordResponse.Id);
             }
             catch (Exception ex) { this._logger.LogWarning(ex.Message); }
         }
 
-        private async Task InitiateRerunForBackupAsync(string rerunJobId)
+        private async Task InitiateRerunForBackupAsync()
         {
             try
             {

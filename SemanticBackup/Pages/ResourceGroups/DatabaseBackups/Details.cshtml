@@ -1,5 +1,5 @@
-﻿@page "/resource-groups/{resourceGroupId}/database-backups/info/{id}"
-@model SemanticBackup.Pages.ResourceGroups.DatabaseBackups.InfoModel
+﻿@page "/resource-groups/{resourceGroupId}/database-backups/details/{id:long}"
+@model SemanticBackup.Pages.ResourceGroups.DatabaseBackups.DetailsModel
 @{
     ViewData["Title"] = $"Database Record | Info #{Model.BackupRecordResponse?.Name}";
 }

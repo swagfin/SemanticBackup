@@ -22,7 +22,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
 
-        public string BotId => _backupRecord.Id;
+        public string BotId => _backupRecord.Id.ToString();
 
         public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IServiceScopeFactory scopeFactory)
         {
@@ -85,7 +85,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 throw new Exception($"No Database File In Path or May have been deleted, Path: {path}");
         }
 
-        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed, string newZIPPath = null)
+        private void UpdateBackupFeed(long recordId, string status, string message, long elapsed, string newZIPPath = null)
         {
             try
             {

@@ -60,7 +60,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 foreach (ContentDeliveryRecord contentDeliveryRecord in contentDeliveryRecords.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
                                     _logger.LogInformation($"Processing Queued Content Delivery Record: #{contentDeliveryRecord.Id}...");
-                                    BackupRecord backupRecordInfo = await backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId);
+                                    BackupRecord backupRecordInfo = await backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId ?? 0);
                                     BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(backupRecordInfo?.BackupDatabaseInfoId);
                                     ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo?.ResourceGroupId);
                                     ContentDeliveryConfiguration contentDeliveryConfiguration = await contentDeliveryConfigPersistanceService.GetByIdAsync(contentDeliveryRecord?.ContentDeliveryConfigurationId);
@@ -163,7 +163,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             List<BackupRecord> expiredBackups = await backupRecordPersistanceService.GetAllExpiredAsync();
                             if (expiredBackups != null && expiredBackups.Count > 0)
                             {
-                                List<string> toDeleteList = new List<string>();
+                                List<long> toDeleteList = new List<long>();
                                 foreach (BackupRecord backupRecord in expiredBackups)
                                     toDeleteList.Add(backupRecord.Id);
                                 _logger.LogInformation($"Queued ({expiredBackups.Count}) Expired Records for Delete");

@@ -53,10 +53,10 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                     {
                         case "backup":
                             //rerun backup
-                            string backupKeyId = await InitiateDatabaseBackupAsync();
+                            long? backupKeyId = await InitiateDatabaseBackupAsync();
                             //redirect to backup page
-                            if (!string.IsNullOrWhiteSpace(backupKeyId))
-                                return Redirect($"/resource-groups/{resourceGroupId}/database-backups/info/{backupKeyId}");
+                            if (backupKeyId != null && backupKeyId != 0)
+                                return Redirect($"/resource-groups/{resourceGroupId}/database-backups/details/{backupKeyId}");
                             break;
 
                         default:
@@ -77,7 +77,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
             }
         }
 
-        private async Task<string> InitiateDatabaseBackupAsync()
+        private async Task<long?> InitiateDatabaseBackupAsync()
         {
             try
             {

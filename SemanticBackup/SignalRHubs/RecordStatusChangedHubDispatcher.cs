@@ -102,7 +102,7 @@ namespace SemanticBackup.SignalRHubs
                             if (BackupRecordsQueue.TryDequeue(out BackupRecordMetric backupMetricRecord) && backupMetricRecord != null)
                             {
                                 //Specific Group By BackupRecord ID
-                                ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupMetricRecord.Metric.Id);
+                                ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == backupMetricRecord.Metric.Id.ToString());
                                 if (clientGrp != null)
                                     SendNotification(clientGrp, backupMetricRecord);
                                 //Specific Group By Database ID
@@ -131,7 +131,7 @@ namespace SemanticBackup.SignalRHubs
                             if (ContentDeliveryRecordsQueue.TryDequeue(out ContentDeliveryRecordMetric contentDeliveryRecord) && contentDeliveryRecord != null)
                             {
                                 //Specific Group By BackupRecord ID
-                                ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == contentDeliveryRecord.Metric.BackupRecordId);
+                                ClientGroup clientGrp = BackupRecordHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == contentDeliveryRecord.Metric.BackupRecordId.ToString());
                                 if (clientGrp != null)
                                     SendNotification(clientGrp, contentDeliveryRecord);
                             }

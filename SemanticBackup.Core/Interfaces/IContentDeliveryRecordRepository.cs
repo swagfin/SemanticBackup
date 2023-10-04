@@ -13,8 +13,8 @@ namespace SemanticBackup.Core.Interfaces
         Task<bool> UpdateAsync(ContentDeliveryRecord record);
         Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0);
         Task<List<ContentDeliveryRecord>> GetAllByStatusAsync(string status);
-        Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdAsync(string id);
-        Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, string id, string status = "*");
+        Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdAsync(long id);
+        Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, long id, string status = "*");
         Task<ContentDeliveryRecord> GetByContentTypeByExecutionMessageAsync(string deliveryType, string executionMessage);
         Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference);
     }

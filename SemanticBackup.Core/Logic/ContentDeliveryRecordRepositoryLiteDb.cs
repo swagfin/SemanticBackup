@@ -36,13 +36,13 @@ namespace SemanticBackup.Core.Logic
         {
             return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.CurrentStatus == status).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
         }
-        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, string id, string status = "*")
+        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, long id, string status = "*")
         {
             if (status == "*")
                 return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
             return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.CurrentStatus == status && x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
         }
-        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdAsync(string id)
+        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdAsync(long id)
         {
             return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
         }
@@ -113,7 +113,7 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<ContentDeliveryRecord> GetByContentTypeByExecutionMessageAsync(string deliveryType, string executionMessage)
         {
-            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage) || (x.DeliveryType == deliveryType && x.BackupRecordId == executionMessage)).FirstOrDefaultAsync();
+            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage) || (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage)).FirstOrDefaultAsync();
         }
 
         public async Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference)

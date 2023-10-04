@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -20,7 +20,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroup;
-        public string BotId => _backupRecord.Id;
+        public string BotId => _backupRecord.Id.ToString();
         public MySQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IServiceScopeFactory serviceScopeFactory)
         {
             this._resourceGroup = resourceGroupId;
@@ -71,7 +71,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 Directory.CreateDirectory(directory);
         }
 
-        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed)
+        private void UpdateBackupFeed(long recordId, string status, string message, long elapsed)
         {
             try
             {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -20,7 +20,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public bool IsStarted { get; private set; } = false;
 
         public string ResourceGroupId => _resourceGroup;
-        public string BotId => _backupRecord.Id;
+        public string BotId => _backupRecord.Id.ToString();
         public SQLRestoreBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IServiceScopeFactory scopeFactory)
         {
             this._resourceGroup = resourceGroupId;
@@ -70,7 +70,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 throw new Exception($"No Database File In Path or May have been deleted, Path: {path}");
         }
 
-        private void UpdateRestoreStatusFeed(string recordId, string status, string message)
+        private void UpdateRestoreStatusFeed(long recordId, string status, string message)
         {
             try
             {

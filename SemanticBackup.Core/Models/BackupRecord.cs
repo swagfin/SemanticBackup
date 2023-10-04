@@ -6,7 +6,7 @@ namespace SemanticBackup.Core.Models
     public class BackupRecord
     {
         [Required, Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
+        public long Id { get; set; }
         [Required]
         public string BackupDatabaseInfoId { get; set; }
         public string Name { get; set; }

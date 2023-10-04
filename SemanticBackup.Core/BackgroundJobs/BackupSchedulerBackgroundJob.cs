@@ -146,12 +146,12 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Proceed
                             List<string> botsToRemove = new List<string>();
                             //REMOVE BACKUP RECORDS
-                            List<string> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
+                            List<long> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
                             if (recordsIds != null && recordsIds.Count > 0)
-                                foreach (string id in recordsIds)
+                                foreach (long id in recordsIds)
                                 {
                                     await backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                    botsToRemove.Add(id);
+                                    botsToRemove.Add(id.ToString());
                                 }
 
                             //REMOVE CONTENT DELIVERY RECORDS
