@@ -7,6 +7,6 @@ namespace SemanticBackup.Core.Interfaces
     public interface IBackupProviderForMySQLServer
     {
         Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
-        Task<IEnumerable<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo);
+        Task<List<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo);
     }
 }

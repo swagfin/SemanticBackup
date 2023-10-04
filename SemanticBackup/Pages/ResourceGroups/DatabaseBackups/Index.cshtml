@@ -3,12 +3,6 @@
 @{
     ViewData["Title"] = "Database Backups | All";
 }
-@{
-    <script type="text/javascript">
-        var baseUrl = @Html.Raw(Json.Serialize("/"));
-        var directoryId = @Html.Raw(Json.Serialize(1));
-    </script>
-}
 <div class="container pd-x-0">
     <div class="ui container">
 
@@ -83,40 +77,3 @@
         </table>
     </div>
 </div>
-@section Scripts{
-<script src="~/lib/signalr/dist/browser/signalr.js"></script>
-<script type="text/javascript" src="~/assets/js/signalr-subscriber.js"></script>
-<script type="text/javascript">
-    jQuery(document).ready(function ($) {
-        //Create Main Obersavable
-        _ = getListenerAsync(baseUrl + "BackupRecordsNotify", directoryId, "ReceiveNotification", function (response) {
-            console.log("Received Database Backup Status Update");
-            //console.log(response);
-            var metric = response.metric;
-            var key = metric.id;
-            var status = metric.backupStatus;
-            //Update Status
-            //Check if Not Exists
-            if(response.isNewMetric && $("#record_for_" + key).length == 0)
-            {
-               console.log("Prepending new Record Notification");
-               var newElement = '<tr id="record_for_'+ key +'"><td colspan="6"><div class="ui tiny blue message"><div class="header">New backup for <b><a href="/databasebackupschedules/'+ key +'"> '+ metric.name +' </a></b> has started <span style="color:orange;margin-right:10px" class="use-time-ago" use-time-ago-value="'+ metric.registeredDate +'"> Just now </span>&gt;&gt; Progress: <span class="event_status_for_'+ key +'"> <span class="ui label small basic"><i class="info icon"></i>QUEUED</span> </span></div></div></td></tr>';
-               $("#records_data_table").prepend(newElement);
-            }
-            //Update
-            console.log("Updating UI Key: " + key + ", Status: " + status);
-            if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>' + status + '</span>'); }
-            else if (status == "COMPLETED") { $(".event_status_for_" + key).html('<span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
-            else if (status == "COMPRESSING") { $(".event_status_for_" + key).html('<span class="ui label small basic olive"><i class="notched circle loading icon"></i>' + status + '</span>'); }
-            else if (status == "READY") { $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>'); }
-            else if (status == "ERROR") { $(".event_status_for_" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }
-            else { $(".event_status_for_" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
-            //Update Others
-            $(".execution_milliseconds_for_" + key).html(metric.executionMilliseconds);
-            $(".last_status_update_for_" + key).html("Just now");
-            $(".last_status_update_for_" + key).attr("use-time-ago-value", metric.statusUpdateDate);
-            //console.log("Updated UI Success");
-        });
-    });
-</script>
-}

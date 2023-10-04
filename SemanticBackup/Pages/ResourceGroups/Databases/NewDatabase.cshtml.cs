@@ -15,14 +15,11 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
     [Authorize]
     public class NewDatabaseModel : PageModel
     {
-        public string AuthToken { get; }
-
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupRepository _resourceGroupRepository;
         private readonly IDatabaseInfoRepository _databaseInfoRepository;
         private readonly IBackupScheduleRepository _backupScheduleRepository;
 
-        public string ApiEndPoint { get; }
         [BindProperty]
         public DatabaseInfoRequest backupDatabaseRequest { get; set; }
         [BindProperty]

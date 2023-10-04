@@ -20,7 +20,7 @@
                 <div class="form-row">
                     <div class="form-group col-md-3">
                         <label for="DatabaseType">DatabaseType</label>
-                        <select autofocus="true" onchange="setDbPort();refreshDbList();" class="selectpicker form-control set-db-port refresh-db-type" asp-for="backupDatabaseRequest.DatabaseType" required>
+                        <select autofocus="true" onchange="setDbPort();" class="selectpicker form-control set-db-port refresh-db-type" asp-for="backupDatabaseRequest.DatabaseType" required>
                             @{
                                 foreach (var dbType in Enum.GetValues(typeof(BackupDatabaseInfoDbType)).Cast<BackupDatabaseInfoDbType>())
                                 {
@@ -31,21 +31,21 @@
                     </div>
                     <div class="form-group col-md-7">
                         <label for="Server">Server</label>
-                        <input asp-for="backupDatabaseRequest.Server" onchange="refreshDbList();" type="text" value="127.0.0.1" class="form-control refresh-db-server" required>
+                        <input asp-for="backupDatabaseRequest.Server"  type="text" value="127.0.0.1" class="form-control refresh-db-server" required>
                     </div>
                     <div class="form-group col-md-2">
                         <label for="Port">Port</label>
-                        <input asp-for="backupDatabaseRequest.Port" type="text" onchange="refreshDbList();" value="0" autocomplete="off" class="form-control set-db-port-val refresh-db-port" required>
+                        <input asp-for="backupDatabaseRequest.Port" type="text" value="0" autocomplete="off" class="form-control set-db-port-val refresh-db-port" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label for="Username">Username</label>
-                        <input asp-for="backupDatabaseRequest.Username" type="text" onchange="refreshDbList();" autocomplete="off" class="form-control refresh-db-username" required>
+                        <input asp-for="backupDatabaseRequest.Username" type="text" autocomplete="off" class="form-control refresh-db-username" required>
                     </div>
                     <div class="form-group col-md-6">
                         <label for="Password">Password</label>
-                        <input asp-for="backupDatabaseRequest.Password" type="password" onchange="refreshDbList();" autocomplete="off" class="form-control refresh-db-password" required>
+                        <input asp-for="backupDatabaseRequest.Password" type="password" autocomplete="off" class="form-control refresh-db-password" required>
                     </div>
                 </div>
                 <div class="form-group">
@@ -73,9 +73,6 @@
 @section Scripts{
 
     <script type="text/javascript">
-        var baseUrl = @Html.Raw(Json.Serialize(Model.ApiEndPoint));
-        var directoryId = @Html.Raw(Json.Serialize("1"));
-        var _authToken = @Html.Raw(Json.Serialize(Model.AuthToken));
         //Set Db Default Ports
         function setDbPort() {
             var value = $(".set-db-port").val();
@@ -89,45 +86,5 @@
         //Initi
         setDbPort();
         $(".database-dropdown-search").dropdown({ allowAdditions: true });
-
-        function refreshDbList() {
-            //loading
-            console.log("Refreshing Db Collection");
-            //Create Request Object
-            var dataObj = { type: $(".refresh-db-type").val(), server: $(".refresh-db-server").val(), username: $(".refresh-db-username").val(), password: $(".refresh-db-password").val(), port: $(".refresh-db-port").val() };
-            //Valid
-            if (dataObj.server.length == 0 || dataObj.username.length == 0 || dataObj.password.length == 0) {
-                // console.log("Skipped Query, Missing required params");
-                return;
-            }
-            $(".database-dropdown-search").addClass("loading");
-            //Proceed
-            $.ajax({
-                type: 'POST',
-                url: baseUrl + directoryId + '/api/BackupDatabases/pre-get-database-collection',
-                contentType: "application/json",
-                headers: {
-                    'Authorization': 'Bearer ' + _authToken
-                },
-                data: JSON.stringify(dataObj),
-                success: function (msg) {
-                    //console.log(msg);
-                    var elementOptions = "";
-                    if (msg != null) {
-                        msg.forEach(function (item, index) {
-                            elementOptions += '<option value="' + item + '">' + item + '</option>';
-                        });
-                    }
-                    //Append
-                    $(".database-dropdown-container").html('<select autofocus class="ui fluid search dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames">' + elementOptions + '</select>');
-                    $(".database-dropdown-search").dropdown({ allowAdditions: true });
-                },
-                error: function (xhr, status, error) {
-                    console.log(status);
-                    $(".database-dropdown-search").removeClass("loading");
-                }
-
-            });
-        };
     </script>
 }

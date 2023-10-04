@@ -58,7 +58,7 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
             }
         }
 
-        public async Task<IEnumerable<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo)
+        public async Task<List<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo)
         {
             List<string> availableDbs = new List<string>();
             string[] exclude = new string[] { "master", "model", "msdb", "tempdb" };

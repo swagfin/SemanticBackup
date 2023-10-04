@@ -1,7 +1,7 @@
 ﻿@page "/resource-groups/{resourceGroupId}/database-backups/details/{id:long}"
 @model SemanticBackup.Pages.ResourceGroups.DatabaseBackups.DetailsModel
 @{
-    ViewData["Title"] = $"Database Record | Info #{Model.BackupRecordResponse?.Name}";
+    ViewData["Title"] = $"Database Record | Info #{Model.BackupRecordResponse.Name}";
 }
 <div class="container">
     <section class="ui two wide column grid">
@@ -300,12 +300,9 @@
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
             //Create Main Obersavable
-            var baseUrl = @Html.Raw(Json.Serialize("/"));
-            var currentRecordId = @(Html.Raw(Json.Serialize(Model.BackupRecordResponse?.Id)));
+            var currentRecordId = @(Html.Raw(Json.Serialize(Model.BackupRecordResponse.Id)));
             //Hub For Record Backup Status
-            var huburl = baseUrl + "BackupRecordsNotify";
-            var connection = new signalR.HubConnectionBuilder().withUrl(huburl).build();
-
+            var connection = new signalR.HubConnectionBuilder().withUrl("/BackupRecordsNotify").build();
 
             //Invoke Connection
             async function startConnection() {
@@ -320,7 +317,7 @@
                 } catch (err) {
                     console.log(err);
                     //reconnect after 5sec
-                    setTimeout(() => startConnection(), 5000);
+                    setTimeout(() => startConnection(), 3000);
                 }
             };
 
@@ -387,7 +384,7 @@
                     $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>EXECUTED</span>');
                     //Check Download LINK
                     if (metric.deliveryType == "DIRECT_LINK") {
-                        var downloadLink = baseUrl + "d/" + metric.executionMessage;
+                        var downloadLink = "/d/" + metric.executionMessage;
                         $(".execution_message_for_downloadLink_" + key).html('<a href="' + downloadLink + '" target="_blank"><i class="download icon"></i> Download Link </a>');
                         $(".event_downloadlink_for_" + key).html('<a href="' + downloadLink + '" target="_blank" class="ui teal label"><i class="download icon"></i> Download</a>');
                     }
