@@ -11,9 +11,8 @@
     }
 
     //Setting up signal R
-    var huburl = baseUrl + "DasbhoardStatistics";
-    console.log(huburl);
-    var connection = new signalR.HubConnectionBuilder().withUrl(huburl)
+    console.log("connecting to live signalR updates...");
+    var connection = new signalR.HubConnectionBuilder().withUrl("/DasbhoardStatistics")
         .build();
 
     //Await Function Call
