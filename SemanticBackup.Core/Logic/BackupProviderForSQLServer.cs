@@ -86,5 +86,21 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
             }
             return availableDbs;
         }
+        public async Task<(bool success, string err)> TryTestConnectionAsync(string connectionString)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    await conn.OpenAsync();
+                    await conn.CloseAsync();
+                    return (true, string.Empty);
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
     }
 }

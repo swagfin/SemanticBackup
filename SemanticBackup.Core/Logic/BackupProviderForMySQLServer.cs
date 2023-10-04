@@ -58,5 +58,22 @@ namespace SemanticBackup.Core.Logic
             }
             return availableDbs;
         }
+
+        public async Task<(bool success, string err)> TryTestConnectionAsync(string connectionString)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    await conn.OpenAsync();
+                    await conn.CloseAsync();
+                    return (true, string.Empty);
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
     }
 }

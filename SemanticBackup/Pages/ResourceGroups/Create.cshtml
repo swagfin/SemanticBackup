@@ -49,6 +49,47 @@
                 </section>
 
                 <div class="ui divider"></div>
+                <h4 class="ui primary header">Database Configuration</h4>
+
+             <section class="ui segment attached form">
+
+              <div class="form-row">
+                  <div class="form-group col-md-3">
+                      <label for="DatabaseType">DatabaseType</label>
+                      <select autofocus="true" onchange="setDbPort();" class="selectpicker form-control set-db-port refresh-db-type" asp-for="request.DbType" required>
+                          @{
+                              foreach (var dbType in Enum.GetValues(typeof(DbTypes)).Cast<DbTypes>())
+                              {
+                                  <option>@(dbType)</option>
+                              }
+                          }
+                      </select>
+                  </div>
+                  <div class="form-group col-md-7">
+                      <label for="Server">Server</label>
+                       <input asp-for="request.DbServer" type="text" value="127.0.0.1" placeholder="Database Server" autocomplete="off" class="form-control refresh-db-server" required>
+                  </div>
+                  <div class="form-group col-md-2">
+                      <label for="Port">Port</label>
+                      <input asp-for="request.DbPort" type="text" value="0" autocomplete="off" placeholder="Database Port" class="form-control set-db-port-val refresh-db-port" required>
+                  </div>
+              </div>
+		  
+              <div class="form-row">
+                  <div class="form-group col-md-6">
+                      <label for="Username">Username</label>
+                      <input asp-for="request.DbUsername" type="text" autocomplete="off" placeholder="Database username" class="form-control refresh-db-username" required>
+                  </div>
+                  <div class="form-group col-md-6">
+                      <label for="Password">Password</label>
+                      <input asp-for="request.DbPassword" type="password" placeholder="xxxxxxx" autocomplete="off" class="form-control refresh-db-password" required>
+                  </div>
+              </div>
+
+          </section>
+
+
+                <div class="ui divider"></div>
                 <h4 class="ui primary header">Backup Preference</h4>
 
                 <section class="ui segment attached form">
@@ -233,5 +274,17 @@
         $(".dropdown").dropdown({ allowAdditions: false });
         $(".destinations-dropdown-search").dropdown({ allowAdditions: true });
         $('.menu .item').tab();
+        //Set Db Default Ports
+        function setDbPort() {
+            var value = $(".set-db-port").val();
+            if (value.includes("MARIADB") || value.includes("MYSQL")) {
+                $(".set-db-port-val").val('3306');
+            }
+            else if (value.includes("SQLSERVER")) {
+                $(".set-db-port-val").val('1433');
+            }
+        };
+        //Initi
+        setDbPort();
     </script>
 }

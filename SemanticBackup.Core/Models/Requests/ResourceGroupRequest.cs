@@ -8,6 +8,16 @@ namespace SemanticBackup.Core.Models.Requests
         public string Name { get; set; }
         [Range(1, 50)]
         public int MaximumRunningBots { get; set; } = 1;
+
+        [Required]
+        public string DbServer { get; set; } = "127.0.0.1";
+        [Required]
+        public string DbUsername { get; set; }
+        public string DbPassword { get; set; }
+        public int DbPort { get; set; } = 0;
+        [Required]
+        public string DbType { get; set; } = DbTypes.SQLSERVER2019.ToString();
+
         public bool CompressBackupFiles { get; set; } = true;
         [Range(1, 366)]
         public int BackupExpiryAgeInDays { get; set; } = 7;

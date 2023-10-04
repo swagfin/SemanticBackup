@@ -21,17 +21,21 @@ namespace SemanticBackup.Pages.ResourceGroups
         private readonly SystemConfigOptions _persistanceOptions;
         private readonly IResourceGroupRepository _resourceGroupPersistance;
         private readonly IContentDeliveryConfigRepository _contentDeliveryConfigRepository;
+        private readonly IBackupProviderForMySQLServer _backupProviderForMySQLServer;
+        private readonly IBackupProviderForSQLServer _backupProviderForSQLServer;
 
         public string ErrorResponse { get; set; } = null;
         [BindProperty]
         public ResourceGroupRequest request { get; set; }
 
-        public CreateModel(ILogger<IndexModel> logger, IOptions<SystemConfigOptions> options, IResourceGroupRepository resourceGroupPersistance, IContentDeliveryConfigRepository contentDeliveryConfigRepository)
+        public CreateModel(ILogger<IndexModel> logger, IOptions<SystemConfigOptions> options, IResourceGroupRepository resourceGroupPersistance, IContentDeliveryConfigRepository contentDeliveryConfigRepository, IBackupProviderForMySQLServer backupProviderForMySQLServer, IBackupProviderForSQLServer backupProviderForSQLServer)
         {
             this._logger = logger;
             this._persistanceOptions = options.Value;
             this._resourceGroupPersistance = resourceGroupPersistance;
             this._contentDeliveryConfigRepository = contentDeliveryConfigRepository;
+            this._backupProviderForMySQLServer = backupProviderForMySQLServer;
+            this._backupProviderForSQLServer = backupProviderForSQLServer;
         }
         public void OnGet()
         {
@@ -52,14 +56,23 @@ namespace SemanticBackup.Pages.ResourceGroups
                 ResourceGroup saveObj = new ResourceGroup
                 {
                     Name = request.Name,
-                    LastAccess = DateTime.UtcNow.ConvertLongFormat(),
                     MaximumRunningBots = request.MaximumRunningBots,
+                    DbType = request.DbType,
+                    DbServer = request.DbServer,
+                    DbPort = request.DbPort,
+                    DbPassword = request.DbPassword,
+                    DbUsername = request.DbUsername,
                     CompressBackupFiles = request.CompressBackupFiles,
                     BackupExpiryAgeInDays = request.BackupExpiryAgeInDays,
                     NotifyEmailDestinations = request.NotifyEmailDestinations,
                     NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery,
                     NotifyOnErrorBackups = request.NotifyOnErrorBackups,
+                    LastAccess = DateTime.UtcNow.ConvertLongFormat(),
                 };
+
+                //atttempt check connection string
+                await ValidateDbConnectionAsync(saveObj);
+
                 bool savedSuccess = await _resourceGroupPersistance.AddAsync(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
@@ -87,6 +100,16 @@ namespace SemanticBackup.Pages.ResourceGroups
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(request.DbServer))
+                {
+                    ErrorResponse = "Database Server Name was not provided";
+                    return false;
+                }
+                if (string.IsNullOrWhiteSpace(request.DbUsername))
+                {
+                    ErrorResponse = "Database Username is required";
+                    return false;
+                }
                 if (request.RSFTPSetting != null && request.RSFTPSetting.IsEnabled)
                     if (string.IsNullOrEmpty(request.RSFTPSetting.Password) || string.IsNullOrEmpty(request.RSFTPSetting.Username) || string.IsNullOrEmpty(request.RSFTPSetting.Server))
                     {
@@ -134,6 +157,22 @@ namespace SemanticBackup.Pages.ResourceGroups
             }
             catch (Exception ex) { _logger.LogWarning(ex.Message); ErrorResponse = ex.Message; return false; }
 
+        }
+        private async Task ValidateDbConnectionAsync(ResourceGroup saveObj)
+        {
+            //Finnally Validate Database Connection
+            if (saveObj.DbType.Contains("SQLSERVER"))
+            {
+                var response = await _backupProviderForSQLServer.TryTestConnectionAsync(saveObj.GetDbConnectionString());
+                if (!response.success)
+                    throw new Exception(response.err);
+            }
+            else if (request.DbType.Contains("MYSQL") || request.DbType.Contains("MARIADB"))
+            {
+                var response = await _backupProviderForMySQLServer.TryTestConnectionAsync(saveObj.GetDbConnectionString());
+                if (!response.success)
+                    throw new Exception(response.err);
+            }
         }
 
         private List<ContentDeliveryConfiguration> GetPostedConfigurations(string resourceGroupId, ResourceGroupRequest request)

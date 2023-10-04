@@ -8,5 +8,6 @@ namespace SemanticBackup.Core.Interfaces
     {
         Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
         Task<List<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo);
+        Task<(bool success, string err)> TryTestConnectionAsync(string connectionString);
     }
 }
