@@ -113,7 +113,6 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 BackupSchedule saveObj = new BackupSchedule
                 {
                     BackupDatabaseInfoId = databaseInfo.Id,
-                    ResourceGroupId = databaseInfo.ResourceGroupId,
                     ScheduleType = BackupScheduleType.FULLBACKUP.ToString(),
                     EveryHours = 24,
                     StartDateUTC = new DateTime(currentTimeUTC.Year, currentTimeUTC.Month, currentTimeUTC.Day + 1),

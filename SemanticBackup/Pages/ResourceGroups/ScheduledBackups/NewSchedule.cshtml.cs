@@ -68,7 +68,6 @@ namespace SemanticBackup.Pages.ResourceGroups.ScheduledBackups
                     BackupSchedule saveObj = new BackupSchedule
                     {
                         BackupDatabaseInfoId = BackupScheduleRequest.BackupDatabaseInfoId,
-                        ResourceGroupId = CurrentResourceGroup.Id,
                         ScheduleType = BackupScheduleRequest.ScheduleType,
                         EveryHours = BackupScheduleRequest.EveryHours,
                         StartDateUTC = BackupScheduleRequest.StartDate,
