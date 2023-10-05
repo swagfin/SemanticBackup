@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
@@ -59,15 +60,25 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                             await InitiateRerunForDeliveryAsync(Request.Query["job"].ToString()?.Trim().ToLower());
                             break;
                     }
+                else if (Request.Query.ContainsKey("download"))
+                {
+                    string contentKey = Request.Query["download"].ToString()?.Trim();
+                    ContentDeliveryRecord deliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.DeliveryType == "DIRECT_LINK" && x.ExecutionMessage == contentKey);
+                    if (deliveryRecord == null)
+                        return new NotFoundObjectResult($"no downloadable content with with specified ref: {contentKey}");
+                    //return downloadable content
+                    return await DownloadableContentAsync(deliveryRecord);
+                }
                 //return page
                 return Page();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogWarning(ex.Message);
                 return Redirect($"/resource-groups/{id}/database-backups");
             }
         }
+
         private async Task GetContentDeliveryRecordsAsync()
         {
             try
@@ -121,6 +132,24 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 this.RerunStatus = "failed";
                 this.RerunStatusReason = ex.Message;
             }
+        }
+
+        private async Task<IActionResult> DownloadableContentAsync(ContentDeliveryRecord deliveryRecord)
+        {
+            if (!System.IO.File.Exists(BackupRecordResponse.Path))
+                return new NotFoundObjectResult($"Physical Backup File appears to be missing");
+
+            new FileExtensionContentTypeProvider().TryGetContentType(BackupRecordResponse.Path, out string contentType);
+            contentType = contentType ?? "application/octet-stream";
+            string fileName = System.IO.Path.GetFileName(BackupRecordResponse.Path);
+            var cd = new System.Net.Mime.ContentDisposition
+            {
+                FileName = fileName,
+                Inline = true,
+            };
+            Response.Headers.Add("Content-Disposition", cd.ToString());
+            byte[] filedata = await System.IO.File.ReadAllBytesAsync(BackupRecordResponse.Path);
+            return File(filedata, contentType);
         }
     }
 }
