@@ -72,7 +72,7 @@ namespace SemanticBackup.Pages.ResourceGroups.ScheduledBackups
                         EveryHours = BackupScheduleRequest.EveryHours,
                         StartDateUTC = BackupScheduleRequest.StartDate,
                         CreatedOnUTC = DateTime.UtcNow,
-                        Name = validDatabaseInfo.Name,
+                        Name = validDatabaseInfo.DatabaseName,
                     };
                     bool savedSuccess = await _backupScheduleRepository.AddOrUpdateAsync(saveObj);
                     if (!savedSuccess)

@@ -24,6 +24,8 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string BotId => _backupRecord.Id.ToString();
 
+        public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+
         public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IServiceScopeFactory scopeFactory)
         {
             this._resourceGroupId = resourceGroupId;

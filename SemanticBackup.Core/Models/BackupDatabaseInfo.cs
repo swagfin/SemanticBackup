@@ -8,9 +8,9 @@ namespace SemanticBackup.Core.Models
         [Required, Key]
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
         public string ResourceGroupId { get; set; }
-        public string Description { get; set; }
         [Required, MinLength(3)]
         public string DatabaseName { get; set; }
+        public string Description { get; set; }
         public DateTime DateRegisteredUTC { get; set; } = DateTime.UtcNow;
     }
 }

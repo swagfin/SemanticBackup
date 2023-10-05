@@ -87,8 +87,8 @@ namespace SemanticBackup.Core.BackgroundJobs
                                                 BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
                                                 BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                                                 ExpiryDateUTC = RecordExpiryUTC,
-                                                Name = backupDatabaseInfo.Name,
-                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, backupDatabaseInfo.GetSavingPathFromFormat(_persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
+                                                Name = $"{backupDatabaseInfo.DatabaseName} on {resourceGroup.DbServer}",
+                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, resourceGroup.GetSavingPathFromFormat(backupDatabaseInfo.DatabaseName, _persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
                                                 StatusUpdateDateUTC = currentTimeUTC,
                                                 RegisteredDateUTC = currentTimeUTC,
                                                 ExecutedDeliveryRun = false

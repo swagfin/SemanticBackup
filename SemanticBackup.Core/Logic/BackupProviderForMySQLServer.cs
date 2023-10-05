@@ -10,11 +10,12 @@ namespace SemanticBackup.Core.Logic
 {
     public class BackupProviderForMySQLServer : IBackupProviderForMySQLServer
     {
-        public async Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
+        public async Task<bool> BackupDatabaseAsync(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord)
         {
-            if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
-                throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
-            using (MySqlConnection conn = new MySqlConnection(backupDatabaseInfo.DatabaseConnectionString))
+            string connectionString = resourceGroup.GetDbConnectionString(databaseName);
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new Exception($"Invalid connection string provided for Database Type: {resourceGroup.DbType} is not Valid or is not Supported");
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 using (MySqlCommand cmd = new MySqlCommand())
                 {
@@ -30,11 +31,12 @@ namespace SemanticBackup.Core.Logic
             }
         }
 
-        public async Task<List<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo)
+        public async Task<List<string>> GetAvailableDatabaseCollectionAsync(ResourceGroup resourceGroup)
         {
             List<string> availableDbs = new List<string>();
             string[] exclude = new string[] { "information_schema", "mysql", "performance_schema" };
-            using (MySqlConnection conn = new MySqlConnection(backupDatabaseInfo.DatabaseConnectionString))
+            string connectionString = resourceGroup.GetDbConnectionString();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 using (MySqlCommand cmd = new MySqlCommand("SHOW DATABASES;"))
                 {
@@ -59,10 +61,11 @@ namespace SemanticBackup.Core.Logic
             return availableDbs;
         }
 
-        public async Task<(bool success, string err)> TryTestConnectionAsync(string connectionString)
+        public async Task<(bool success, string err)> TryTestDbConnectivityAsync(ResourceGroup resourceGroup)
         {
             try
             {
+                string connectionString = resourceGroup.GetDbConnectionString();
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     await conn.OpenAsync();

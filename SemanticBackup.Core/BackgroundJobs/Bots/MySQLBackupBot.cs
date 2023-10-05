@@ -11,20 +11,21 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
     internal class MySQLBackupBot : IBot
     {
-        private readonly string _resourceGroup;
-        private readonly BackupDatabaseInfo _databaseInfo;
+        private readonly ResourceGroup _resourceGroup;
+        private readonly string _databaseName;
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<MySQLBackupBot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string ResourceGroupId => _resourceGroup;
+        public string ResourceGroupId => _resourceGroup.Id;
         public string BotId => _backupRecord.Id.ToString();
-        public MySQLBackupBot(string resourceGroupId, BackupDatabaseInfo databaseInfo, BackupRecord backupRecord, IServiceScopeFactory serviceScopeFactory)
+        public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+        public MySQLBackupBot(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord, IServiceScopeFactory serviceScopeFactory)
         {
-            this._resourceGroup = resourceGroupId;
-            this._databaseInfo = databaseInfo;
+            this._databaseName = databaseName;
+            this._resourceGroup = resourceGroup;
             this._backupRecord = backupRecord;
             this._scopeFactory = serviceScopeFactory;
             //Logger
@@ -38,7 +39,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             Stopwatch stopwatch = new Stopwatch();
             try
             {
-                _logger.LogInformation($"Creating Backup of Db: {_databaseInfo.DatabaseName}");
+                _logger.LogInformation($"Creating Backup of Db: {_databaseName}");
                 EnsureFolderExists(_backupRecord.Path);
                 await Task.Delay(new Random().Next(1000));
                 stopwatch.Start();
@@ -47,14 +48,14 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     IBackupProviderForMySQLServer providerService = scope.ServiceProvider.GetRequiredService<IBackupProviderForMySQLServer>();
-                    backupedUp = await providerService.BackupDatabaseAsync(_databaseInfo, _backupRecord);
+                    backupedUp = await providerService.BackupDatabaseAsync(_databaseName, _resourceGroup, _backupRecord);
                 }
                 stopwatch.Stop();
                 if (backupedUp)
                     UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.COMPLETED.ToString(), "Successfull", stopwatch.ElapsedMilliseconds);
                 else
                     throw new Exception("Creating Backup Failed to Return Success Completion");
-                _logger.LogInformation($"Creating Backup of Db: {_databaseInfo.DatabaseName}...SUCCESS");
+                _logger.LogInformation($"Creating Backup of Db: {_databaseName}...SUCCESS");
             }
             catch (Exception ex)
             {

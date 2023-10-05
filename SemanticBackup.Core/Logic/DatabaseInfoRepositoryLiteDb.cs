@@ -26,7 +26,7 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<List<BackupDatabaseInfo>> GetAllAsync(string resourceGroupId)
         {
-            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderBy(x => x.Name).ToListAsync();
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderBy(x => x.DatabaseName).ToListAsync();
         }
         public async Task<int> GetAllCountAsync(string resourceGroupId)
         {
@@ -60,13 +60,13 @@ namespace SemanticBackup.Core.Logic
             return await _db.GetCollection<BackupDatabaseInfo>().UpdateAsync(record);
         }
 
-        public async Task<BackupDatabaseInfo> GetByDatabaseNameAsync(string databaseName, string databaseType)
-        {
-            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.DatabaseName != null && x.DatabaseType != null).Where(x => x.DatabaseName.Trim() == databaseName.Trim() && x.DatabaseType.Trim() == databaseType.Trim()).OrderBy(x => x.Name).FirstOrDefaultAsync();
-        }
         public async Task<List<string>> GetDatabaseIdsForResourceGroupAsync(string resourceGroupId)
         {
             return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Select(x => x.Id).ToListAsync();
+        }
+        public async Task<List<string>> GetDatabaseNamesForResourceGroupAsync(string resourceGroupId)
+        {
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Select(x => x.DatabaseName).ToListAsync();
         }
     }
 }

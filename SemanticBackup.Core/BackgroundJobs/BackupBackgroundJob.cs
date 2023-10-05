@@ -76,12 +76,12 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         {
                                             if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                             {
-                                                if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                                    _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, _serviceScopeFactory));
-                                                else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                                    _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, _serviceScopeFactory));
+                                                if (resourceGroup.DbType.Contains("SQLSERVER"))
+                                                    _botsManagerBackgroundJob.AddBot(new SQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _serviceScopeFactory));
+                                                else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
+                                                    _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _serviceScopeFactory));
                                                 else
-                                                    throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
+                                                    throw new Exception($"No Bot is registered to Handle Database Backups of Type: {resourceGroup.DbType}");
                                                 //Finally Update Status
                                                 bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
                                                 if (updated)

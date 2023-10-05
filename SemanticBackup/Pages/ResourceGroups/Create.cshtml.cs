@@ -163,13 +163,13 @@ namespace SemanticBackup.Pages.ResourceGroups
             //Finnally Validate Database Connection
             if (saveObj.DbType.Contains("SQLSERVER"))
             {
-                var response = await _backupProviderForSQLServer.TryTestConnectionAsync(saveObj.GetDbConnectionString());
+                var response = await _backupProviderForSQLServer.TryTestDbConnectivityAsync(saveObj);
                 if (!response.success)
                     throw new Exception(response.err);
             }
             else if (request.DbType.Contains("MYSQL") || request.DbType.Contains("MARIADB"))
             {
-                var response = await _backupProviderForMySQLServer.TryTestConnectionAsync(saveObj.GetDbConnectionString());
+                var response = await _backupProviderForMySQLServer.TryTestDbConnectivityAsync(saveObj);
                 if (!response.success)
                     throw new Exception(response.err);
             }
