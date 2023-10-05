@@ -33,7 +33,7 @@
                                 {
                                     foreach (var dbrecord in Model.DatabaseInfoSelectList.OrderBy(x => x.DatabaseName))
                                     {
-                                        <option value="@(dbrecord.Id)">@(string.Format("Database: {0}, Server: {1}", dbrecord.DatabaseName, dbrecord.Server))</option>
+                                        <option value="@(dbrecord.Id)">@(dbrecord.DatabaseName)</option>
                                     }
                                 }
                                 <option selected disabled>---SELECT DATABASE---</option>

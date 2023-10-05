@@ -96,8 +96,8 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                     BackupDatabaseInfoId = DatabaseInfoResponse.Id,
                     BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                     ExpiryDateUTC = RecordExpiryUTC,
-                    Name = DatabaseInfoResponse.Name,
-                    Path = Path.Combine(_options.DefaultBackupDirectory, SharedFunctions.GetSavingPathFromFormat(DatabaseInfoResponse, _options.BackupFileSaveFormat, currentTimeLocal)),
+                    Name = $"{DatabaseInfoResponse.DatabaseName} on {CurrentResourceGroup.DbServer}",
+                    Path = Path.Combine(_options.DefaultBackupDirectory, CurrentResourceGroup.GetSavingPathFromFormat(DatabaseInfoResponse.DatabaseName, _options.BackupFileSaveFormat, currentTimeUTC)),
                     StatusUpdateDateUTC = currentTimeUTC,
                     RegisteredDateUTC = currentTimeUTC,
                     ExecutedDeliveryRun = false

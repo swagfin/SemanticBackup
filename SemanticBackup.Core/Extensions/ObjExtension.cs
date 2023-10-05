@@ -7,15 +7,15 @@ namespace SemanticBackup.Core
 {
     public static class ObjExtension
     {
-        public static string GetSavingPathFromFormat(this BackupDatabaseInfo backupDatabaseInfo, string format, DateTime currentTimeUtc)
+        public static string GetSavingPathFromFormat(this ResourceGroup resourceGroup, string databaseName, string format, DateTime currentTimeUtc)
         {
             if (string.IsNullOrEmpty(format))
-                return $"{backupDatabaseInfo.DatabaseName}\\{currentTimeUtc:yyyy-MM-dd}\\{backupDatabaseInfo.DatabaseName}-{currentTimeUtc:yyyy-MM-dd-HHmmss}.{backupDatabaseInfo.DatabaseType}.bak";
+                return $"{databaseName}\\{currentTimeUtc:yyyy-MM-dd}\\{databaseName}-{currentTimeUtc:yyyy-MM-dd-HHmmss}.{resourceGroup.DbType}.bak";
             //Proceed
-            return format.Replace("{{database}}", backupDatabaseInfo.DatabaseName)
+            return format.Replace("{{database}}", databaseName)
                                          .Replace("{{date}}", $"{currentTimeUtc:yyyy-MM-dd}")
                                          .Replace("{{datetime}}", $"UTC{currentTimeUtc:yyyy-MM-dd-HHmmssffff}")
-                                         .Replace("{{databasetype}}", backupDatabaseInfo.DatabaseType);
+                                         .Replace("{{databasetype}}", resourceGroup.DbType);
         }
 
         public static ResourceGroup GetDefaultGroup(this List<ResourceGroup> resourceGroups)
@@ -36,6 +36,17 @@ namespace SemanticBackup.Core
             }
             else
                 return string.Empty;
+        }
+        public static string GetColorCode(this ResourceGroup resourceGroup)
+        {
+            if (resourceGroup.DbType.Contains("SQLSERVER"))
+                return "orange";
+            else if (resourceGroup.DbType.Contains("MYSQL"))
+                return "teal";
+            else if (resourceGroup.DbType.Contains("MARIADB"))
+                return "blue";
+            else
+                return "gray";
         }
     }
 }

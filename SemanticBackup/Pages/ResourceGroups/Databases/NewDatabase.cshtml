@@ -17,46 +17,20 @@
         <form method="post" class="database-registration-page">
             <div class="ui segment attached">
 
-                <div class="form-row">
-                    <div class="form-group col-md-3">
-                        <label for="DatabaseType">DatabaseType</label>
-                        <select autofocus="true" onchange="setDbPort();" class="selectpicker form-control set-db-port refresh-db-type" asp-for="backupDatabaseRequest.DatabaseType" required>
-                            @{
-                                foreach (var dbType in Enum.GetValues(typeof(BackupDatabaseInfoDbType)).Cast<BackupDatabaseInfoDbType>())
-                                {
-                                    <option>@(dbType)</option>
-                                }
+                <div class="ui warning tiny message">Choose from databases that have not been included or added in Backup</div>
+
+                <div class="form-group">
+                    <label for="DatabaseName">Choose from Available Databases</label>
+                    <div class="database-dropdown-container">
+                        <select class="ui fluid search small dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames">
+                            @foreach (string dbName in Model.AvailableDatabases)
+                            {
+                                <option value="@(dbName)">@(dbName)</option>   
                             }
                         </select>
                     </div>
-                    <div class="form-group col-md-7">
-                        <label for="Server">Server</label>
-                        <input asp-for="backupDatabaseRequest.Server"  type="text" value="127.0.0.1" class="form-control refresh-db-server" required>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label for="Port">Port</label>
-                        <input asp-for="backupDatabaseRequest.Port" type="text" value="0" autocomplete="off" class="form-control set-db-port-val refresh-db-port" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label for="Username">Username</label>
-                        <input asp-for="backupDatabaseRequest.Username" type="text" autocomplete="off" class="form-control refresh-db-username" required>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label for="Password">Password</label>
-                        <input asp-for="backupDatabaseRequest.Password" type="password" autocomplete="off" class="form-control refresh-db-password" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="DatabaseName">Database Name</label>
-                    <div class="database-dropdown-container">
-                        <select class="ui fluid search small dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames"></select>
-                    </div>
                 </div>
 
-                <div class="form-row">
-                </div>
                 <div class="form-group">
                     <label for="Description">Description</label>
                     <input asp-for="backupDatabaseRequest.Description" autocomplete="off" type="text" class="form-control">
@@ -71,20 +45,7 @@
     </div><!-- container -->
 </div><!-- content -->
 @section Scripts{
-
     <script type="text/javascript">
-        //Set Db Default Ports
-        function setDbPort() {
-            var value = $(".set-db-port").val();
-            if (value.includes("MARIADB") || value.includes("MYSQL")) {
-                $(".set-db-port-val").val('3306');
-            }
-            else if (value.includes("SQLSERVER")) {
-                $(".set-db-port-val").val('1433');
-            }
-        };
-        //Initi
-        setDbPort();
-        $(".database-dropdown-search").dropdown({ allowAdditions: true });
+        $(".database-dropdown-search").dropdown({ allowAdditions: false });
     </script>
 }

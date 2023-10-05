@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
@@ -9,5 +10,6 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         bool IsStarted { get; }
         string ResourceGroupId { get; }
         string BotId { get; }
+        DateTime DateCreatedUtc { get; }
     }
 }

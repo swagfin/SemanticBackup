@@ -23,6 +23,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
+        public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public UploaderLinkGenBot(string resourceGroupId, BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
         {
             this._resourceGroupId = resourceGroupId;

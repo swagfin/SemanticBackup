@@ -15,21 +15,21 @@
                 <i class="database blue icon"></i>
                 <div class="content">
                     <div class="header">DATABASE NAME</div>
-                    @Model.DatabaseInfoResponse.DatabaseName
+                    @(Model.DatabaseInfoResponse.DatabaseName)
                 </div>
             </div>
             <div class="item">
                 <i class="desktop blue icon"></i>
                 <div class="content">
                     <div class="header">SERVER</div>
-                    @Model.DatabaseInfoResponse.Server
+                    @(Model.CurrentResourceGroup.DbServer)
                 </div>
             </div>
             <div class="item">
                 <i class="database blue icon"></i>
                 <div class="content">
                     <div class="header">DATABASE TYPE</div>
-                    <span class="ui mini basic @(Model.DatabaseInfoResponse.ColorCode) label">@(Model.DatabaseInfoResponse.DatabaseType)</span>
+                    <span class="ui mini basic @(Model.CurrentResourceGroup.GetColorCode()) label">@(Model.CurrentResourceGroup.DbType)</span>
                 </div>
             </div>
             <div class="item">

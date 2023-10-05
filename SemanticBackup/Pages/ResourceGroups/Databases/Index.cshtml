@@ -32,8 +32,8 @@
                             <tr onclick="location.href='/resource-groups/@(Model.CurrentResourceGroup.Key)/databases/details/@(record.DatabaseName.UrlEncoded())'" title="Click to View Database Info">
                                 <td>@string.Format("{0:N0}", count)</td>
                                 <td class="positive" style="font-weight:bold;font-size:12px"> <i class="database icon"></i> @record.DatabaseName</td>
-                                <td>@record.Server</td>
-                                <td><span class="ui small basic @(record.ColorCode) label">@(@record.DatabaseType)</span></td>
+                                <td>@(Model.CurrentResourceGroup.DbServer)</td>
+                                <td><span class="ui small basic @(Model.CurrentResourceGroup.GetColorCode()) label">@(Model.CurrentResourceGroup.DbType)</span></td>
                                 <td><a href="/resource-groups/@(Model.CurrentResourceGroup.Key)/databases/details/@(record.DatabaseName.UrlEncoded())" class="ui small blue label"><i class="info icon"></i>View Info</a></td>
                             </tr>
                         }
