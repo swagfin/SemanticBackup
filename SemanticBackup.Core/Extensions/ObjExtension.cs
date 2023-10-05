@@ -37,5 +37,16 @@ namespace SemanticBackup.Core
             else
                 return string.Empty;
         }
+        public static string GetColorCode(this ResourceGroup resourceGroup)
+        {
+            if (resourceGroup.DbType.Contains("SQLSERVER"))
+                return "orange";
+            else if (resourceGroup.DbType.Contains("MYSQL"))
+                return "teal";
+            else if (resourceGroup.DbType.Contains("MARIADB"))
+                return "blue";
+            else
+                return "gray";
+        }
     }
 }
