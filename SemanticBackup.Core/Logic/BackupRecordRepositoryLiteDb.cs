@@ -21,9 +21,9 @@ namespace SemanticBackup.Core.Logic
         public BackupRecordRepositoryLiteDb(IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers, IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService, IDatabaseInfoRepository databaseInfoRepository)
         {
 #if DEBUG
-            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-history.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-history.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
 #else
-            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-history.db")) { Password = "12345678", Connection = ConnectionType.Shared });
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-history.db")) { Password = "12345678", Connection = ConnectionType.Shared });
 #endif
             //Init
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();

@@ -15,7 +15,7 @@
                         <div class="stat-content">
                             <div class="text-left dib">
                                 <div class="stat-heading text-center" style="height:45px">
-                                    <img id="serviceLogo" style="height:100%;" src="~/images/database_p6.png" />
+                                    <img id="serviceLogo" style="height:100%;" src="/images/database_p6.png" />
                                 </div>
                             </div>
                         </div>
@@ -117,8 +117,8 @@
 </div>
 <!-- container -->
 @section Scripts{
-    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
-    <script type="text/javascript" src="~/assets/js/dashboard.js?v=3"></script>
+    <script src="/lib/signalr/dist/browser/signalr.js"></script>
+    <script type="text/javascript" src="/assets/js/dashboard.js?v=3"></script>
     <script type="text/javascript">
         var resourcegroupId = @(Html.Raw(Json.Serialize(Model.CurrentResourceGroup.Id)));
     </script>
