@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,14 +49,17 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //DI INJECTIONS
                             IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                             IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
+                            IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                             //Proceed
                             List<BackupRecord> queuedBackups = await backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.COMPLETED.ToString());
                             if (queuedBackups != null && queuedBackups.Count > 0)
                             {
                                 foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
+                                    //get valid database
+                                    BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
                                     //Check if valid Resource Group
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
                                     if (resourceGroup != null)
                                     {
                                         //Use Resource Group Threads
@@ -86,8 +89,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         }
                                     }
                                     else
-                                        _logger.LogWarning($"The Backup Record Id: {backupRecord.Id}, doesn't seem to have been assigned to a valid Resource Group Id: {backupRecord.ResourceGroupId}, Zipping Skipped");
-
+                                        _logger.LogWarning($"The Backup Record Id: {backupRecord.Id}, doesn't seem to have been assigned to a valid Resource Group, Zipping Skipped");
                                 }
                             }
                         }

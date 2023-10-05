@@ -6,8 +6,9 @@ namespace SemanticBackup.Core.Interfaces
 {
     public interface IBackupProviderForSQLServer
     {
-        Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
-        Task<bool> RestoreDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord);
-        Task<IEnumerable<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo);
+        Task<bool> BackupDatabaseAsync(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord);
+        Task<List<string>> GetAvailableDatabaseCollectionAsync(ResourceGroup resourceGroup);
+        Task<bool> RestoreDatabaseAsync(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord);
+        Task<(bool success, string err)> TryTestDbConnectivityAsync(ResourceGroup resourceGroup);
     }
 }

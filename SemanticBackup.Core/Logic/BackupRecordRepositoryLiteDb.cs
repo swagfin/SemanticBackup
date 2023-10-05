@@ -16,8 +16,9 @@ namespace SemanticBackup.Core.Logic
         private readonly LiteDatabaseAsync _db;
         private readonly IEnumerable<IRecordStatusChangedNotifier> _backupRecordStatusChangedNotifiers;
         private readonly IContentDeliveryRecordRepository _contentDeliveryRecordPersistanceService;
+        private readonly IDatabaseInfoRepository _databaseInfoRepository;
 
-        public BackupRecordRepositoryLiteDb(IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers, IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService)
+        public BackupRecordRepositoryLiteDb(IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers, IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService, IDatabaseInfoRepository databaseInfoRepository)
         {
 #if DEBUG
             this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-history.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
@@ -29,51 +30,57 @@ namespace SemanticBackup.Core.Logic
             //Proceed
             this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
             this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
+            this._databaseInfoRepository = databaseInfoRepository;
         }
 
-        public async Task<List<BackupRecord>> GetAllAsync(string resourcegroup)
+
+        public async Task<List<BackupRecord>> GetAllAsync(string resourceGroupId)
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
+            List<string> dbCollection = await _databaseInfoRepository.GetDatabaseIdsForResourceGroupAsync(resourceGroupId);
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId)).OrderByDescending(x => x.Id).ToListAsync();
         }
-        public async Task<int> GetAllCountAsync(string resourcegroup)
+        public async Task<int> GetAllCountAsync(string resourceGroupId)
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Select(x => x.RegisteredDateUTC).CountAsync();
+            List<string> dbCollection = await _databaseInfoRepository.GetDatabaseIdsForResourceGroupAsync(resourceGroupId);
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId)).Select(x => x.Id).CountAsync();
         }
         public async Task<List<BackupRecord>> GetAllByStatusAsync(string status)
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status).OrderByDescending(x => x.Id).ToListAsync();
         }
         public async Task<List<BackupRecord>> GetAllByRestoreStatusAsync(string status)
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.RestoreStatus == status).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.RestoreStatus == status).OrderByDescending(x => x.Id).ToListAsync();
         }
         public async Task<List<BackupRecord>> GetAllExpiredAsync()
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDateUTC != null).Where(x => x.ExpiryDateUTC <= DateTime.UtcNow).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDateUTC != null).Where(x => x.ExpiryDateUTC <= DateTime.UtcNow).OrderBy(x => x.Id).ToListAsync();
         }
-        public async Task<List<BackupRecord>> GetAllByRegisteredDateByStatusAsync(string resourcegroup, DateTime fromDate, string status = "*")
+        public async Task<List<BackupRecord>> GetAllByRegisteredDateByStatusAsync(string resourceGroupId, DateTime fromDate, string status = "*")
+        {
+            List<string> dbCollection = await _databaseInfoRepository.GetDatabaseIdsForResourceGroupAsync(resourceGroupId);
+            if (status == "*")
+                return await _db.GetCollection<BackupRecord>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId) && x.RegisteredDateUTC > fromDate).OrderByDescending(x => x.Id).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId) && x.BackupStatus == status && x.RegisteredDateUTC > fromDate).OrderByDescending(x => x.Id).ToListAsync();
+        }
+        public async Task<List<BackupRecord>> GetAllByStatusUpdateDateByStatusAsync(string resourceGroupId, DateTime fromDate, string status = "*")
+        {
+            List<string> dbCollection = await _databaseInfoRepository.GetDatabaseIdsForResourceGroupAsync(resourceGroupId);
+            if (status == "*")
+                return await _db.GetCollection<BackupRecord>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId) && x.StatusUpdateDateUTC > fromDate).OrderByDescending(x => x.Id).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId) && x.BackupStatus == status && x.StatusUpdateDateUTC > fromDate).OrderByDescending(x => x.Id).ToListAsync();
+        }
+        public async Task<List<BackupRecord>> GetAllByDatabaseIdByStatusAsync(string databaseId, string status = "*")
         {
             if (status == "*")
-                return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.RegisteredDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.RegisteredDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
-        }
-        public async Task<List<BackupRecord>> GetAllByStatusUpdateDateByStatusAsync(string resourcegroup, DateTime fromDate, string status = "*")
-        {
-            if (status == "*")
-                return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.StatusUpdateDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.StatusUpdateDateUTC > fromDate).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
-        }
-        public async Task<List<BackupRecord>> GetAllByDatabaseIdByStatusAsync(string resourcegroup, string id, string status = "*")
-        {
-            if (status == "*")
-                return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ResourceGroupId == resourcegroup).Where(x => x.BackupStatus == status && x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
+                return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == databaseId).OrderByDescending(x => x.Id).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupStatus == status && x.BackupDatabaseInfoId == databaseId).OrderByDescending(x => x.Id).ToListAsync();
         }
         public async Task<List<BackupRecord>> GetAllByDatabaseIdAsync(string id)
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.Id).ToListAsync();
         }
-        public async Task<List<string>> GetAllNoneResponsiveIdsAsync(List<string> statusChecks, int minuteDifference)
+        public async Task<List<long>> GetAllNoneResponsiveIdsAsync(List<string> statusChecks, int minuteDifference)
         {
             if (statusChecks == null || statusChecks.Count == 0)
                 return null;
@@ -88,7 +95,7 @@ namespace SemanticBackup.Core.Logic
             return savedSuccess;
         }
 
-        public async Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
+        public async Task<bool> UpdateStatusFeedAsync(long id, string status, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -113,7 +120,7 @@ namespace SemanticBackup.Core.Logic
             return false;
         }
 
-        public async Task<bool> UpdateRestoreStatusFeedAsync(string id, string status, string message = null, string confirmationToken = null)
+        public async Task<bool> UpdateRestoreStatusFeedAsync(long id, string status, string message = null, string confirmationToken = null)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -131,12 +138,18 @@ namespace SemanticBackup.Core.Logic
             }
             return false;
         }
-        public async Task<BackupRecord> GetByIdAsync(string id)
+        public async Task<BackupRecord> GetByIdAsync(long id)
         {
             return await _db.GetCollection<BackupRecord>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();
         }
-
-        public async Task<bool> RemoveAsync(string id)
+        public async Task<BackupRecord> VerifyBackupRecordInResourceGroupThrowIfNotExistAsync(string resourceGroupId, long backupRecordId)
+        {
+            BackupRecord backupRecordResponse = await _db.GetCollection<BackupRecord>().Query().Where(x => x.Id == backupRecordId).FirstOrDefaultAsync() ?? throw new Exception($"unknown backup record with identity key {backupRecordId} under resource group id: {resourceGroupId}");
+            //retrive the Database Information
+            _ = await _databaseInfoRepository.VerifyDatabaseInResourceGroupThrowIfNotExistAsync(resourceGroupId, backupRecordResponse.BackupDatabaseInfoId ?? string.Empty);
+            return backupRecordResponse;
+        }
+        public async Task<bool> RemoveAsync(long id)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -154,7 +167,7 @@ namespace SemanticBackup.Core.Logic
             return false;
         }
 
-        private async void TryDeleteContentDispatchRecordsAsync(string id)
+        private async void TryDeleteContentDispatchRecordsAsync(long id)
         {
             try
             {
@@ -175,9 +188,9 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<List<BackupRecord>> GetAllReadyAndPendingDeliveryAsync()
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordBackupStatus.READY.ToString()).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordBackupStatus.READY.ToString()).OrderBy(x => x.Id).ToListAsync();
         }
-        public async Task<bool> UpdateDeliveryRunnedAsync(string backupRecordId, bool hasRun, string executedDeliveryRunStatus)
+        public async Task<bool> UpdateDeliveryRunnedAsync(long backupRecordId, bool hasRun, string executedDeliveryRunStatus)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == backupRecordId).FirstOrDefaultAsync();
@@ -231,6 +244,7 @@ namespace SemanticBackup.Core.Logic
             }
             catch (Exception) { }
         }
+
 
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +18,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
-        public BackupBackgroundJob(
-            ILogger<BackupBackgroundJob> logger,
-            SystemConfigOptions persistanceOptions,
-            IServiceScopeFactory serviceScopeFactory,
-            BotsManagerBackgroundJob botsManagerBackgroundJob)
+        public BackupBackgroundJob(ILogger<BackupBackgroundJob> logger, SystemConfigOptions persistanceOptions, IServiceScopeFactory serviceScopeFactory, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;
@@ -57,7 +53,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                             List<BackupRecord> queuedBackups = await backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordBackupStatus.QUEUED.ToString());
                             if (queuedBackups != null && queuedBackups.Count > 0)
                             {
-                                List<string> scheduleToDelete = new List<string>();
+                                List<long> scheduleToDelete = new List<long>();
                                 foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
                                     _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
@@ -70,7 +66,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     else
                                     {
                                         //Check if valid Resource Group
-                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
+                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
                                         if (resourceGroup == null)
                                         {
                                             _logger.LogWarning($"The Database Id: {backupRecord.BackupDatabaseInfoId}, doesn't seem to have been assigned to a valid Resource Group Id: {backupDatabaseInfo.ResourceGroupId}, Record will be Deleted");
@@ -80,12 +76,12 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         {
                                             if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                             {
-                                                if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                                    _botsManagerBackgroundJob.AddBot(new SQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, _serviceScopeFactory));
-                                                else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
-                                                    _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, _serviceScopeFactory));
+                                                if (resourceGroup.DbType.Contains("SQLSERVER"))
+                                                    _botsManagerBackgroundJob.AddBot(new SQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _serviceScopeFactory));
+                                                else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
+                                                    _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _serviceScopeFactory));
                                                 else
-                                                    throw new Exception($"No Bot is registered to Handle Database Backups of Type: {backupDatabaseInfo.DatabaseType}");
+                                                    throw new Exception($"No Bot is registered to Handle Database Backups of Type: {resourceGroup.DbType}");
                                                 //Finally Update Status
                                                 bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordBackupStatus.EXECUTING.ToString());
                                                 if (updated)
@@ -173,12 +169,13 @@ namespace SemanticBackup.Core.BackgroundJobs
                     IContentDeliveryRecordRepository contentDeliveryRecordsService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                     IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
                     BotsManagerBackgroundJob botsManagerBackgroundJob = scope.ServiceProvider.GetRequiredService<BotsManagerBackgroundJob>();
-                    ResourceGroup backRecordResourceGrp = await resourceGroupPersistanceService.GetByIdAsync(rm.ResourceGroupId);
-                    if (backRecordResourceGrp == null)
-                    {
-                        _logger.LogWarning($"InDepth Deletion Failed, the Database Record has no valid Resource Group, Id: {rm.ResourceGroupId}, resource Group: {rm.ResourceGroupId}");
+                    IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
+                    //get db information
+                    BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(rm.BackupDatabaseInfoId);
+                    //Check if valid Resource Group
+                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
+                    if (resourceGroup == null)
                         return;
-                    }
                     //Proceed
                     var dbRecords = await contentDeliveryRecordsService.GetAllByBackupRecordIdAsync(rm.Id); //database record content delivery
                     if (dbRecords == null)
@@ -193,17 +190,15 @@ namespace SemanticBackup.Core.BackgroundJobs
                         if (rec.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
                         {
                             //In Depth Remove From DropBox
-                            botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(rm, rec, config, _serviceScopeFactory));
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(resourceGroup.Id, rm, rec, config, _serviceScopeFactory));
                         }
                         else if (rec.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
                         {
                             //In Depth remove From Azure Storage
-                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(rm, rec, config, _serviceScopeFactory));
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(resourceGroup.Id, rm, rec, config, _serviceScopeFactory));
                         }
-
                     }
                 }
-
             }
             catch (Exception ex) { _logger.LogError(ex.Message); }
         }

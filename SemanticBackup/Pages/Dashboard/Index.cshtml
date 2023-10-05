@@ -1,0 +1,125 @@
+﻿@page "/resource-groups/{resourceGroupId}/dashboard"
+@model SemanticBackup.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container pd-x-0">
+
+    <div class="row stats-row">
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stat-widget-two stats-info" hidden>
+                        <div class="stat-content">
+                            <div class="text-left dib">
+                                <div class="stat-heading text-center" style="height:45px">
+                                    <img id="serviceLogo" style="height:100%;" src="~/images/database_p6.png" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui active centered inline loader"></div>
+                </div>
+            </div>
+        </div><!-- col -->
+        <div class="col-sm-6 col-lg-3 mg-t-10 mg-sm-t-0">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info" hidden>
+
+                        <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">TOTAL DATABASES</h6>
+                        <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                            <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1" id="totalDatabasesLabel">0</h3>
+                            <p class="tx-11 tx-color-03 mg-b-0"><span id="calMinuteIncreaseLabel" class="tx-medium tx-success"> <span id="calMinuteIncreaseValue">0</span><i id="calMinuteIncreaseArrow" class="icon ion-md-arrow-up"></i></span>than previous minute</p>
+                        </div>
+                    </div>
+                    <div class="ui active centered inline loader"></div>
+                </div>
+
+            </div>
+        </div><!-- col -->
+        <div class="col-sm-6 col-lg-3 mg-t-10 mg-lg-t-0">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info" hidden>
+
+                        <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">BACKUP SCHEDULES</h6>
+                        <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                            <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1" id="totalBackupSchedulesLabel">0</h3>
+                            <p class="tx-11 tx-color-03 mg-b-0"><span id="calThreeIncreaseLabel" class="tx-medium tx-success"><span id="calThreeIncreaseValue">0</span><i id="calThreeIncreaseArrow" class="icon ion-md-arrow-up"></i></span>than previous minute</p>
+                        </div>
+                    </div>
+                    <div class="ui active centered inline loader"></div>
+                </div>
+
+            </div>
+        </div><!-- col -->
+        <div class="col-sm-6 col-lg-3 mg-t-10 mg-lg-t-0">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info" hidden>
+
+                        <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">EXECUTED BACKUPS JOBS</h6>
+                        <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                            <h3 class="tx-normal tx-rubik mg-b-0 mg-r-5 lh-1" id="totalBackupRecordsLabel">0</h3>
+                            <p class="tx-11 tx-color-03 mg-b-0"><span id="calPeriodIncreaseLabel" class="tx-medium tx-success"><span id="calPeriodIncreaseValue">0</span><i id="calPeriodIncreaseArrow" class="icon ion-md-arrow-up"></i></span>than previous minute</p>
+                        </div>
+                    </div>
+                    <div class="ui active centered inline loader"></div>
+                </div>
+            </div>
+        </div><!-- col -->
+
+
+    </div>
+
+    <div class="divider-horizontal" style="margin:20px"></div>
+    <div class="row row-xs">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header bd-b-0 pd-t-20 pd-lg-t-25 pd-l-20 pd-lg-l-25 d-flex flex-column flex-sm-row align-items-sm-start justify-content-sm-between">
+                </div><!-- card-header -->
+
+
+                <div class="card-body pd-lg-25">
+                    <div class="row align-items-sm-end">
+                        <div class="col-lg-12 col-xl-12">
+                            <div class="ui active centered inline loader"></div>
+
+                            <div class="chart-six stats-info" id="analytics_chart_container_001"><canvas id="analytics_chart_001"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer text-muted">
+                        <div class="btn-group mg-t-20 mg-sm-t-0">
+                            <button id="btnRefresh" class="btn btn-xs btn-white btn-uppercase analytics_refresh_button active">REFRESH</button>
+                            <div class="dropdown">
+                                <button class="btn btn-xs btn-white btn-uppercase active dropdown-toggle analytics_service_selected" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    SELECT SERVICE
+                                </button>
+                                <div class="dropdown-menu analytics_services_collection" aria-labelledby="dropdownMenuButton">
+                                </div>
+                            </div>
+
+                        </div><!-- btn-group -->
+
+                    </div>
+
+
+                </div><!-- card-body -->
+
+            </div><!-- card -->
+        </div>
+
+    </div><!-- row -->
+</div>
+<!-- container -->
+@section Scripts{
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+    <script type="text/javascript" src="~/assets/js/dashboard.js?v=3"></script>
+    <script type="text/javascript">
+        var resourcegroupId = @(Html.Raw(Json.Serialize(Model.CurrentResourceGroup.Id)));
+    </script>
+}

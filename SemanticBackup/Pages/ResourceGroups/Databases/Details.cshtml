@@ -1,0 +1,218 @@
+﻿@page "/resource-groups/{resourceGroupId}/databases/details/{id}"
+@model SemanticBackup.Pages.ResourceGroups.Databases.DetailsModel
+@{
+    ViewData["Title"] = $"Databases | Info #{Model.DatabaseInfoResponse?.DatabaseName}";
+}
+<div class="container pd-x-0">
+    <div class="ui container">
+
+        <div class="ui header large">
+            Details #@(Model.DatabaseInfoResponse?.DatabaseName)
+        </div>
+
+        <div class="ui celled list">
+            <div class="item">
+                <i class="database blue icon"></i>
+                <div class="content">
+                    <div class="header">DATABASE NAME</div>
+                    @(Model.DatabaseInfoResponse.DatabaseName)
+                </div>
+            </div>
+            <div class="item">
+                <i class="desktop blue icon"></i>
+                <div class="content">
+                    <div class="header">SERVER</div>
+                    @(Model.CurrentResourceGroup.DbServer)
+                </div>
+            </div>
+            <div class="item">
+                <i class="database blue icon"></i>
+                <div class="content">
+                    <div class="header">DATABASE TYPE</div>
+                    <span class="ui mini basic @(Model.CurrentResourceGroup.GetColorCode()) label">@(Model.CurrentResourceGroup.DbType)</span>
+                </div>
+            </div>
+            <div class="item">
+                <i class="info blue icon"></i>
+                <div class="content">
+                    <div class="header">Description</div>
+                    @(string.Format("{0:N0} DAYS", Model.DatabaseInfoResponse.Description))
+                </div>
+            </div>
+        </div>
+
+        <div class="ui top attached tabular primary small menu">
+            <a class="item active" data-tab="recentbackups">BACKUPS</a>
+            <a class="item" data-tab="backupschedules">SCHEDULES</a>
+        </div>
+        <div class="ui bottom attached tab segment active" data-tab="recentbackups">
+            <section class="ui two wide column grid">
+                <div class="eight wide column">
+                    <h3>Recent 10 Backups</h3>
+                </div>
+                <div class="eight wide column">
+                    <a class="ui tiny green button right floated" href="?request=backup"><i class="cloud upload icon"></i>Get Instant Backup</a>
+                </div>
+            </section>
+
+            <table class="ui selectable small table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Backup Date</th>
+                        <th>Last Updated</th>
+                        <th>Avg. Speed</th>
+                        <th>Backup Status</th>
+                    </tr>
+                </thead>
+                <tbody id="records_data_table">
+                    @{
+                        if (Model.BackupRecordsResponse != null && Model.BackupRecordsResponse.Count > 0)
+                            foreach (var record in Model.BackupRecordsResponse)
+                            {
+                                <tr id="record_for_@(record.Id)" onclick="location.href='/resource-groups/@(Model.CurrentResourceGroup.Key)/database-backups/details/@(record.Id)'">
+                                    <td><a style="font-weight:bold" href="/resource-groups/@(Model.CurrentResourceGroup.Key)/database-backups/details/@(record.Id)">&#x23;@(record.Id)</a></td>
+                                    <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.Name</td>
+                                    <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.RegisteredDateUTC)</td>
+                                    <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDateUTC)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.StatusUpdateDateUTC)</td>
+                                    <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
+
+                                    @{
+                                        if (record.BackupStatus == "EXECUTING")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"> <span class="ui label small basic blue"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "COMPLETED")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"> <span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "COMPRESSING")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"> <span class="ui label small basic olive"><i class="notched circle loading icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "READY")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"><span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>  </td>
+                                        }
+                                        else if (record.BackupStatus == "ERROR")
+                                        {
+                                            <td class="event_status_for_@(record.Id)"><span class="ui label small basic red"><i class="exclamation circle icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                        else
+                                        {
+                                            <td class="event_status_for_@(record.Id)">  <span class="ui label small basic"><i class="info icon"></i>@record.BackupStatus</span>  </td>
+                                        }
+                                    }
+
+                                </tr>
+                            }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" style="text-align:center">
+                                    <div class="ui message small warning"><div>No Recent backups for this database</div></div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="ui bottom attached tab segment" data-tab="backupschedules">
+            <section class="ui two wide column grid">
+                <div class="eight wide column">
+                    <h3>Scheduled Backups</h3>
+                </div>
+                <div class="eight wide column">
+                    <a class="ui tiny blue button right floated" href="/resource-groups/@(Model.CurrentResourceGroup?.Key ?? "#")/scheduled-backups/new-schedule"><i class="calendar icon"></i>Create Schedule</a>
+                </div>
+            </section>
+
+            <table class="ui selectable small table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th class="warning" style="font-weight:bold">Name</th>
+                        <th>Schedule Type</th>
+                        <th>Every Hours</th>
+                        <th>Last Run</th>
+                        <th>Next Run</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int recordCount = 0;
+                        if (Model.BackupSchedulesResponse != null && Model.BackupSchedulesResponse.Count > 0)
+                            foreach (var record in Model.BackupSchedulesResponse)
+                            {
+                                recordCount++;
+                                <tr onclick="location.href='/databasebackupschedules/@(record.Id)'">
+                                    <td>@string.Format("{0:N0}", recordCount)</td>
+                                    <td class="positive" style="font-weight:bold;font-size:12px"> <i class="clock icon"></i> @record.Name</td>
+                                    <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
+                                    <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
+                                    <td>@(record.LastRunUTC.ToLastRunPreviewableWithTimezone(User.GetUserTimeZoneOffset()))</td>
+                                    <td>@string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRunUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))</td>
+                                </tr>
+                            }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" style="text-align:center">
+                                    <div class="ui message small warning"><div>To Available Backup Schedules for this database</div></div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+        </div>
+
+
+    </div>
+</div>
+@section Scripts{
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+    <script type="text/javascript" src="~/assets/js/signalr-subscriber.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+
+            //Init Tab Menu
+            $('.menu .item').tab();
+
+            //Create Main Obersavable
+            var currentRecordId = @(Html.Raw(Json.Serialize(Model.DatabaseInfoResponse.Id)));
+            _ = getListenerAsync("/BackupRecordsNotify", currentRecordId, "ReceiveNotification", function (response) {
+                console.log("Received Database Backup Status Update");
+                //console.log(response);
+                var metric = response.metric;
+                var key = metric.id;
+                var status = metric.backupStatus;
+                //Check if Not Exists
+                if (response.isNewMetric && $("#record_for_" + key).length == 0) {
+                    console.log("Prepending new Record Notification");
+                    var newElement = '<tr id="record_for_' + key + '"><td colspan="6"><div class="ui tiny blue message"><div class="header">New backup for <b><a href="/databasebackupschedules/' + key + '"> ' + metric.name + ' </a></b> has started <span style="color:orange;margin-right:10px" class="use-time-ago" use-time-ago-value="' + metric.registeredDate + '"> Just now </span>&gt;&gt; Progress: <span class="event_status_for_' + key + '"> <span class="ui label small basic"><i class="info icon"></i>QUEUED</span> </span></div></div></td></tr>';
+                    $("#records_data_table").prepend(newElement);
+                }
+                //Update Status
+                console.log("Updating UI Key: " + key + ", Status: " + status);
+                if (status == "EXECUTING") { $(".event_status_for_" + key).html('<span class="ui label small basic blue"><i class="notched circle loading icon"></i>' + status + '</span>'); }
+                else if (status == "COMPLETED") { $(".event_status_for_" + key).html('<span class="ui label small basic teal"><i class="notched circle loading icon"></i>VALIDATING</span>'); }
+                else if (status == "COMPRESSING") { $(".event_status_for_" + key).html('<span class="ui label small basic olive"><i class="notched circle loading icon"></i>' + status + '</span>'); }
+                else if (status == "READY") { $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>BACKUP COMPLETED</span>'); }
+                else if (status == "ERROR") { $(".event_status_for_" + key).html('<span class="ui label small basic red"><i class="exclamation circle icon"></i>' + status + '</span>'); }
+                else { $(".event_status_for_" + key).html('<span class="ui label small basic"><i class="info icon"></i>' + status + '</span>'); }
+                //Update Others
+                $(".execution_milliseconds_for_" + key).html(metric.executionMilliseconds);
+                $(".last_status_update_for_" + key).html("Just now");
+                $(".last_status_update_for_" + key).attr("use-time-ago-value", metric.statusUpdateDate);
+                //console.log("Updated UI Success");
+            });
+
+        });
+    </script>
+}

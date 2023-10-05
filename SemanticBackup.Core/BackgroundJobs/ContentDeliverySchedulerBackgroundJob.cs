@@ -41,9 +41,11 @@ namespace SemanticBackup.Core.BackgroundJobs
                         using (var scope = _serviceScopeFactory.CreateScope())
                         {
                             //DI INJECTIONS
+                            IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                             IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                             IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                             IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
+                            IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                             //Proceed
                             List<BackupRecord> pendingExecutionRecords = await backupRecordPersistanceService.GetAllReadyAndPendingDeliveryAsync();
                             if (pendingExecutionRecords != null && pendingExecutionRecords.Count > 0)
@@ -51,8 +53,12 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 foreach (BackupRecord backupRecord in pendingExecutionRecords.OrderBy(x => x.RegisteredDateUTC).ToList())
                                 {
                                     _logger.LogInformation($"Queueing Content Delivery for Backup Record Id: {backupRecord.Id}...");
+                                    //get db information
+                                    BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                                    //Check if valid Resource Group
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
                                     //Has Valid Resource Group
-                                    List<ContentDeliveryConfiguration> resourceGroupContentDeliveryConfigs = await contentDeliveryConfigPersistanceService.GetAllAsync(backupRecord.ResourceGroupId);
+                                    List<ContentDeliveryConfiguration> resourceGroupContentDeliveryConfigs = await contentDeliveryConfigPersistanceService.GetAllAsync(resourceGroup.Id ?? string.Empty);
                                     if (resourceGroupContentDeliveryConfigs != null && resourceGroupContentDeliveryConfigs.Count > 0)
                                     {
                                         List<string> scheduleToDelete = new List<string>();

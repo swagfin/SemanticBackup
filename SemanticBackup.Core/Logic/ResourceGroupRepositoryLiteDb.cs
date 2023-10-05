@@ -4,7 +4,6 @@ using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.Logic
@@ -20,7 +19,7 @@ namespace SemanticBackup.Core.Logic
         public ResourceGroupRepositoryLiteDb(IBackupRecordRepository backupRecordPersistanceService, IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
 #if DEBUG
-            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
 #else
             this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.db")) { Password = "12345678", Connection = ConnectionType.Shared });
 #endif
@@ -34,6 +33,12 @@ namespace SemanticBackup.Core.Logic
         }
         public async Task<bool> AddAsync(ResourceGroup record)
         {
+            record.Id = Guid.NewGuid().ToString().ToUpper();
+            record.Name = record.Name.Trim();
+            //attempt to check if exists
+            ResourceGroup preExistingRecord = await GetByIdOrKeyAsync(record.Id);
+            if (preExistingRecord != null)
+                throw new Exception($"there is already an existing resource group with provided identity: {record.Name} or Key:  {record.Key}");
             return await _db.GetCollection<ResourceGroup>().UpsertAsync(record);
         }
 
@@ -42,9 +47,13 @@ namespace SemanticBackup.Core.Logic
             return await _db.GetCollection<ResourceGroup>().Query().OrderBy(x => x.Name).ToListAsync();
         }
 
-        public async Task<ResourceGroup> GetByIdAsync(string id)
+        public async Task<ResourceGroup> GetByIdOrKeyAsync(string resourceGroupIdentifier)
         {
-            return await _db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == id).OrderBy(x => x.Name).FirstOrDefaultAsync();
+            return await _db.GetCollection<ResourceGroup>().Query().Where(x => x.Id == resourceGroupIdentifier.Trim() || x.Key == resourceGroupIdentifier.Trim()).FirstOrDefaultAsync();
+        }
+        public async Task<ResourceGroup> VerifyByIdOrKeyThrowIfNotExistAsync(string resourceGroupIdentifier)
+        {
+            return await GetByIdOrKeyAsync(resourceGroupIdentifier) ?? throw new Exception($"resource group not found with provided identity: {resourceGroupIdentifier}");
         }
 
         public async Task<bool> RemoveAsync(string id)

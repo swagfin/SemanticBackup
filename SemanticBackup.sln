@@ -3,11 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.API", "SemanticBackup.API\SemanticBackup.API.csproj", "{B98E330A-7B4C-4BE0-AB64-1582B61A404B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.Core", "SemanticBackup.Core\SemanticBackup.Core.csproj", "{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup.WebClient", "SemanticBackup.WebClient\SemanticBackup.WebClient.csproj", "{D701ADB1-914F-4114-8259-0F904CC34E6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SemanticBackup", "SemanticBackup\SemanticBackup.csproj", "{7378609A-3DA4-4B26-AFDB-5C7C16CF6DEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,18 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B98E330A-7B4C-4BE0-AB64-1582B61A404B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC9F2D0E-039C-4DCB-B79A-C62F451B1736}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D701ADB1-914F-4114-8259-0F904CC34E6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D701ADB1-914F-4114-8259-0F904CC34E6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D701ADB1-914F-4114-8259-0F904CC34E6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D701ADB1-914F-4114-8259-0F904CC34E6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7378609A-3DA4-4B26-AFDB-5C7C16CF6DEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7378609A-3DA4-4B26-AFDB-5C7C16CF6DEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7378609A-3DA4-4B26-AFDB-5C7C16CF6DEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7378609A-3DA4-4B26-AFDB-5C7C16CF6DEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

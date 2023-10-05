@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
+using System.Web;
 
 namespace SemanticBackup.Core
 {
@@ -17,6 +19,14 @@ namespace SemanticBackup.Core
                     sb.Append(hashBytes[i].ToString("X2"));
                 return sb.ToString();
             }
+        }
+        public static string FormatToUrlStyle(this string input)
+        {
+            return Regex.Replace(input, @"[^a-zA-Z0-9]+", "-").Trim('-').ToLower().Trim();
+        }
+        public static string UrlEncoded(this string value)
+        {
+            return HttpUtility.UrlEncode(value ?? string.Empty, Encoding.UTF8).Trim();
         }
     }
 }

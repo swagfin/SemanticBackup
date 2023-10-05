@@ -24,9 +24,10 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
-        public InDepthDeleteAzureStorageBot(BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+        public InDepthDeleteAzureStorageBot(string resourceGroupId, BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = backupRecord.ResourceGroupId;
+            this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
             this._backupRecord = backupRecord;
             this._contentDeliveryConfiguration = contentDeliveryConfiguration;

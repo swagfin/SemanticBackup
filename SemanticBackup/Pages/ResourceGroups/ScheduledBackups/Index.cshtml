@@ -1,0 +1,54 @@
+﻿@page "/resource-groups/{resourceGroupId}/scheduled-backups"
+@model SemanticBackup.Pages.ResourceGroups.ScheduledBackups.IndexModel
+@{
+    ViewData["Title"] = "Database Backups Schedules | All";
+}
+<div class="container pd-x-0">
+    <div class="ui container">
+        <a class="btn btn-primary" href="/resource-groups/@(Model.CurrentResourceGroup?.Key ?? "#")/scheduled-backups/new-schedule">Setup new Schedule</a>
+        <div class="ui header large">Database Backup Schedules</div>
+        <div class="ui divider"></div>
+
+       <div class="ui attached segment">
+            <div class="ui header small">List of Backup Schedules</div>
+        </div>
+        <table class="ui basic selectable small table segment attached">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th class="warning" style="font-weight:bold">Name</th>
+                    <th>Schedule Type</th>
+                    <th>Every Hours</th>
+                    <th>Last Run</th>
+                    <th>Next Run</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int count = 0;
+                    if (Model.BackupSchedulesResponse != null && Model.BackupSchedulesResponse.Count > 0)
+                        foreach (var record in Model.BackupSchedulesResponse)
+                        {
+                            count++;
+                            <tr>
+                                <td>@string.Format("{0:N0}", count)</td>
+                                <td class="positive" style="font-weight:bold;font-size:12px"> <i class="clock icon"></i> @record.Name</td>
+                                <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
+                                <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
+                                <td>@(record.LastRunUTC.ToLastRunPreviewableWithTimezone(User.GetUserTimeZoneOffset()))</td>
+                                <td>@(string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRunUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset())))</td>
+                            </tr>
+                        }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" style="text-align:center">
+                                <div class="ui message small warning"><div>To Data Available</div></div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

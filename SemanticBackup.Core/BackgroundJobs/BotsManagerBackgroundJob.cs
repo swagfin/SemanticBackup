@@ -53,7 +53,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                         if (this.Bots != null && this.Bots.Count > 0)
                         {
                             //Start and Stop Bacup Bots
-                            List<IBot> botsNotStarted = this.Bots.Where(x => !x.IsStarted).ToList();
+                            List<IBot> botsNotStarted = this.Bots.Where(x => !x.IsStarted).OrderBy(x => x.DateCreatedUtc).ToList();
                             if (botsNotStarted != null && botsNotStarted.Count > 0)
                                 foreach (IBot bot in botsNotStarted)
                                     _ = bot.RunAsync();

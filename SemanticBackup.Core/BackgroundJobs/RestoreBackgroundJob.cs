@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.BackgroundJobs.Bots;
-using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,17 +58,17 @@ namespace SemanticBackup.Core.BackgroundJobs
                                 {
                                     _logger.LogInformation($"Processing Queued Backup RESTORE Record Key: #{backupRecord.Id}...");
                                     BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupRecord.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
                                     if (backupDatabaseInfo != null && resourceGroup != null)
                                     {
                                         if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                         {
-                                            if (backupDatabaseInfo.DatabaseType.Contains("SQLSERVER"))
-                                                _botsManagerBackgroundJob.AddBot(new SQLRestoreBot(resourceGroup.Id, backupDatabaseInfo, backupRecord, _serviceScopeFactory));
-                                            else if (backupDatabaseInfo.DatabaseType.Contains("MYSQL") || backupDatabaseInfo.DatabaseType.Contains("MARIADB"))
+                                            if (resourceGroup.DbType.Contains("SQLSERVER"))
+                                                _botsManagerBackgroundJob.AddBot(new SQLRestoreBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _serviceScopeFactory));
+                                            else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
                                                 throw new Exception("No RESTORE Bot for MYSQL");
                                             else
-                                                throw new Exception($"No Bot is registered to Handle Database RESTORE of Type: {backupDatabaseInfo.DatabaseType}");
+                                                throw new Exception($"No Bot is registered to Handle Database RESTORE of Type: {resourceGroup.DbType}");
                                             //Finally Update Status
                                             bool updated = await backupRecordPersistanceService.UpdateRestoreStatusFeedAsync(backupRecord.Id, BackupRecordRestoreStatus.EXECUTING_RESTORE.ToString(), "Executing Restore....");
                                             if (updated)

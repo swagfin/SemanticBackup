@@ -72,7 +72,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     else
                                     {
                                         //Proceed
-                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdAsync(backupDatabaseInfo.ResourceGroupId);
+                                        ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
                                         if (resourceGroup == null)
                                         {
                                             _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");
@@ -81,16 +81,14 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         else
                                         {
                                             //has valid Resource Group Proceed
-                                            DateTime resourceGroupLocalTime = DateTime.UtcNow.ConvertFromUTC(resourceGroup?.TimeZone);
                                             DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
                                             BackupRecord newRecord = new BackupRecord
                                             {
                                                 BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
-                                                ResourceGroupId = backupDatabaseInfo.ResourceGroupId,
                                                 BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
                                                 ExpiryDateUTC = RecordExpiryUTC,
-                                                Name = backupDatabaseInfo.Name,
-                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, backupDatabaseInfo.GetSavingPathFromFormat(_persistanceOptions.BackupFileSaveFormat, resourceGroupLocalTime)),
+                                                Name = $"{backupDatabaseInfo.DatabaseName} on {resourceGroup.DbServer}",
+                                                Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, resourceGroup.GetSavingPathFromFormat(backupDatabaseInfo.DatabaseName, _persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
                                                 StatusUpdateDateUTC = currentTimeUTC,
                                                 RegisteredDateUTC = currentTimeUTC,
                                                 ExecutedDeliveryRun = false
@@ -148,12 +146,12 @@ namespace SemanticBackup.Core.BackgroundJobs
                             //Proceed
                             List<string> botsToRemove = new List<string>();
                             //REMOVE BACKUP RECORDS
-                            List<string> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
+                            List<long> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
                             if (recordsIds != null && recordsIds.Count > 0)
-                                foreach (string id in recordsIds)
+                                foreach (long id in recordsIds)
                                 {
                                     await backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordBackupStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                    botsToRemove.Add(id);
+                                    botsToRemove.Add(id.ToString());
                                 }
 
                             //REMOVE CONTENT DELIVERY RECORDS

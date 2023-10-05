@@ -12,8 +12,9 @@ namespace SemanticBackup.Core.Logic
     public class BackupScheduleRepositoryLiteDb : IBackupScheduleRepository
     {
         private readonly LiteDatabaseAsync _db;
+        private readonly IDatabaseInfoRepository _databaseInfoRepository;
 
-        public BackupScheduleRepositoryLiteDb()
+        public BackupScheduleRepositoryLiteDb(IDatabaseInfoRepository databaseInfoRepository)
         {
 #if DEBUG
             this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-schedules.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
@@ -22,23 +23,26 @@ namespace SemanticBackup.Core.Logic
 #endif
             //Init
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
+            this._databaseInfoRepository = databaseInfoRepository;
         }
 
-        public async Task<List<BackupSchedule>> GetAllAsync(string resourcegroup)
+        public async Task<List<BackupSchedule>> GetAllAsync(string resourceGroupId)
         {
-            return await _db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).OrderBy(x => x.Name).ToListAsync();
+            List<string> dbCollection = await _databaseInfoRepository.GetDatabaseIdsForResourceGroupAsync(resourceGroupId);
+            return await _db.GetCollection<BackupSchedule>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId)).OrderBy(x => x.Name).ToListAsync();
         }
-        public async Task<int> GetAllCountAsync(string resourcegroup)
+        public async Task<int> GetAllCountAsync(string resourceGroupId)
         {
-            return await _db.GetCollection<BackupSchedule>().Query().Where(x => x.ResourceGroupId == resourcegroup).Select(x => x.Id).CountAsync();
+            List<string> dbCollection = await _databaseInfoRepository.GetDatabaseIdsForResourceGroupAsync(resourceGroupId);
+            return await _db.GetCollection<BackupSchedule>().Query().Where(x => dbCollection.Contains(x.BackupDatabaseInfoId)).Select(x => x.Id).CountAsync();
         }
         public async Task<List<BackupSchedule>> GetAllDueByDateAsync()
         {
-            return await _db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRunUTC <= DateTime.UtcNow && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.NextRunUTC).ToListAsync();
+            return await _db.GetCollection<BackupSchedule>().Query().Where(x => x.NextRunUTC <= DateTime.UtcNow).OrderBy(x => x.NextRunUTC).ToListAsync();
         }
         public async Task<List<BackupSchedule>> GetAllByDatabaseIdAsync(string id)
         {
-            return await _db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id && !string.IsNullOrWhiteSpace(x.ResourceGroupId)).OrderBy(x => x.Name).ToListAsync();
+            return await _db.GetCollection<BackupSchedule>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderBy(x => x.Name).ToListAsync();
         }
         public async Task<bool> AddOrUpdateAsync(BackupSchedule record)
         {

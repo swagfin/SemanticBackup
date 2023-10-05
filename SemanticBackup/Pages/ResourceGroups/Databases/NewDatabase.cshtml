@@ -1,0 +1,51 @@
+﻿@page "/resource-groups/{resourceGroupId}/databases/new-database"
+@model SemanticBackup.Pages.ResourceGroups.Databases.NewDatabaseModel
+@{
+    ViewData["Title"] = "Register Database";
+}
+
+<div class="content">
+    <div class="text container">
+        <h2>Register Database</h2>
+        <div class="ui divider"></div>
+        @{
+            if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
+            {
+                <div class="ui tiny negative message"><b>@(Model.ErrorResponse)</b></div>
+            }
+        }
+        <form method="post" class="database-registration-page">
+            <div class="ui segment attached">
+
+                <div class="ui warning tiny message">Choose from databases that have not been included or added in Backup</div>
+
+                <div class="form-group">
+                    <label for="DatabaseName">Choose from Available Databases</label>
+                    <div class="database-dropdown-container">
+                        <select class="ui fluid search small dropdown database-dropdown-search" multiple="" name="DatabaseNames" id="DatabaseNames">
+                            @foreach (string dbName in Model.AvailableDatabases)
+                            {
+                                <option value="@(dbName)">@(dbName)</option>   
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Description">Description</label>
+                    <input asp-for="backupDatabaseRequest.Description" autocomplete="off" type="text" class="form-control">
+                </div>
+                <div class="ui info tiny message">
+                    <input id="backupDatabaseRequestAutoCreateSchedule" asp-for="backupDatabaseRequest.AutoCreateSchedule" checked="true">
+                    <label style="cursor:pointer" for="backupDatabaseRequestAutoCreateSchedule">Auto Create Daily Backup Schedule (24hrs)</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Register Database</button>
+            </div>
+        </form>
+    </div><!-- container -->
+</div><!-- content -->
+@section Scripts{
+    <script type="text/javascript">
+        $(".database-dropdown-search").dropdown({ allowAdditions: false });
+    </script>
+}

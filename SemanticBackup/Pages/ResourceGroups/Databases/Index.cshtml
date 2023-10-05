@@ -1,0 +1,52 @@
+﻿@page "/resource-groups/{resourceGroupId}/databases"
+@model SemanticBackup.Pages.ResourceGroups.Databases.IndexModel
+@{
+    ViewData["Title"] = "Databases | All";
+}
+<div class="container pd-x-0">
+    <div class="ui container">
+        <a class="btn btn-primary" href="/resource-groups/@(Model.CurrentResourceGroup.Key)/databases/new-database">Register new Database</a>
+        <div class="ui header large">Registered Databases</div>
+        <div class="ui divider"></div>
+
+        <div class="ui attached segment">
+            <div class="ui header small">List of Registered Databases</div>
+        </div>
+        <table class="ui basic selectable small table segment attached">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th class="warning" style="font-weight:bold">Database</th>
+                    <th>Server</th>
+                    <th>Type</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int count = 0;
+                    if (Model.DatabaseResponse != null && Model.DatabaseResponse.Count > 0)
+                        foreach (var record in Model.DatabaseResponse)
+                        {
+                            count++;
+                            <tr onclick="location.href='/resource-groups/@(Model.CurrentResourceGroup.Key)/databases/details/@(record.DatabaseName.UrlEncoded())'" title="Click to View Database Info">
+                                <td>@string.Format("{0:N0}", count)</td>
+                                <td class="positive" style="font-weight:bold;font-size:12px"> <i class="database icon"></i> @record.DatabaseName</td>
+                                <td>@(Model.CurrentResourceGroup.DbServer)</td>
+                                <td><span class="ui small basic @(Model.CurrentResourceGroup.GetColorCode()) label">@(Model.CurrentResourceGroup.DbType)</span></td>
+                                <td><a href="/resource-groups/@(Model.CurrentResourceGroup.Key)/databases/details/@(record.DatabaseName.UrlEncoded())" class="ui small blue label"><i class="info icon"></i>View Info</a></td>
+                            </tr>
+                        }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align:center">
+                                <div class="ui message small warning"><div>To Data Available</div></div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

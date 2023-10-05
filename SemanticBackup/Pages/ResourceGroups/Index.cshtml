@@ -1,0 +1,82 @@
+﻿@page "/resource-groups"
+@model SemanticBackup.Pages.ResourceGroups.IndexModel
+@{
+    ViewData["Title"] = "Resource Groups";
+    Layout = "_LayoutNoDirectory";
+}
+<div class="container pd-x-0">
+    <div class="row row-xs">
+
+        <div class="col-lg-8 col-xl-12 mg-t-10">
+            <h2>Resource Groups</h2>
+            <div class="ui divider"></div>
+            @{
+                if (Model.CurrentResourceGroup == null)
+                {
+                    <div class="ui message icon">
+                        <i class="clone outline icon"></i>
+                        <div class="content">
+                            You have not created any Resource Group, <a href="~/resource-groups/create"> create a Resource Group</a> and monitor their status and statistics
+                            <p align="center">
+                            </p><div class="ui two buttons">
+                                <a class="ui button blue" href="~/resource-groups/create"><i class="plus add icon"></i>Create Resource Group</a>
+                                <a class="ui button " href="~/resource-groups/"><i class="list icon"></i>Resource Groups</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <section class="ui stackable cards">
+
+                        <div class="@(Model.CurrentResourceGroup.GetColorCode()) card">
+                            <div class="content">
+                                <span class="right floated mini ui image" title="Default Directory"><span class="ui mini circular green label"></span></span>
+                                <div class="header">
+                                    @(Model.CurrentResourceGroup.Name)
+                                </div>
+                                <div class="extra meta">
+                                    <div class="ui divider"></div>
+                                    <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", Model.CurrentResourceGroup.MaximumRunningBots)</span><br />
+                                    <span><b><i class="file archive outline icon"></i> Compression:</b> @string.Format("{0}", Model.CurrentResourceGroup.CompressBackupFiles ? "ZIP" : "(none)")</span>
+                                </div>
+                            </div>
+                            <div class="extra content">
+                                <div class="ui two buttons">
+                                    <a class="ui blue button" href="~/resource-groups/switch/@(Model.CurrentResourceGroup.Id)"><i class="chart line icon icon"></i>Switch</a>
+                                    <a href="~/resource-groups/delete/@(Model.CurrentResourceGroup.Id)" class="ui red button"><i class="delete icon"></i>Delete</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        @foreach (var resourceGrp in Model.ResourceGroups.Where(x=>x.Id != Model.CurrentResourceGroup.Id))
+                            {
+                                <div class="card">
+                                    <div class="content">
+                                        <span class="right floated mini ui image"><span class="ui mini circular red label"></span></span>
+                                        <div class="header">
+                                            @(resourceGrp.Name)
+                                        </div>
+                                        <div class="extra meta">
+                                            <div class="ui divider"></div>
+                                            <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", resourceGrp.MaximumRunningBots)</span><br />
+                                            <span><b><i class="file archive outline icon"></i> Compression:</b> @string.Format("{0}", resourceGrp.CompressBackupFiles ? "ZIP" : "(none)")</span>
+                                        </div>
+                                    </div>
+                                    <div class="extra content">
+                                        <div class="ui two buttons">
+                                            <a class="ui blue button" href="~/resource-groups/switch/@(resourceGrp.Id)"><i class="chart line icon icon"></i>Switch</a>
+                                            <a href="~/resource-groups/delete/@(resourceGrp.Id)" class="ui red button"><i class="delete icon"></i>Delete</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                    </section>
+
+                }
+            }
+
+        </div>
+    </div>
+
+</div>

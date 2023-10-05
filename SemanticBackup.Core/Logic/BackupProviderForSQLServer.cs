@@ -11,21 +11,22 @@ namespace SemanticBackup.Core.Logic
 {
     public class BackupProviderForSQLServer : IBackupProviderForSQLServer
     {
-        public async Task<bool> BackupDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
+        public async Task<bool> BackupDatabaseAsync(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord)
         {
             string backupCommandTemplate = @"
 BACKUP DATABASE [{0}] 
 TO  DISK = N'{1}' 
 WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
 ";
-            if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
-                throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
-            using (DbConnection connection = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
+            string connectionString = resourceGroup.GetDbConnectionString();
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new Exception($"Invalid connection string provided for Database Type: {resourceGroup.DbType} is not Valid or is not Supported");
+            using (DbConnection connection = new SqlConnection(connectionString))
             {
                 await connection.OpenAsync();
                 DbCommand command = connection.CreateCommand();
                 command.CommandTimeout = 0; // Backups can take a long time for big databases
-                command.CommandText = string.Format(backupCommandTemplate, backupDatabaseInfo.DatabaseName, backupRecord.Path.Trim());
+                command.CommandText = string.Format(backupCommandTemplate, databaseName, backupRecord.Path.Trim());
                 //Execute
                 int queryRows = await command.ExecuteNonQueryAsync();
                 await connection.CloseAsync();
@@ -33,7 +34,7 @@ WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
             }
         }
 
-        public async Task<bool> RestoreDatabaseAsync(BackupDatabaseInfo backupDatabaseInfo, BackupRecord backupRecord)
+        public async Task<bool> RestoreDatabaseAsync(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord)
         {
             string restoreCommandTemplate = @"
 USE [master]
@@ -41,16 +42,17 @@ RESTORE DATABASE [{0}]
 FROM  DISK = N'{1}' 
 WITH NOUNLOAD, REPLACE, STATS = 5;
 ";
-            if (string.IsNullOrWhiteSpace(backupDatabaseInfo.DatabaseConnectionString))
-                throw new Exception($"Database Connection string for Database Type: {backupDatabaseInfo.DatabaseType} is not Valid or is not Supported");
+            string connectionString = resourceGroup.GetDbConnectionString();
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new Exception($"Invalid connection string provided for Database Type: {resourceGroup.DbType} is not Valid or is not Supported");
             if (string.IsNullOrEmpty(backupRecord.Path))
                 throw new Exception("Source Location can't be NULL");
-            using (DbConnection connection = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
+            using (DbConnection connection = new SqlConnection(connectionString))
             {
                 await connection.OpenAsync();
                 DbCommand command = connection.CreateCommand();
                 command.CommandTimeout = 0; // Backups can take a long time for big databases
-                command.CommandText = string.Format(restoreCommandTemplate, backupDatabaseInfo.DatabaseName, backupRecord.Path);
+                command.CommandText = string.Format(restoreCommandTemplate, databaseName, backupRecord.Path);
                 //Execute
                 int queryRows = await command.ExecuteNonQueryAsync();
                 connection.Close();
@@ -58,11 +60,12 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
             }
         }
 
-        public async Task<IEnumerable<string>> GetAvailableDatabaseCollectionAsync(BackupDatabaseInfo backupDatabaseInfo)
+        public async Task<List<string>> GetAvailableDatabaseCollectionAsync(ResourceGroup resourceGroup)
         {
             List<string> availableDbs = new List<string>();
             string[] exclude = new string[] { "master", "model", "msdb", "tempdb" };
-            using (SqlConnection conn = new SqlConnection(backupDatabaseInfo.DatabaseConnectionString))
+            string connectionString = resourceGroup.GetDbConnectionString();
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 using (SqlCommand cmd = new SqlCommand("SELECT name FROM master.dbo.sysdatabases"))
                 {
@@ -85,6 +88,23 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
                 }
             }
             return availableDbs;
+        }
+        public async Task<(bool success, string err)> TryTestDbConnectivityAsync(ResourceGroup resourceGroup)
+        {
+            try
+            {
+                string connectionString = resourceGroup.GetDbConnectionString();
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    await conn.OpenAsync();
+                    await conn.CloseAsync();
+                    return (true, string.Empty);
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
         }
     }
 }

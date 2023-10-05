@@ -26,7 +26,7 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<List<BackupDatabaseInfo>> GetAllAsync(string resourceGroupId)
         {
-            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderBy(x => x.Name).ToListAsync();
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderBy(x => x.DatabaseName).ToListAsync();
         }
         public async Task<int> GetAllCountAsync(string resourceGroupId)
         {
@@ -39,7 +39,11 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<BackupDatabaseInfo> GetByIdAsync(string id)
         {
-            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.Id == id).OrderBy(x => x.Name).FirstOrDefaultAsync();
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.Id == id.Trim()).FirstOrDefaultAsync();
+        }
+        public async Task<BackupDatabaseInfo> VerifyDatabaseInResourceGroupThrowIfNotExistAsync(string resourceGroupId, string databaseIdentifier)
+        {
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId && (x.Id == databaseIdentifier.Trim() || x.DatabaseName == databaseIdentifier.Trim())).FirstOrDefaultAsync() ?? throw new Exception($"unknown database with identity key {databaseIdentifier} under resource group id: {resourceGroupId}");
         }
 
         public async Task<bool> RemoveAsync(string id)
@@ -56,9 +60,13 @@ namespace SemanticBackup.Core.Logic
             return await _db.GetCollection<BackupDatabaseInfo>().UpdateAsync(record);
         }
 
-        public async Task<BackupDatabaseInfo> GetByDatabaseNameAsync(string databaseName, string databaseType)
+        public async Task<List<string>> GetDatabaseIdsForResourceGroupAsync(string resourceGroupId)
         {
-            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.DatabaseName != null && x.DatabaseType != null).Where(x => x.DatabaseName.Trim() == databaseName.Trim() && x.DatabaseType.Trim() == databaseType.Trim()).OrderBy(x => x.Name).FirstOrDefaultAsync();
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Select(x => x.Id).ToListAsync();
+        }
+        public async Task<List<string>> GetDatabaseNamesForResourceGroupAsync(string resourceGroupId)
+        {
+            return await _db.GetCollection<BackupDatabaseInfo>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Select(x => x.DatabaseName).ToListAsync();
         }
     }
 }
