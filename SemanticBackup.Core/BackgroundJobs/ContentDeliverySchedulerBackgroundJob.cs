@@ -72,7 +72,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         {
                                             Id = $"{backupRecord.Id}|{resourceGroup.Id}".ToMD5String().ToUpper(), //Unique Identification
                                             BackupRecordId = backupRecord.Id,
-                                            ResourceGroupId = resourceGroup.Id,
                                             CurrentStatus = BackupRecordDeliveryStatus.QUEUED.ToString(),
                                             DeliveryType = deliveryType.ToString(),
                                             RegisteredDateUTC = DateTime.UtcNow,

@@ -78,21 +78,28 @@ namespace SemanticBackup.Services
                 {
                     IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                     IBackupRecordRepository _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                    //Info On Resource Group
-                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(record.ResourceGroupId);
-                    if (resourceGroup == null)
-                        return; //No Valid Resource Group
-                    if (!resourceGroup.NotifyOnErrorBackupDelivery)
-                        return; //Disabled
+                    IDatabaseInfoRepository _databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
+                    //get details about backup record
                     BackupRecord backupRecord = await _backupRecordPersistanceService.GetByIdAsync(record.BackupRecordId);
                     if (backupRecord == null)
                         return; //No Valid Backup File
+                    //get details about database
+                    BackupDatabaseInfo databaseInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                    if (databaseInfo == null)
+                        return; //No Valid Database
+                    //get details about Resource Group
+                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(databaseInfo.ResourceGroupId);
+                    if (resourceGroup == null)
+                        return; //No Valid Resource Group
+                    //check if notify is enabled
+                    if (!resourceGroup.NotifyOnErrorBackupDelivery)
+                        return; //Disabled
+                    //proceed
                     string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed";
                     string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed</h3> <br/> <p> <b>DELIVERY TYPE: </b> {record.DeliveryType} <br/>   <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date Utc: </b> {backupRecord.RegisteredDateUTC:yyyy-MM-dd HH:mm:ss} <br/>  <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{record.CurrentStatus}</span> <br/><br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{record.Id}</span> <br/> </p> <p> Execution Message: <b><i>{record.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
                     List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
                     await SendEmailAsync(subject, emailBody, destinations);
                 }
-
             }
             catch (Exception ex)
             {

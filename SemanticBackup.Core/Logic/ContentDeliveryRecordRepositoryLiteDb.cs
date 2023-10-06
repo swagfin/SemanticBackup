@@ -27,19 +27,9 @@ namespace SemanticBackup.Core.Logic
             this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
         }
 
-        public async Task<List<BackupRecordDelivery>> GetAllAsync(string resourceGroupId)
-        {
-            return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
-        }
         public async Task<List<BackupRecordDelivery>> GetAllByStatusAsync(string status)
         {
             return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => x.CurrentStatus == status).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
-        }
-        public async Task<List<BackupRecordDelivery>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, long id, string status = "*")
-        {
-            if (status == "*")
-                return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
-            return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.CurrentStatus == status && x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
         }
         public async Task<List<BackupRecordDelivery>> GetAllByBackupRecordIdAsync(long id)
         {
@@ -89,12 +79,6 @@ namespace SemanticBackup.Core.Logic
             }
             return false;
         }
-
-        public async Task<BackupRecordDelivery> GetByIdAsync(string id)
-        {
-            return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();
-        }
-
         public async Task<bool> RemoveAsync(string id)
         {
             var collection = _db.GetCollection<BackupRecordDelivery>();
@@ -104,15 +88,6 @@ namespace SemanticBackup.Core.Logic
                 return await collection.DeleteAsync(new BsonValue(objFound.Id));
             }
             return false;
-        }
-        public async Task<bool> UpdateAsync(BackupRecordDelivery record)
-        {
-            return await _db.GetCollection<BackupRecordDelivery>().UpdateAsync(record);
-        }
-
-        public async Task<BackupRecordDelivery> GetByContentTypeByExecutionMessageAsync(string deliveryType, string executionMessage)
-        {
-            return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage) || (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage)).FirstOrDefaultAsync();
         }
 
         public async Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference)
@@ -133,6 +108,5 @@ namespace SemanticBackup.Core.Logic
                     }
                     catch { }
         }
-
     }
 }
