@@ -50,10 +50,9 @@ namespace SemanticBackup.Core.BackgroundJobs
                             IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                             IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                             IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
-                            IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
                             IDatabaseInfoRepository databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                             //Proceed
-                            List<BackupRecordDelivery> contentDeliveryRecords = await contentDeliveryRecordPersistanceService.GetAllByStatusAsync(ContentDeliveryRecordStatus.QUEUED.ToString());
+                            List<BackupRecordDelivery> contentDeliveryRecords = await contentDeliveryRecordPersistanceService.GetAllByStatusAsync(BackupRecordDeliveryStatus.QUEUED.ToString());
                             if (contentDeliveryRecords != null && contentDeliveryRecords.Count > 0)
                             {
                                 List<string> scheduleToDeleteRecords = new List<string>();
@@ -63,16 +62,10 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     BackupRecord backupRecordInfo = await backupRecordPersistanceService.GetByIdAsync(contentDeliveryRecord?.BackupRecordId ?? 0);
                                     BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(backupRecordInfo?.BackupDatabaseInfoId);
                                     ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo?.ResourceGroupId);
-                                    ContentDeliveryConfiguration contentDeliveryConfiguration = await contentDeliveryConfigPersistanceService.GetByIdAsync(contentDeliveryRecord?.ContentDeliveryConfigurationId);
 
                                     if (backupRecordInfo == null)
                                     {
                                         _logger.LogWarning($"No Backup Record with Id: {contentDeliveryRecord.BackupRecordId}, Content Delivery Record will be Deleted: {contentDeliveryRecord.Id}");
-                                        scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
-                                    }
-                                    else if (contentDeliveryConfiguration == null)
-                                    {
-                                        _logger.LogWarning($"Backup Record Id: {contentDeliveryRecord.BackupRecordId}, Queued for Content Delivery has no valid Configuration, Will be Removed");
                                         scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
                                     }
                                     else if (resourceGroup == null)
@@ -80,41 +73,46 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         _logger.LogWarning($"Backup Record Id: {contentDeliveryRecord.BackupRecordId}, Queued for Content Delivery has no valid Resource Group, Will be Removed");
                                         scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
                                     }
+                                    else if (resourceGroup.BackupDeliveryConfig == null)
+                                    {
+                                        _logger.LogWarning($"Backup Record Id: {contentDeliveryRecord.BackupRecordId}, Queued for Content Delivery has no valid Configuration, Will be Removed");
+                                        scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
+                                    }
                                     else
                                     {
                                         //Override Maximum Running Threads// This is because of currently being used exception
                                         if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, 1))
                                         {
-                                            string status = ContentDeliveryRecordStatus.EXECUTING.ToString();
+                                            string status = BackupRecordDeliveryStatus.EXECUTING.ToString();
                                             string statusMsg = "Dispatching Backup Record";
-                                            if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DIRECT_LINK.ToString())
+                                            if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.DownloadLink.ToString())
                                             {
                                                 //Download Link Generator
-                                                _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(resourceGroup, backupRecordInfo, contentDeliveryRecord, _serviceScopeFactory));
                                             }
-                                            else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.FTP_UPLOAD.ToString())
+                                            else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Ftp.ToString())
                                             {
                                                 //FTP Uploader
-                                                _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(resourceGroup, backupRecordInfo, contentDeliveryRecord, _serviceScopeFactory));
                                             }
-                                            else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.EMAIL_SMTP.ToString())
+                                            else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Smtp.ToString())
                                             {
                                                 //Email Send and Uploader
-                                                _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(resourceGroup, backupRecordInfo, contentDeliveryRecord, _serviceScopeFactory));
                                             }
-                                            else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
+                                            else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Dropbox.ToString())
                                             {
                                                 //Email Send and Uploader
-                                                _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(resourceGroup, backupRecordInfo, contentDeliveryRecord, _serviceScopeFactory));
                                             }
-                                            else if (contentDeliveryRecord.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
+                                            else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.AzureBlobStorage.ToString())
                                             {
                                                 //Azure Blob Storage
-                                                _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(resourceGroup.Id, backupRecordInfo, contentDeliveryRecord, contentDeliveryConfiguration, _serviceScopeFactory));
+                                                _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(resourceGroup, backupRecordInfo, contentDeliveryRecord, _serviceScopeFactory));
                                             }
                                             else
                                             {
-                                                status = ContentDeliveryRecordStatus.ERROR.ToString();
+                                                status = BackupRecordDeliveryStatus.ERROR.ToString();
                                                 statusMsg = $"Backup Record Id: {contentDeliveryRecord.BackupRecordId}, Queued for Content Delivery has UNSUPPORTED Delivery Type, Record Will be Removed";
                                                 _logger.LogWarning(statusMsg);
                                                 scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);

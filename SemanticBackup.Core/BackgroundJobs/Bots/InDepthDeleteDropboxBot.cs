@@ -1,7 +1,6 @@
 ﻿using Dropbox.Api;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -12,24 +11,22 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
     internal class InDepthDeleteDropboxBot : IBot
     {
-        private readonly string _resourceGroupId;
         private readonly BackupRecordDelivery _contentDeliveryRecord;
+        private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<InDepthDeleteDropboxBot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string ResourceGroupId => _resourceGroupId;
+        public string ResourceGroupId => _resourceGroup.Id;
         public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
-        public InDepthDeleteDropboxBot(string resourceGroupId, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public InDepthDeleteDropboxBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
+            this._resourceGroup = resourceGroup;
             this._backupRecord = backupRecord;
-            this._contentDeliveryConfiguration = contentDeliveryConfiguration;
             this._scopeFactory = scopeFactory;
             //Logger
             using (var scope = _scopeFactory.CreateScope())
@@ -44,7 +41,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 _logger.LogInformation($"DELETING Backup File From DropBox....");
                 await Task.Delay(new Random().Next(1000));
-                RSDropBoxSetting settings = GetValidDeserializedSettings();
+                DropboxDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Dropbox ?? throw new Exception("no valid dropbox config");
                 stopwatch.Start();
                 //Directory
                 string validDirectory = (string.IsNullOrWhiteSpace(settings.Directory)) ? "/" : settings.Directory;
@@ -74,14 +71,5 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 this.IsCompleted = true;
             }
         }
-
-        private RSDropBoxSetting GetValidDeserializedSettings()
-        {
-            var config = JsonConvert.DeserializeObject<RSDropBoxSetting>(this._contentDeliveryConfiguration.Configuration);
-            if (config == null)
-                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSDropBoxSetting)}");
-            return config;
-        }
-
     }
 }

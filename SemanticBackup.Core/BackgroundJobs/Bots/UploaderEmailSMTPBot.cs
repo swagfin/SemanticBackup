@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Mail;
@@ -14,25 +14,23 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
     internal class UploaderEmailSMTPBot : IBot
     {
-        private readonly string _resourceGroupId;
         private readonly BackupRecordDelivery _contentDeliveryRecord;
+        private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<UploaderEmailSMTPBot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string ResourceGroupId => _resourceGroupId;
+        public string ResourceGroupId => _resourceGroup.Id;
         public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
 
-        public UploaderEmailSMTPBot(string resourceGroupId, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public UploaderEmailSMTPBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
+            this._resourceGroup = resourceGroup;
             this._backupRecord = backupRecord;
-            this._contentDeliveryConfiguration = contentDeliveryConfiguration;
             this._scopeFactory = scopeFactory;
             //Logger
             using (var scope = _scopeFactory.CreateScope())
@@ -47,13 +45,15 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 _logger.LogInformation($"Sending Email via SMTP....");
                 await Task.Delay(new Random().Next(1000));
-                RSEmailSMTPSetting settings = GetValidDeserializedSettings();
+                SmtpDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Smtp ?? throw new Exception("no valid smtp config");
                 stopwatch.Start();
                 //Upload FTP
                 CheckIfFileExistsOrRemove(this._backupRecord.Path);
                 //Check any Recepient
-                if (settings.ValidSMTPDestinations == null || settings.ValidSMTPDestinations.Count < 1)
+                List<string> emailRecipients = settings.GetValidSmtpDestinations();
+                if (emailRecipients.Count == 0)
                     throw new Exception("No recipients added in Resource Group SMTP");
+                //proceed
                 string fileName = Path.GetFileName(this._backupRecord.Path);
                 string executionMessage = "Sending Email....";
                 using (MailMessage e_mail = new MailMessage())
@@ -81,12 +81,12 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                         e_mail.Body = $"Find Attached Database Backup Record: <br /> <b>File:</b> {fileName} <br/> <br/><br/><br> <span style='color:gray'>Powered By Crudsoft Technologies <br/>email: support@crudsofttechnologies.com</span>";
 
                         //Add Default
-                        e_mail.To.Add(settings.ValidSMTPDestinations[0]);
+                        e_mail.To.Add(emailRecipients[0]);
 
-                        if (settings.ValidSMTPDestinations.Count > 1)
+                        if (emailRecipients.Count > 1)
                         {
                             int addIndex = 0;
-                            foreach (string dest in settings.ValidSMTPDestinations)
+                            foreach (string dest in emailRecipients)
                             {
                                 //Skip the First
                                 if (addIndex != 0)
@@ -101,7 +101,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                     }
                 }
                 stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
+                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordDeliveryStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
                 _logger.LogInformation($"Sending Email via SMTP: {_backupRecord.Path}... SUCCESS");
             }
             catch (Exception ex)
@@ -110,14 +110,6 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), (ex.InnerException != null) ? $"Error Uploading: {ex.InnerException.Message}" : ex.Message, stopwatch.ElapsedMilliseconds);
             }
-        }
-
-        private RSEmailSMTPSetting GetValidDeserializedSettings()
-        {
-            var config = JsonConvert.DeserializeObject<RSEmailSMTPSetting>(this._contentDeliveryConfiguration.Configuration);
-            if (config == null)
-                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSEmailSMTPSetting)}");
-            return config;
         }
 
         private void CheckIfFileExistsOrRemove(string path)

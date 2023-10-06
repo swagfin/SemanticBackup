@@ -11,16 +11,14 @@ namespace SemanticBackup.Core.Models
         [Required]
         public long BackupRecordId { get; set; }
         [Required]
-        public string ContentDeliveryConfigurationId { get; set; }
-        [Required]
         public string DeliveryType { get; set; }
-        public string CurrentStatus { get; set; } = ContentDeliveryRecordStatus.QUEUED.ToString();
+        public string CurrentStatus { get; set; } = BackupRecordDeliveryStatus.QUEUED.ToString();
         public DateTime StatusUpdateDateUTC { get; set; } = DateTime.UtcNow;
         public string ExecutionMessage { get; set; }
         public string ExecutionMilliseconds { get; set; }
         public DateTime RegisteredDateUTC { get; set; } = DateTime.UtcNow;
     }
-    public enum ContentDeliveryRecordStatus
+    public enum BackupRecordDeliveryStatus
     {
         QUEUED,
         EXECUTING,

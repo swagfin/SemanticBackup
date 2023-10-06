@@ -41,59 +41,51 @@ namespace SemanticBackup.Core.BackgroundJobs
                         using (var scope = _serviceScopeFactory.CreateScope())
                         {
                             //DI INJECTIONS
-                            IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                             IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                            IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                            IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
-                            IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                             //Proceed
                             List<BackupRecord> pendingExecutionRecords = await backupRecordPersistanceService.GetAllReadyAndPendingDeliveryAsync();
-                            if (pendingExecutionRecords != null && pendingExecutionRecords.Count > 0)
+                            foreach (BackupRecord backupRecord in pendingExecutionRecords?.OrderBy(x => x.RegisteredDateUTC)?.ToList())
                             {
-                                foreach (BackupRecord backupRecord in pendingExecutionRecords.OrderBy(x => x.RegisteredDateUTC).ToList())
+                                _logger.LogInformation($"Queueing Content Delivery for Backup Record Id: {backupRecord.Id}...");
+                                //## get other services
+                                IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
+                                IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
+                                IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
+                                //get db information
+                                BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                                //Check if valid Resource Group
+                                ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
+                                //Has Valid Resource Group
+
+                                //check if backup delivery config is set
+                                if (resourceGroup.BackupDeliveryConfig == null)
                                 {
-                                    _logger.LogInformation($"Queueing Content Delivery for Backup Record Id: {backupRecord.Id}...");
-                                    //get db information
-                                    BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
-                                    //Check if valid Resource Group
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
-                                    //Has Valid Resource Group
-                                    List<ContentDeliveryConfiguration> resourceGroupContentDeliveryConfigs = await contentDeliveryConfigPersistanceService.GetAllAsync(resourceGroup.Id ?? string.Empty);
-                                    if (resourceGroupContentDeliveryConfigs != null && resourceGroupContentDeliveryConfigs.Count > 0)
-                                    {
-                                        List<string> scheduleToDelete = new List<string>();
-                                        foreach (ContentDeliveryConfiguration config in resourceGroupContentDeliveryConfigs)
-                                        {
-                                            bool queuedSuccess = await contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new BackupRecordDelivery
-                                            {
-                                                Id = $"{backupRecord.Id}|{config.Id}|{config.ResourceGroupId}".ToMD5String().ToUpper(), //Unique Identification
-                                                BackupRecordId = backupRecord.Id,
-                                                ContentDeliveryConfigurationId = config.Id,
-                                                ResourceGroupId = config.ResourceGroupId,
-                                                CurrentStatus = ContentDeliveryRecordStatus.QUEUED.ToString(),
-                                                DeliveryType = config.DeliveryType,
-                                                RegisteredDateUTC = DateTime.UtcNow,
-                                                StatusUpdateDateUTC = DateTime.UtcNow,
-                                                ExecutionMessage = "Queued for Dispatch"
-                                            });
-                                            if (!queuedSuccess)
-                                                _logger.LogWarning($"Unable to Queue Content Delivery Record of Type: {config.Id}, of Backup Record: {backupRecord.Id}");
-                                        }
-                                        //Update Execution
-                                        bool savedSuccess = await backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SUCCESSFULLY_EXECUTED.ToString());
-                                        //Scheduled to Remove
-                                        if (scheduleToDelete.Count > 0)
-                                            foreach (var id in scheduleToDelete)
-                                                await contentDeliveryConfigPersistanceService.RemoveAsync(id);
-                                    }
-                                    else
-                                    {
-                                        _logger.LogInformation($"Resource Group Id: {backupRecord.Id}, doesn't have any content delivery config, Skipped Backup Record Content Delivery");
-                                        await backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
-                                    }
-
+                                    _logger.LogInformation($"Resource Group Id: {backupRecord.Id}, doesn't have any backup delivery config, Skipped");
+                                    _ = await backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
                                 }
+                                else
+                                {
+                                    //loop delivery types
+                                    foreach (BackupDeliveryConfigTypes deliveryType in Enum.GetValues(typeof(BackupDeliveryConfigTypes)))
+                                    {
+                                        bool queuedSuccess = await contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new BackupRecordDelivery
+                                        {
+                                            Id = $"{backupRecord.Id}|{resourceGroup.Id}".ToMD5String().ToUpper(), //Unique Identification
+                                            BackupRecordId = backupRecord.Id,
+                                            ResourceGroupId = resourceGroup.Id,
+                                            CurrentStatus = BackupRecordDeliveryStatus.QUEUED.ToString(),
+                                            DeliveryType = deliveryType.ToString(),
+                                            RegisteredDateUTC = DateTime.UtcNow,
+                                            StatusUpdateDateUTC = DateTime.UtcNow,
+                                            ExecutionMessage = "Queued for Dispatch"
+                                        });
+                                        if (!queuedSuccess)
+                                            _logger.LogWarning($"Unable to Queue Backup Record Delivery Id: {backupRecord.Id}, Delivery Type : {deliveryType}");
+                                    }
 
+                                    //Update Execution
+                                    _ = await backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SUCCESSFULLY_EXECUTED.ToString());
+                                }
                             }
                         }
                     }

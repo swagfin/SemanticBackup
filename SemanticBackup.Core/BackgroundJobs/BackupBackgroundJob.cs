@@ -167,7 +167,6 @@ namespace SemanticBackup.Core.BackgroundJobs
                 {
                     IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
                     IContentDeliveryRecordRepository contentDeliveryRecordsService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                    IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryConfigRepository>();
                     BotsManagerBackgroundJob botsManagerBackgroundJob = scope.ServiceProvider.GetRequiredService<BotsManagerBackgroundJob>();
                     IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                     //get db information
@@ -180,22 +179,21 @@ namespace SemanticBackup.Core.BackgroundJobs
                     var dbRecords = await contentDeliveryRecordsService.GetAllByBackupRecordIdAsync(rm.Id); //database record content delivery
                     if (dbRecords == null)
                         return;
-                    List<string> supportedInDepthDelete = new List<string> { ContentDeliveryType.DROPBOX.ToString(), ContentDeliveryType.AZURE_BLOB_STORAGE.ToString() };
+                    List<string> supportedInDepthDelete = new List<string> { BackupDeliveryConfigTypes.Dropbox.ToString(), BackupDeliveryConfigTypes.AzureBlobStorage.ToString() };
                     List<BackupRecordDelivery> supportedDeliveryRecords = dbRecords.Where(x => supportedInDepthDelete.Contains(x.DeliveryType)).ToList();
                     if (supportedDeliveryRecords == null || supportedDeliveryRecords.Count == 0)
                         return;
                     foreach (var rec in supportedDeliveryRecords)
                     {
-                        ContentDeliveryConfiguration config = await contentDeliveryConfigPersistanceService.GetByIdAsync(rec.ContentDeliveryConfigurationId);
-                        if (rec.DeliveryType == ContentDeliveryType.DROPBOX.ToString())
+                        if (rec.DeliveryType == BackupDeliveryConfigTypes.Dropbox.ToString())
                         {
                             //In Depth Remove From DropBox
-                            botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(resourceGroup.Id, rm, rec, config, _serviceScopeFactory));
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(resourceGroup, rm, rec, _serviceScopeFactory));
                         }
-                        else if (rec.DeliveryType == ContentDeliveryType.AZURE_BLOB_STORAGE.ToString())
+                        else if (rec.DeliveryType == BackupDeliveryConfigTypes.AzureBlobStorage.ToString())
                         {
                             //In Depth remove From Azure Storage
-                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(resourceGroup.Id, rm, rec, config, _serviceScopeFactory));
+                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(resourceGroup, rm, rec, _serviceScopeFactory));
                         }
                     }
                 }

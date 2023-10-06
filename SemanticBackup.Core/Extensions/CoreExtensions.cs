@@ -22,7 +22,6 @@ namespace SemanticBackup.Core
             services.AddSingleton<IBackupRecordRepository, BackupRecordRepositoryLiteDb>();
             services.AddSingleton<IBackupScheduleRepository, BackupScheduleRepositoryLiteDb>();
             services.AddSingleton<IResourceGroupRepository, ResourceGroupRepositoryLiteDb>();
-            services.AddSingleton<IContentDeliveryConfigRepository, ContentDeliveryConfigRepositoryLiteDb>();
             services.AddSingleton<IContentDeliveryRecordRepository, ContentDeliveryRecordRepositoryLiteDb>();
             services.AddSingleton<IUserAccountRepository, UserAccountRepositoryLiteDb>();
 

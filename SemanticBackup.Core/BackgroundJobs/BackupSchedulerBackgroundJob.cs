@@ -132,7 +132,7 @@ namespace SemanticBackup.Core.BackgroundJobs
         {
             var t = new Thread(async () =>
             {
-                List<string> statusChecks = new List<string> { BackupRecordBackupStatus.EXECUTING.ToString(), BackupRecordBackupStatus.COMPRESSING.ToString(), ContentDeliveryRecordStatus.EXECUTING.ToString() };
+                List<string> statusChecks = new List<string> { BackupRecordBackupStatus.EXECUTING.ToString(), BackupRecordBackupStatus.COMPRESSING.ToString(), BackupRecordDeliveryStatus.EXECUTING.ToString() };
                 int executionTimeoutInMinutes = _persistanceOptions.ExecutionTimeoutInMinutes < 1 ? 1 : _persistanceOptions.ExecutionTimeoutInMinutes;
                 while (true)
                 {

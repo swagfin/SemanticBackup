@@ -48,5 +48,14 @@ namespace SemanticBackup.Core
             else
                 return "gray";
         }
+
+
+        public static List<string> GetValidSmtpDestinations(this SmtpDeliveryConfig smtpDeliveryConfig)
+        {
+            List<string> allEmails = new List<string>();
+            if (smtpDeliveryConfig == null || string.IsNullOrEmpty(smtpDeliveryConfig.SMTPDestinations))
+                return allEmails;
+            return smtpDeliveryConfig.SMTPDestinations.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Replace(" ", string.Empty).Trim()).ToList();
+        }
     }
 }

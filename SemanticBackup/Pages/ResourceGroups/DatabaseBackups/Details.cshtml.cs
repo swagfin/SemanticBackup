@@ -122,7 +122,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 else if (contentDeliveryRecord.CurrentStatus != "ERROR")
                     throw new Exception($"STATUS needs to be ERROR state, Current Status for this record is: {contentDeliveryRecord.CurrentStatus}");
                 //prepare re-run
-                bool rerunSuccess = await _contentDeliveryRecordRepository.UpdateStatusFeedAsync(contentDeliveryRecord.Id, ContentDeliveryRecordStatus.QUEUED.ToString(), "Queued for Re-run", 0);
+                bool rerunSuccess = await _contentDeliveryRecordRepository.UpdateStatusFeedAsync(contentDeliveryRecord.Id, BackupRecordDeliveryStatus.QUEUED.ToString(), "Queued for Re-run", 0);
                 this.RerunStatus = "success";
                 this.RerunStatusReason = "Success";
             }
