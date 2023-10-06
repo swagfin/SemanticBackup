@@ -13,7 +13,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
     internal class InDepthDeleteDropboxBot : IBot
     {
         private readonly string _resourceGroupId;
-        private readonly ContentDeliveryRecord _contentDeliveryRecord;
+        private readonly BackupRecordDelivery _contentDeliveryRecord;
         private readonly BackupRecord _backupRecord;
         private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
         private readonly IServiceScopeFactory _scopeFactory;
@@ -24,7 +24,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
         public string ResourceGroupId => _resourceGroupId;
         public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
-        public InDepthDeleteDropboxBot(string resourceGroupId, BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public InDepthDeleteDropboxBot(string resourceGroupId, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
         {
             this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;

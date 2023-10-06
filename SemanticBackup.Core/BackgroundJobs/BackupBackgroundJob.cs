@@ -181,7 +181,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                     if (dbRecords == null)
                         return;
                     List<string> supportedInDepthDelete = new List<string> { ContentDeliveryType.DROPBOX.ToString(), ContentDeliveryType.AZURE_BLOB_STORAGE.ToString() };
-                    List<ContentDeliveryRecord> supportedDeliveryRecords = dbRecords.Where(x => supportedInDepthDelete.Contains(x.DeliveryType)).ToList();
+                    List<BackupRecordDelivery> supportedDeliveryRecords = dbRecords.Where(x => supportedInDepthDelete.Contains(x.DeliveryType)).ToList();
                     if (supportedDeliveryRecords == null || supportedDeliveryRecords.Count == 0)
                         return;
                     foreach (var rec in supportedDeliveryRecords)

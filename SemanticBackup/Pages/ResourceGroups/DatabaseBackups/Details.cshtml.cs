@@ -23,7 +23,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
         public BackupRecord BackupRecordResponse { get; private set; }
         public string RerunStatus { get; private set; }
         public string RerunStatusReason { get; private set; }
-        public List<ContentDeliveryRecord> ContentDeliveryRecordsResponse { get; private set; }
+        public List<BackupRecordDelivery> ContentDeliveryRecordsResponse { get; private set; }
         public ResourceGroup CurrentResourceGroup { get; private set; }
 
         public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository contentDeliveryRecordRepository)
@@ -63,7 +63,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 else if (Request.Query.ContainsKey("download"))
                 {
                     string contentKey = Request.Query["download"].ToString()?.Trim();
-                    ContentDeliveryRecord deliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.DeliveryType == "DIRECT_LINK" && x.ExecutionMessage == contentKey);
+                    BackupRecordDelivery deliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.DeliveryType == "DIRECT_LINK" && x.ExecutionMessage == contentKey);
                     if (deliveryRecord == null)
                         return new NotFoundObjectResult($"no downloadable content with with specified ref: {contentKey}");
                     //return downloadable content
@@ -115,7 +115,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             try
             {
                 //re-run here
-                ContentDeliveryRecord contentDeliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.Id == rerunJobId);
+                BackupRecordDelivery contentDeliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.Id == rerunJobId);
                 if (contentDeliveryRecord == null)
                     throw new Exception($"No delivery content with specified job: {rerunJobId}");
                 //check status
@@ -134,7 +134,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             }
         }
 
-        private async Task<IActionResult> DownloadableContentAsync(ContentDeliveryRecord deliveryRecord)
+        private async Task<IActionResult> DownloadableContentAsync(BackupRecordDelivery deliveryRecord)
         {
             if (!System.IO.File.Exists(BackupRecordResponse.Path))
                 return new NotFoundObjectResult($"Physical Backup File appears to be missing");

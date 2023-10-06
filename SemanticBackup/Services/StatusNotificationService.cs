@@ -29,7 +29,7 @@ namespace SemanticBackup.Services
             _ = SendBackupRecordEmailNotificationAsync(backupRecord);
         }
 
-        public void DispatchContentDeliveryUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord = false)
+        public void DispatchContentDeliveryUpdatedStatus(BackupRecordDelivery record, bool isNewRecord = false)
         {
             _logger.LogInformation("Received ContentDeliveryUpdate Notification....");
             _ = SendContentDeliveryNotificationAsync(record);
@@ -67,7 +67,7 @@ namespace SemanticBackup.Services
             }
         }
 
-        private async Task SendContentDeliveryNotificationAsync(ContentDeliveryRecord record)
+        private async Task SendContentDeliveryNotificationAsync(BackupRecordDelivery record)
         {
             try
             {

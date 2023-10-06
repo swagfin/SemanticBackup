@@ -64,7 +64,7 @@ namespace SemanticBackup.Core.BackgroundJobs
                                         List<string> scheduleToDelete = new List<string>();
                                         foreach (ContentDeliveryConfiguration config in resourceGroupContentDeliveryConfigs)
                                         {
-                                            bool queuedSuccess = await contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new ContentDeliveryRecord
+                                            bool queuedSuccess = await contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new BackupRecordDelivery
                                             {
                                                 Id = $"{backupRecord.Id}|{config.Id}|{config.ResourceGroupId}".ToMD5String().ToUpper(), //Unique Identification
                                                 BackupRecordId = backupRecord.Id,

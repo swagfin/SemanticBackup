@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SemanticBackup.Core.Models
 {
-    public class ContentDeliveryRecord
+    public class BackupRecordDelivery
     {
         [Required, Key]
         public string Id { get; set; } = Guid.NewGuid().ToString().ToUpper();
