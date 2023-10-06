@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Core.BackgroundJobs
 {
-    public class ContentDeliverySchedulerBackgroundJob : IProcessorInitializable
+    public class BackupRecordDeliverySchedulerBackgroundJob : IProcessorInitializable
     {
-        private readonly ILogger<ContentDeliverySchedulerBackgroundJob> _logger;
+        private readonly ILogger<BackupRecordDeliverySchedulerBackgroundJob> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        public ContentDeliverySchedulerBackgroundJob(
-            ILogger<ContentDeliverySchedulerBackgroundJob> logger,
+        public BackupRecordDeliverySchedulerBackgroundJob(
+            ILogger<BackupRecordDeliverySchedulerBackgroundJob> logger,
             IServiceScopeFactory serviceScopeFactory)
         {
             this._logger = logger;

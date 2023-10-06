@@ -33,8 +33,8 @@ namespace SemanticBackup.Core
             services.AddSingleton<IProcessorInitializable, BackupSchedulerBackgroundJob>();
             services.AddSingleton<IProcessorInitializable, BackupBackgroundJob>(); //Main Backup Thread Lunching Bots
             services.AddSingleton<IProcessorInitializable, BackupBackgroundZIPJob>(); //Zipper Thread Lunching Bots
-            services.AddSingleton<IProcessorInitializable, ContentDeliverySchedulerBackgroundJob>(); //Schedules Backup for Deliveries
-            services.AddSingleton<IProcessorInitializable, ContentDeliveryDispatchBackgroundJob>(); //Dispatches out saved Scheduled Jobs
+            services.AddSingleton<IProcessorInitializable, BackupRecordDeliverySchedulerBackgroundJob>(); //Schedules Backup for Deliveries
+            services.AddSingleton<IProcessorInitializable, BackupRecordDeliveryDispatchBackgroundJob>(); //Dispatches out saved Scheduled Jobs
             services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
 
 
