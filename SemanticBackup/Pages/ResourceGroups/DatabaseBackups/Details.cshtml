@@ -28,7 +28,7 @@
         {
             if (Model.RerunStatus.Contains("success"))
             {
-                <div class="ui icon tiny blue message container">
+                <div class="ui icon tiny success message">
                     <i class="refresh icon"></i>
                     <div class="content">
                         <div class="header">
@@ -40,7 +40,7 @@
             }
             else
             {
-                <div class="ui icon tiny warning message container">
+                <div class="ui icon tiny warning message">
                     <i class="refresh icon"></i>
                     <div class="content">
                         <div class="header">
@@ -213,7 +213,7 @@
                             <tr id="record_for_@(record.Id)">
                                 <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.DeliveryType</td>
                                 @{
-                                    if (record.DeliveryType == "DIRECT_LINK")
+                                    if (record.DeliveryType == BackupDeliveryConfigTypes.DownloadLink.ToString())
                                     {
                                         if (record.CurrentStatus == "READY")
                                         {
@@ -257,7 +257,7 @@
                                             <a href="?re-run=delivery&job=@(record.Id)" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>
                                         </td>
                                     }
-                                    else if (record.DeliveryType == "DIRECT_LINK")
+                                    else if (record.DeliveryType == BackupDeliveryConfigTypes.DownloadLink.ToString())
                                     {
                                         if (record.CurrentStatus == "READY")
                                         {
@@ -373,7 +373,7 @@
                 if (response.isNewMetric && $("#record_for_" + key).length == 0) {
                     console.log("Appending new Record Notification");
                     var newElement = '<tr id="record_for_' + key + '"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> ' + metric.deliveryType + '</td><td class="execution_message_for_' + key + '">' + metric.executionMessage + '</td><td class="event_status_for_' + key + '"><span class="ui label small basic"><i class="info icon"></i>' + metric.currentStatus + '</span></td><td class="event_rerun_for_' + key + '"><a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a></td></tr>';
-                    if (metric.deliveryType == "DIRECT_LINK") {
+                    if (metric.deliveryType == "DownloadLink") {
                         newElement = '<tr id="record_for_' + key + '"><td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> ' + metric.deliveryType + '</td><td class="execution_message_for_downloadLink_' + key + '"><i>Generating Link...</i></td><td class="event_status_for_' + key + '"><span class="ui label small basic"><i class="info icon"></i>' + metric.currentStatus + '</span></td><td class="event_downloadlink_for_' + key + '"> <a style="cursor:not-allowed" class="ui disabled small label"><i class="download icon"></i> Download</a></td></tr>';
                     }
                     $("#records_data_table").append(newElement);
@@ -383,7 +383,7 @@
                 if (status == "READY") {
                     $(".event_status_for_" + key).html('<span class="ui label small basic green"><i class="file archive icon"></i>EXECUTED</span>');
                     //Check Download LINK
-                    if (metric.deliveryType == "DIRECT_LINK") {
+                    if (metric.deliveryType == "DownloadLink") {
                         $(".execution_message_for_downloadLink_" + key).html('<a href="?download=' + metric.executionMessage + '" target="_blank"><i class="download icon"></i> Download Link </a>');
                         $(".event_downloadlink_for_" + key).html('<a href="?download=' + metric.executionMessage + '" target="_blank" class="ui teal label"><i class="download icon"></i> Download</a>');
                     }
@@ -395,7 +395,7 @@
                 $(".execution_message_for_" + key).html(metric?.executionMessage);
                 //Update Message Now
                 if (status == "ERROR") {
-                    $(".event_rerun_for_" + key).html('<a href="/databasebackups/' + key + '/re-run/redirect/' + metric.backupRecordId + '/content-delivery" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>');
+                    $(".event_rerun_for_" + key).html('<a href="?re-run=delivery&job=' + key + '" class="ui blue small label"><i class="refresh icon"></i> Re-run Job</a>');
                 }
                 else {
                     $(".event_rerun_for_" + key).html(' <a style="cursor:not-allowed" class="ui disabled small label"><i class="refresh icon"></i> Re-run Job</a>');

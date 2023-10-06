@@ -12,11 +12,10 @@ namespace SemanticBackup.Core.Logic
     {
         private LiteDatabaseAsync _db;
         private readonly IBackupRecordRepository _backupRecordPersistanceService;
-        private readonly IContentDeliveryConfigRepository _contentDeliveryConfigPersistanceService;
         private readonly IBackupScheduleRepository _backupSchedulePersistanceService;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;
 
-        public ResourceGroupRepositoryLiteDb(IBackupRecordRepository backupRecordPersistanceService, IContentDeliveryConfigRepository contentDeliveryConfigPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
+        public ResourceGroupRepositoryLiteDb(IBackupRecordRepository backupRecordPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
 #if DEBUG
             this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
@@ -27,7 +26,6 @@ namespace SemanticBackup.Core.Logic
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
             //Proceed
             this._backupRecordPersistanceService = backupRecordPersistanceService;
-            this._contentDeliveryConfigPersistanceService = contentDeliveryConfigPersistanceService;
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
@@ -116,16 +114,6 @@ namespace SemanticBackup.Core.Logic
                         await _backupRecordPersistanceService.RemoveAsync(record.Id);
             }
             catch { }
-            //Delete Configuration for Dispatch
-            try
-            {
-                var associatedDeliveryConfigs = await _contentDeliveryConfigPersistanceService.GetAllAsync(resourceGroupId);
-                if (associatedDeliveryConfigs != null)
-                    foreach (var record in associatedDeliveryConfigs)
-                        await _contentDeliveryConfigPersistanceService.RemoveAsync(record.Id);
-            }
-            catch { }
         }
-
     }
 }

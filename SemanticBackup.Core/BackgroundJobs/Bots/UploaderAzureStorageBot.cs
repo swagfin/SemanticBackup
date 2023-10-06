@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
-using Newtonsoft.Json;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
@@ -14,24 +13,22 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
     internal class UploaderAzureStorageBot : IBot
     {
-        private readonly string _resourceGroupId;
-        private readonly ContentDeliveryRecord _contentDeliveryRecord;
+        private readonly BackupRecordDelivery _contentDeliveryRecord;
+        private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<UploaderAzureStorageBot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string ResourceGroupId => _resourceGroupId;
+        public string ResourceGroupId => _resourceGroup.Id;
         public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
-        public UploaderAzureStorageBot(string resourceGroupId, BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public UploaderAzureStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
+            this._resourceGroup = resourceGroup;
             this._backupRecord = backupRecord;
-            this._contentDeliveryConfiguration = contentDeliveryConfiguration;
             this._scopeFactory = scopeFactory;
             //Logger
             using (var scope = _scopeFactory.CreateScope())
@@ -46,7 +43,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 _logger.LogInformation($"Uploading Backup File via Azure Blob Storage....");
                 await Task.Delay(new Random().Next(1000));
-                RSAzureBlobStorageSetting settings = GetValidDeserializedSettings();
+                AzureBlobStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.AzureBlobStorage ?? throw new Exception("no valid azure blob storage config");
                 stopwatch.Start();
                 //Upload FTP
                 CheckIfFileExistsOrRemove(this._backupRecord.Path);
@@ -72,7 +69,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                     executionMessage = $"Uploaded Container: {validContainer}";
                 }
                 stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
+                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordDeliveryStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
                 _logger.LogInformation($"Uploading Backup File via Azure Blob Storage: {_backupRecord.Path}... SUCCESS");
             }
             catch (Exception ex)
@@ -81,14 +78,6 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), (ex.InnerException != null) ? $"Error Uploading: {ex.InnerException.Message}" : ex.Message, stopwatch.ElapsedMilliseconds);
             }
-        }
-
-        private RSAzureBlobStorageSetting GetValidDeserializedSettings()
-        {
-            var config = JsonConvert.DeserializeObject<RSAzureBlobStorageSetting>(this._contentDeliveryConfiguration.Configuration);
-            if (config == null)
-                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSAzureBlobStorageSetting)}");
-            return config;
         }
 
         private void CheckIfFileExistsOrRemove(string path)

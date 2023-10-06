@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
@@ -14,25 +13,23 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
 {
     internal class UploaderFTPBot : IBot
     {
-        private readonly string _resourceGroupId;
-        private readonly ContentDeliveryRecord _contentDeliveryRecord;
+        private readonly BackupRecordDelivery _contentDeliveryRecord;
+        private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly ContentDeliveryConfiguration _contentDeliveryConfiguration;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<UploaderFTPBot> _logger;
         public bool IsCompleted { get; private set; } = false;
         public bool IsStarted { get; private set; } = false;
 
-        public string ResourceGroupId => _resourceGroupId;
+        public string ResourceGroupId => _resourceGroup.Id;
         public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
 
-        public UploaderFTPBot(string resourceGroupId, BackupRecord backupRecord, ContentDeliveryRecord contentDeliveryRecord, ContentDeliveryConfiguration contentDeliveryConfiguration, IServiceScopeFactory scopeFactory)
+        public UploaderFTPBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = resourceGroupId;
             this._contentDeliveryRecord = contentDeliveryRecord;
+            this._resourceGroup = resourceGroup;
             this._backupRecord = backupRecord;
-            this._contentDeliveryConfiguration = contentDeliveryConfiguration;
             this._scopeFactory = scopeFactory;
             //Logger
             using (var scope = _scopeFactory.CreateScope())
@@ -47,7 +44,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
             {
                 _logger.LogInformation($"Uploading Backup File via FTP....");
                 await Task.Delay(new Random().Next(1000));
-                RSFTPSetting settings = GetValidDeserializedSettings();
+                FtpDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Ftp ?? throw new Exception("no valid ftp config");
                 stopwatch.Start();
                 //Upload FTP
                 CheckIfFileExistsOrRemove(this._backupRecord.Path);
@@ -85,16 +82,14 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 }
                 catch (WebException e)
                 {
-                    Console.WriteLine(e.Message.ToString());
-                    string status = ((FtpWebResponse)e.Response).StatusDescription;
-                    throw new Exception(status);
+                    throw new Exception(e.Message);
                 }
                 catch (Exception ex)
                 {
                     throw new Exception(ex.Message);
                 }
                 stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, ContentDeliveryRecordStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
+                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordDeliveryStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
                 _logger.LogInformation($"Uploading Backup File via FTP: {_backupRecord.Path}... SUCCESS");
             }
             catch (Exception ex)
@@ -103,14 +98,6 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 stopwatch.Stop();
                 UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), (ex.InnerException != null) ? $"Error Uploading: {ex.InnerException.Message}" : ex.Message, stopwatch.ElapsedMilliseconds);
             }
-        }
-
-        private RSFTPSetting GetValidDeserializedSettings()
-        {
-            var config = JsonConvert.DeserializeObject<RSFTPSetting>(this._contentDeliveryConfiguration.Configuration);
-            if (config == null)
-                throw new Exception($"Invalid Configuration String provided Of Type: {nameof(RSFTPSetting)}");
-            return config;
         }
 
         private void CheckIfFileExistsOrRemove(string path)

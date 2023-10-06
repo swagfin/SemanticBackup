@@ -17,9 +17,9 @@ namespace SemanticBackup.Core.Logic
         public ContentDeliveryRecordRepositoryLiteDb(IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers)
         {
 #if DEBUG
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-delivery-history.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-record-deliveries.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
 #else
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-delivery-history.db")) { Password = "12345678", Connection = ConnectionType.Shared });
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-record-deliveries.db")) { Password = "12345678", Connection = ConnectionType.Shared });
 #endif
             //Init
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
@@ -27,28 +27,18 @@ namespace SemanticBackup.Core.Logic
             this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
         }
 
-        public async Task<List<ContentDeliveryRecord>> GetAllAsync(string resourceGroupId)
+        public async Task<List<BackupRecordDelivery>> GetAllByStatusAsync(string status)
         {
-            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).OrderByDescending(x => x.RegisteredDateUTC).ToListAsync();
+            return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => x.CurrentStatus == status).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
         }
-        public async Task<List<ContentDeliveryRecord>> GetAllByStatusAsync(string status)
+        public async Task<List<BackupRecordDelivery>> GetAllByBackupRecordIdAsync(long id)
         {
-            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.CurrentStatus == status).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
-        }
-        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdByStatusAsync(string resourceGroupId, long id, string status = "*")
-        {
-            if (status == "*")
-                return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
-            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.ResourceGroupId == resourceGroupId).Where(x => x.CurrentStatus == status && x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
-        }
-        public async Task<List<ContentDeliveryRecord>> GetAllByBackupRecordIdAsync(long id)
-        {
-            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
+            return await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => x.BackupRecordId == id).OrderBy(x => x.RegisteredDateUTC).ToListAsync();
         }
 
-        public async Task<bool> AddOrUpdateAsync(ContentDeliveryRecord record)
+        public async Task<bool> AddOrUpdateAsync(BackupRecordDelivery record)
         {
-            var collection = _db.GetCollection<ContentDeliveryRecord>();
+            var collection = _db.GetCollection<BackupRecordDelivery>();
             var objFound = await collection.Query().Where(x => x.Id == record.Id).FirstOrDefaultAsync();
             if (objFound != null)
             {
@@ -62,7 +52,7 @@ namespace SemanticBackup.Core.Logic
             }
             else
             {
-                bool savedSuccess = await _db.GetCollection<ContentDeliveryRecord>().UpsertAsync(record);
+                bool savedSuccess = await _db.GetCollection<BackupRecordDelivery>().UpsertAsync(record);
                 if (savedSuccess)
                     this.DispatchUpdatedStatus(record, true);
                 return savedSuccess;
@@ -71,7 +61,7 @@ namespace SemanticBackup.Core.Logic
 
         public async Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0)
         {
-            var collection = _db.GetCollection<ContentDeliveryRecord>();
+            var collection = _db.GetCollection<BackupRecordDelivery>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
@@ -89,15 +79,9 @@ namespace SemanticBackup.Core.Logic
             }
             return false;
         }
-
-        public async Task<ContentDeliveryRecord> GetByIdAsync(string id)
-        {
-            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => x.Id == id).FirstOrDefaultAsync();
-        }
-
         public async Task<bool> RemoveAsync(string id)
         {
-            var collection = _db.GetCollection<ContentDeliveryRecord>();
+            var collection = _db.GetCollection<BackupRecordDelivery>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
@@ -105,25 +89,16 @@ namespace SemanticBackup.Core.Logic
             }
             return false;
         }
-        public async Task<bool> UpdateAsync(ContentDeliveryRecord record)
-        {
-            return await _db.GetCollection<ContentDeliveryRecord>().UpdateAsync(record);
-        }
-
-        public async Task<ContentDeliveryRecord> GetByContentTypeByExecutionMessageAsync(string deliveryType, string executionMessage)
-        {
-            return await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage) || (x.DeliveryType == deliveryType && x.ExecutionMessage == executionMessage)).FirstOrDefaultAsync();
-        }
 
         public async Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference)
         {
             if (statusChecks == null || statusChecks.Count == 0)
                 return null;
-            var records = await _db.GetCollection<ContentDeliveryRecord>().Query().Where(x => statusChecks.Contains(x.CurrentStatus)).OrderBy(x => x.RegisteredDateUTC).Select(x => new { x.Id, x.CurrentStatus, x.StatusUpdateDateUTC, x.RegisteredDateUTC }).ToListAsync();
+            var records = await _db.GetCollection<BackupRecordDelivery>().Query().Where(x => statusChecks.Contains(x.CurrentStatus)).OrderBy(x => x.RegisteredDateUTC).Select(x => new { x.Id, x.CurrentStatus, x.StatusUpdateDateUTC, x.RegisteredDateUTC }).ToListAsync();
             return records.Where(x => (DateTime.UtcNow - x.StatusUpdateDateUTC).TotalMinutes >= minuteDifference).Select(x => x.Id).ToList();
         }
 
-        private void DispatchUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord = false)
+        private void DispatchUpdatedStatus(BackupRecordDelivery record, bool isNewRecord = false)
         {
             if (_backupRecordStatusChangedNotifiers != null)
                 foreach (var notifier in _backupRecordStatusChangedNotifiers)
@@ -133,6 +108,5 @@ namespace SemanticBackup.Core.Logic
                     }
                     catch { }
         }
-
     }
 }

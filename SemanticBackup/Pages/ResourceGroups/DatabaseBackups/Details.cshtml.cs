@@ -23,7 +23,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
         public BackupRecord BackupRecordResponse { get; private set; }
         public string RerunStatus { get; private set; }
         public string RerunStatusReason { get; private set; }
-        public List<ContentDeliveryRecord> ContentDeliveryRecordsResponse { get; private set; }
+        public List<BackupRecordDelivery> ContentDeliveryRecordsResponse { get; private set; }
         public ResourceGroup CurrentResourceGroup { get; private set; }
 
         public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository contentDeliveryRecordRepository)
@@ -63,7 +63,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 else if (Request.Query.ContainsKey("download"))
                 {
                     string contentKey = Request.Query["download"].ToString()?.Trim();
-                    ContentDeliveryRecord deliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.DeliveryType == "DIRECT_LINK" && x.ExecutionMessage == contentKey);
+                    BackupRecordDelivery deliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.DeliveryType == BackupDeliveryConfigTypes.DownloadLink.ToString() && x.ExecutionMessage == contentKey);
                     if (deliveryRecord == null)
                         return new NotFoundObjectResult($"no downloadable content with with specified ref: {contentKey}");
                     //return downloadable content
@@ -94,7 +94,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             {
                 //re-run here
                 //:: ensure backup record exists
-                if (BackupRecordResponse.BackupStatus != "ERROR")
+                if (BackupRecordResponse.BackupStatus != BackupRecordBackupStatus.ERROR.ToString())
                     throw new Exception($"STATUS need to be ERROR, Current Status for this record is: {BackupRecordResponse.BackupStatus}");
                 //prepare re-run
                 string newBackupPath = BackupRecordResponse.Path.Replace(".zip", ".bak");
@@ -115,14 +115,14 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             try
             {
                 //re-run here
-                ContentDeliveryRecord contentDeliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.Id == rerunJobId);
+                BackupRecordDelivery contentDeliveryRecord = ContentDeliveryRecordsResponse.FirstOrDefault(x => x.Id.Equals(rerunJobId, StringComparison.CurrentCultureIgnoreCase));
                 if (contentDeliveryRecord == null)
                     throw new Exception($"No delivery content with specified job: {rerunJobId}");
                 //check status
-                else if (contentDeliveryRecord.CurrentStatus != "ERROR")
+                else if (contentDeliveryRecord.CurrentStatus != BackupRecordBackupStatus.ERROR.ToString())
                     throw new Exception($"STATUS needs to be ERROR state, Current Status for this record is: {contentDeliveryRecord.CurrentStatus}");
                 //prepare re-run
-                bool rerunSuccess = await _contentDeliveryRecordRepository.UpdateStatusFeedAsync(contentDeliveryRecord.Id, ContentDeliveryRecordStatus.QUEUED.ToString(), "Queued for Re-run", 0);
+                bool rerunSuccess = await _contentDeliveryRecordRepository.UpdateStatusFeedAsync(contentDeliveryRecord.Id, BackupRecordDeliveryStatus.QUEUED.ToString(), "Queued for Re-run", 0);
                 this.RerunStatus = "success";
                 this.RerunStatusReason = "Success";
             }
@@ -134,7 +134,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             }
         }
 
-        private async Task<IActionResult> DownloadableContentAsync(ContentDeliveryRecord deliveryRecord)
+        private async Task<IActionResult> DownloadableContentAsync(BackupRecordDelivery deliveryRecord)
         {
             if (!System.IO.File.Exists(BackupRecordResponse.Path))
                 return new NotFoundObjectResult($"Physical Backup File appears to be missing");

@@ -24,14 +24,64 @@ namespace SemanticBackup.Core.Models
         public int MaximumRunningBots { get; set; } = 1;
         public bool CompressBackupFiles { get; set; } = true;
         public int BackupExpiryAgeInDays { get; set; } = 7;
+        //delivery Configs
+        public BackupDeliveryConfig BackupDeliveryConfig { get; set; } = new BackupDeliveryConfig();
         public bool NotifyOnErrorBackups { get; set; } = false;
         public bool NotifyOnErrorBackupDelivery { get; set; } = false;
         public string NotifyEmailDestinations { get; set; } = null;
         public long LastAccess { get; set; } = 0;
     }
-
+    public class BackupDeliveryConfig
+    {
+        public DownloadLinkDeliveryConfig DownloadLink { get; set; } = new DownloadLinkDeliveryConfig();
+        public FtpDeliveryConfig Ftp { get; set; } = new FtpDeliveryConfig();
+        public SmtpDeliveryConfig Smtp { get; set; } = new SmtpDeliveryConfig();
+        public DropboxDeliveryConfig Dropbox { get; set; } = new DropboxDeliveryConfig();
+        public AzureBlobStorageDeliveryConfig AzureBlobStorage { get; set; } = new AzureBlobStorageDeliveryConfig();
+    }
+    public class DownloadLinkDeliveryConfig
+    {
+        public bool IsEnabled { get; set; } = true;
+        public string DownloadLinkType { get; set; }
+    }
+    public class FtpDeliveryConfig
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string Server { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string Directory { get; set; } = "/";
+    }
+    public class SmtpDeliveryConfig
+    {
+        public bool IsEnabled { get; set; } = false;
+        public bool SMTPEnableSSL { get; set; } = true;
+        public string SMTPHost { get; set; }
+        public int SMTPPort { get; set; } = 587;
+        public string SMTPEmailAddress { get; set; }
+        public string SMTPEmailCredentials { get; set; }
+        public string SMTPDefaultSMTPFromName { get; set; }
+        public string SMTPDestinations { get; set; }
+    }
+    public class DropboxDeliveryConfig
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string AccessToken { get; set; }
+        public string Directory { get; set; } = "/";
+    }
+    public class AzureBlobStorageDeliveryConfig
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string ConnectionString { get; set; }
+        public string BlobContainer { get; set; }
+    }
+    //enums
     public enum DbTypes
     {
         SQLSERVER2019, SQLSERVER2014, SQLSERVER2012, MARIADBDATABASE, MYSQLDATABASE
+    }
+    public enum BackupDeliveryConfigTypes
+    {
+        DownloadLink, Ftp, Smtp, Dropbox, AzureBlobStorage
     }
 }

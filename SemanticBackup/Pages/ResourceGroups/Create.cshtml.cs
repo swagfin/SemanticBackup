@@ -3,13 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Core.Models.Requests;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Pages.ResourceGroups
@@ -20,7 +18,6 @@ namespace SemanticBackup.Pages.ResourceGroups
         private readonly ILogger<IndexModel> _logger;
         private readonly SystemConfigOptions _persistanceOptions;
         private readonly IResourceGroupRepository _resourceGroupPersistance;
-        private readonly IContentDeliveryConfigRepository _contentDeliveryConfigRepository;
         private readonly IBackupProviderForMySQLServer _backupProviderForMySQLServer;
         private readonly IBackupProviderForSQLServer _backupProviderForSQLServer;
 
@@ -28,12 +25,11 @@ namespace SemanticBackup.Pages.ResourceGroups
         [BindProperty]
         public ResourceGroupRequest request { get; set; }
 
-        public CreateModel(ILogger<IndexModel> logger, IOptions<SystemConfigOptions> options, IResourceGroupRepository resourceGroupPersistance, IContentDeliveryConfigRepository contentDeliveryConfigRepository, IBackupProviderForMySQLServer backupProviderForMySQLServer, IBackupProviderForSQLServer backupProviderForSQLServer)
+        public CreateModel(ILogger<IndexModel> logger, IOptions<SystemConfigOptions> options, IResourceGroupRepository resourceGroupPersistance, IBackupProviderForMySQLServer backupProviderForMySQLServer, IBackupProviderForSQLServer backupProviderForSQLServer)
         {
             this._logger = logger;
             this._persistanceOptions = options.Value;
             this._resourceGroupPersistance = resourceGroupPersistance;
-            this._contentDeliveryConfigRepository = contentDeliveryConfigRepository;
             this._backupProviderForMySQLServer = backupProviderForMySQLServer;
             this._backupProviderForSQLServer = backupProviderForSQLServer;
         }
@@ -68,6 +64,45 @@ namespace SemanticBackup.Pages.ResourceGroups
                     NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery,
                     NotifyOnErrorBackups = request.NotifyOnErrorBackups,
                     LastAccess = DateTime.UtcNow.ConvertLongFormat(),
+                    BackupDeliveryConfig = new BackupDeliveryConfig
+                    {
+                        DownloadLink = new DownloadLinkDeliveryConfig
+                        {
+                            IsEnabled = request.RSDownloadLinkSetting.IsEnabled,
+                            DownloadLinkType = request.RSDownloadLinkSetting.DownloadLinkType
+                        },
+                        Ftp = new FtpDeliveryConfig
+                        {
+                            IsEnabled = request.RSFTPSetting.IsEnabled,
+                            Server = request.RSFTPSetting.Server,
+                            Username = request.RSFTPSetting.Username,
+                            Password = request.RSFTPSetting.Password,
+                            Directory = request.RSFTPSetting.Directory
+                        },
+                        Smtp = new SmtpDeliveryConfig
+                        {
+                            IsEnabled = request.RSEmailSMTPSetting.IsEnabled,
+                            SMTPEnableSSL = request.RSEmailSMTPSetting.SMTPEnableSSL,
+                            SMTPHost = request.RSEmailSMTPSetting.SMTPHost,
+                            SMTPPort = request.RSEmailSMTPSetting.SMTPPort,
+                            SMTPEmailAddress = request.RSEmailSMTPSetting.SMTPEmailAddress,
+                            SMTPEmailCredentials = request.RSEmailSMTPSetting.SMTPEmailCredentials,
+                            SMTPDefaultSMTPFromName = request.RSEmailSMTPSetting.SMTPDefaultSMTPFromName,
+                            SMTPDestinations = request.RSEmailSMTPSetting.SMTPDestinations
+                        },
+                        Dropbox = new DropboxDeliveryConfig
+                        {
+                            IsEnabled = request.RSDropBoxSetting.IsEnabled,
+                            AccessToken = request.RSDropBoxSetting.AccessToken,
+                            Directory = request.RSDropBoxSetting.Directory
+                        },
+                        AzureBlobStorage = new AzureBlobStorageDeliveryConfig
+                        {
+                            IsEnabled = request.RSAzureBlobStorageSetting.IsEnabled,
+                            BlobContainer = request.RSAzureBlobStorageSetting.BlobContainer,
+                            ConnectionString = request.RSAzureBlobStorageSetting.ConnectionString
+                        }
+                    }
                 };
 
                 //atttempt check connection string
@@ -76,15 +111,6 @@ namespace SemanticBackup.Pages.ResourceGroups
                 bool savedSuccess = await _resourceGroupPersistance.AddAsync(saveObj);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
-
-                //Post Check and Get Delivery Settings
-                List<ContentDeliveryConfiguration> configs = GetPostedConfigurations(saveObj.Id, request);
-                if (configs != null && configs.Count > 0)
-                {
-                    bool addedSuccess = await this._contentDeliveryConfigRepository.AddOrUpdateAsync(configs);
-                    if (!addedSuccess)
-                        _logger.LogWarning("Resource Group Content Delivery Settings were not Saved");
-                }
                 return Redirect("/resource-groups");
             }
             catch (Exception ex)
@@ -173,68 +199,6 @@ namespace SemanticBackup.Pages.ResourceGroups
                 if (!response.success)
                     throw new Exception(response.err);
             }
-        }
-
-        private List<ContentDeliveryConfiguration> GetPostedConfigurations(string resourceGroupId, ResourceGroupRequest request)
-        {
-            List<ContentDeliveryConfiguration> configs = new List<ContentDeliveryConfiguration>();
-            try
-            {
-                if (request == null)
-                    return configs;
-                //Download Link
-                if (request.RSDownloadLinkSetting != null && request.RSDownloadLinkSetting.IsEnabled)
-                    configs.Add(new ContentDeliveryConfiguration
-                    {
-                        IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.DIRECT_LINK.ToString(),
-                        ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSDownloadLinkSetting),
-                        PriorityIndex = 0
-                    });
-                //FTP Configs
-                if (request.RSFTPSetting != null && request.RSFTPSetting.IsEnabled)
-                    configs.Add(new ContentDeliveryConfiguration
-                    {
-                        IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.FTP_UPLOAD.ToString(),
-                        ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSFTPSetting),
-                        PriorityIndex = 1
-                    });
-                //Email SMTP
-                if (request.RSEmailSMTPSetting != null && request.RSEmailSMTPSetting.IsEnabled)
-                    configs.Add(new ContentDeliveryConfiguration
-                    {
-                        IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.EMAIL_SMTP.ToString(),
-                        ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSEmailSMTPSetting),
-                        PriorityIndex = 2
-                    });
-                //Dropbox
-                if (request.RSDropBoxSetting != null && request.RSDropBoxSetting.IsEnabled)
-                    configs.Add(new ContentDeliveryConfiguration
-                    {
-                        IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.DROPBOX.ToString(),
-                        ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSDropBoxSetting),
-                        PriorityIndex = 4
-                    });
-                //Azure Blob Storage
-                if (request.RSAzureBlobStorageSetting != null && request.RSAzureBlobStorageSetting.IsEnabled)
-                    configs.Add(new ContentDeliveryConfiguration
-                    {
-                        IsEnabled = true,
-                        DeliveryType = ContentDeliveryType.AZURE_BLOB_STORAGE.ToString(),
-                        ResourceGroupId = resourceGroupId,
-                        Configuration = JsonConvert.SerializeObject(request.RSAzureBlobStorageSetting),
-                        PriorityIndex = 5
-                    });
-            }
-            catch (Exception ex) { _logger.LogError(ex.Message); }
-            return configs;
         }
     }
 }

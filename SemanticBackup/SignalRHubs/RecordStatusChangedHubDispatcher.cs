@@ -60,7 +60,7 @@ namespace SemanticBackup.SignalRHubs
             catch { }
         }
 
-        public void DispatchContentDeliveryUpdatedStatus(ContentDeliveryRecord record, bool isNewRecord)
+        public void DispatchContentDeliveryUpdatedStatus(BackupRecordDelivery record, bool isNewRecord)
         {
             try
             {
@@ -200,7 +200,7 @@ namespace SemanticBackup.SignalRHubs
     public class ContentDeliveryRecordMetric
     {
         public string Subscription { get; set; }
-        public ContentDeliveryRecord Metric { get; set; } = null;
+        public BackupRecordDelivery Metric { get; set; } = null;
         public DateTime LastSyncDateUTC { get; set; } = DateTime.UtcNow;
         public bool IsNewMetric { get; set; } = false;
     }
