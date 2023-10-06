@@ -68,20 +68,33 @@ namespace SemanticBackup.Core.BackgroundJobs
                                     //loop delivery types
                                     foreach (BackupDeliveryConfigTypes deliveryType in Enum.GetValues(typeof(BackupDeliveryConfigTypes)))
                                     {
-                                        bool queuedSuccess = await contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new BackupRecordDelivery
+                                        bool isDeliveryEnabled = false;
+                                        switch (deliveryType)
                                         {
-                                            Id = $"{backupRecord.Id}|{resourceGroup.Id}".ToMD5String().ToUpper(), //Unique Identification
-                                            BackupRecordId = backupRecord.Id,
-                                            CurrentStatus = BackupRecordDeliveryStatus.QUEUED.ToString(),
-                                            DeliveryType = deliveryType.ToString(),
-                                            RegisteredDateUTC = DateTime.UtcNow,
-                                            StatusUpdateDateUTC = DateTime.UtcNow,
-                                            ExecutionMessage = "Queued for Dispatch"
-                                        });
-                                        if (!queuedSuccess)
-                                            _logger.LogWarning($"Unable to Queue Backup Record Delivery Id: {backupRecord.Id}, Delivery Type : {deliveryType}");
+                                            case BackupDeliveryConfigTypes.DownloadLink: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.DownloadLink?.IsEnabled ?? false; break;
+                                            case BackupDeliveryConfigTypes.Ftp: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.Ftp?.IsEnabled ?? false; break;
+                                            case BackupDeliveryConfigTypes.Smtp: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.Smtp?.IsEnabled ?? false; break;
+                                            case BackupDeliveryConfigTypes.Dropbox: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.Dropbox?.IsEnabled ?? false; break;
+                                            case BackupDeliveryConfigTypes.AzureBlobStorage: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.AzureBlobStorage?.IsEnabled ?? false; break;
+                                            default: isDeliveryEnabled = false; break;
+                                        }
+                                        //check if enabled
+                                        if (isDeliveryEnabled)
+                                        {
+                                            bool queuedSuccess = await contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new BackupRecordDelivery
+                                            {
+                                                Id = $"{backupRecord.Id}|{resourceGroup.Id}|{deliveryType}".ToMD5String().ToUpper(), //Unique Identification
+                                                BackupRecordId = backupRecord.Id,
+                                                CurrentStatus = BackupRecordDeliveryStatus.QUEUED.ToString(),
+                                                DeliveryType = deliveryType.ToString(),
+                                                RegisteredDateUTC = DateTime.UtcNow,
+                                                StatusUpdateDateUTC = DateTime.UtcNow,
+                                                ExecutionMessage = "Queued for Dispatch"
+                                            });
+                                            if (!queuedSuccess)
+                                                _logger.LogWarning($"unable to queue Backup Record Id: {backupRecord.Id} for delivery via : {deliveryType}, resource group: {resourceGroup.Name}");
+                                        }
                                     }
-
                                     //Update Execution
                                     _ = await backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SUCCESSFULLY_EXECUTED.ToString());
                                 }

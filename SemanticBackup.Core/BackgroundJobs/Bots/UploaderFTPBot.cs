@@ -82,9 +82,7 @@ namespace SemanticBackup.Core.BackgroundJobs.Bots
                 }
                 catch (WebException e)
                 {
-                    Console.WriteLine(e.Message.ToString());
-                    string status = ((FtpWebResponse)e.Response).StatusDescription;
-                    throw new Exception(status);
+                    throw new Exception(e.Message);
                 }
                 catch (Exception ex)
                 {

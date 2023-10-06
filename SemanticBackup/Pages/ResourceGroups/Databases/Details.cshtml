@@ -149,7 +149,7 @@
                             foreach (var record in Model.BackupSchedulesResponse)
                             {
                                 recordCount++;
-                                <tr onclick="location.href='/databasebackupschedules/@(record.Id)'">
+                                <tr>
                                     <td>@string.Format("{0:N0}", recordCount)</td>
                                     <td class="positive" style="font-weight:bold;font-size:12px"> <i class="clock icon"></i> @record.Name</td>
                                     <td class="warning" style="font-weight:bold">@record.ScheduleType</td>
@@ -185,6 +185,7 @@
             $('.menu .item').tab();
 
             //Create Main Obersavable
+            var currentResourceGroupId = @(Html.Raw(Json.Serialize(Model.CurrentResourceGroup.Key)));
             var currentRecordId = @(Html.Raw(Json.Serialize(Model.DatabaseInfoResponse.Id)));
             _ = getListenerAsync("/BackupRecordsNotify", currentRecordId, "ReceiveNotification", function (response) {
                 console.log("Received Database Backup Status Update");
@@ -195,7 +196,7 @@
                 //Check if Not Exists
                 if (response.isNewMetric && $("#record_for_" + key).length == 0) {
                     console.log("Prepending new Record Notification");
-                    var newElement = '<tr id="record_for_' + key + '"><td colspan="6"><div class="ui tiny blue message"><div class="header">New backup for <b><a href="/databasebackupschedules/' + key + '"> ' + metric.name + ' </a></b> has started <span style="color:orange;margin-right:10px" class="use-time-ago" use-time-ago-value="' + metric.registeredDate + '"> Just now </span>&gt;&gt; Progress: <span class="event_status_for_' + key + '"> <span class="ui label small basic"><i class="info icon"></i>QUEUED</span> </span></div></div></td></tr>';
+                    var newElement = '<tr id="record_for_' + key + '"><td colspan="6"><div class="ui tiny blue message"><div class="header">New backup for <b><a href="/resource-groups/' + currentResourceGroupId + '/database-backups/details/' + key + '"> ' + metric.name + ' </a></b> has started <span style="color:orange;margin-right:10px" class="use-time-ago" use-time-ago-value="' + metric.registeredDate + '"> Just now </span>&gt;&gt; Progress: <span class="event_status_for_' + key + '"> <span class="ui label small basic"><i class="info icon"></i>QUEUED</span> </span></div></div></td></tr>';
                     $("#records_data_table").prepend(newElement);
                 }
                 //Update Status
