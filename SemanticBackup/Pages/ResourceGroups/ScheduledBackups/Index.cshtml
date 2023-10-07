@@ -21,6 +21,7 @@
                     <th>Every Hours</th>
                     <th>Last Run</th>
                     <th>Next Run</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -37,12 +38,13 @@
                                 <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
                                 <td>@(record.LastRunUTC.ToLastRunPreviewableWithTimezone(User.GetUserTimeZoneOffset()))</td>
                                 <td>@(string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRunUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset())))</td>
+                                <td><a href="?remove-backup-schedule=@(record.Id)" onclick="return confirmRemoveBackupSchedule(this);" class="ui mini red button" title="Click to Remove this backup schedule"><i class="delete icon"></i> Remove</a></td>
                             </tr>
                         }
                     else
                     {
                         <tr>
-                            <td colspan="6" style="text-align:center">
+                            <td colspan="7" style="text-align:center">
                                 <div class="ui message small warning"><div>To Data Available</div></div>
                             </td>
                         </tr>

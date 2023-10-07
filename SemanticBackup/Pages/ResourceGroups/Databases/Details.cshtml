@@ -42,16 +42,16 @@
         </div>
 
         <div class="ui top attached tabular primary small menu">
-            <a class="item active" data-tab="recentbackups">BACKUPS</a>
-            <a class="item" data-tab="backupschedules">SCHEDULES</a>
+            <a class="item @(!Request.Query.ContainsKey("schedules") ? "active" : string.Empty)" data-tab="recentbackups">BACKUPS</a>
+            <a class="item @(Request.Query.ContainsKey("schedules") ? "active" : string.Empty)" data-tab="backupschedules">SCHEDULES</a>
         </div>
-        <div class="ui bottom attached tab segment active" data-tab="recentbackups">
+        <div class="ui bottom attached tab segment @(!Request.Query.ContainsKey("schedules") ? "active" : string.Empty)" data-tab="recentbackups">
             <section class="ui two wide column grid">
                 <div class="eight wide column">
                     <h3>Recent 10 Backups</h3>
                 </div>
                 <div class="eight wide column">
-                    <a class="ui tiny green button right floated" href="?request=backup"><i class="cloud upload icon"></i>Get Instant Backup</a>
+                    <a class="ui tiny green button right floated" href="?request-backup=instant"><i class="cloud upload icon"></i>Get Instant Backup</a>
                 </div>
             </section>
 
@@ -120,8 +120,7 @@
             </table>
 
         </div>
-
-        <div class="ui bottom attached tab segment" data-tab="backupschedules">
+        <div class="ui bottom attached tab segment @(Request.Query.ContainsKey("schedules") ? "active" : string.Empty)" data-tab="backupschedules">
             <section class="ui two wide column grid">
                 <div class="eight wide column">
                     <h3>Scheduled Backups</h3>
@@ -140,6 +139,7 @@
                         <th>Every Hours</th>
                         <th>Last Run</th>
                         <th>Next Run</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -156,12 +156,13 @@
                                     <td>@string.Format("{0:N0}HRS", record.EveryHours)</td>
                                     <td>@(record.LastRunUTC.ToLastRunPreviewableWithTimezone(User.GetUserTimeZoneOffset()))</td>
                                     <td>@string.Format("{0:yyyy-MM-dd HH:mm}", record.NextRunUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))</td>
+                                    <td><a href="?remove-backup-schedule=@(record.Id)" onclick="return confirmRemoveBackupSchedule(this);" class="ui mini red button" title="Click to Remove this backup schedule"><i class="delete icon"></i> Remove</a></td>
                                 </tr>
                             }
                         else
                         {
                             <tr>
-                                <td colspan="6" style="text-align:center">
+                                <td colspan="7" style="text-align:center">
                                     <div class="ui message small warning"><div>To Available Backup Schedules for this database</div></div>
                                 </td>
                             </tr>
@@ -215,5 +216,13 @@
             });
 
         });
+        //functions
+        function confirmRemoveBackupSchedule(element) {
+            if (confirm('Do you want to remove this backup schedule ?')) {
+                $(element).addClass('loading disabled');
+                return true;
+            }
+            return false;
+        }
     </script>
 }
