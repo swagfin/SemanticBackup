@@ -1,14 +1,20 @@
 ﻿@page "/resource-groups/{resourceGroupId}/databases/details/{id}"
 @model SemanticBackup.Pages.ResourceGroups.Databases.DetailsModel
 @{
-    ViewData["Title"] = $"Databases | Info #{Model.DatabaseInfoResponse?.DatabaseName}";
+    ViewData["Title"] = $"Databases | Details #{Model.DatabaseInfoResponse?.DatabaseName}";
 }
 <div class="container pd-x-0">
     <div class="ui container">
+       
+        <section class="ui two wide column grid">
+            <div class="eight wide column">
+                <div class="ui header bold"> Details #@(Model.DatabaseInfoResponse?.DatabaseName)</div>
 
-        <div class="ui header large">
-            Details #@(Model.DatabaseInfoResponse?.DatabaseName)
-        </div>
+            </div>
+            <div class="eight wide column">
+                <a class="ui small negative button right floated" onclick="$(this).addClass('loading');" href="/resource-groups/@(Model.CurrentResourceGroup.Key)/databases/remove/@(Model.DatabaseInfoResponse.DatabaseName.UrlEncoded())"><i class="delete icon"></i> Remove Database</a>
+            </div>
+        </section>
 
         <div class="ui celled list">
             <div class="item">

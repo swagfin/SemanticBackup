@@ -54,3 +54,16 @@
         </table>
     </div>
 </div>
+@section Scripts{
+    <script type="text/javascript">
+
+        //functions
+        function confirmRemoveBackupSchedule(element) {
+            if (confirm('Do you want to remove this backup schedule ?')) {
+                $(element).addClass('loading disabled');
+                return true;
+            }
+            return false;
+        }
+    </script>
+}
