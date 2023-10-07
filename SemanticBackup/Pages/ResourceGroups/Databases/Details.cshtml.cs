@@ -46,28 +46,28 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 CurrentResourceGroup = await _resourceGroupRepository.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
                 DatabaseInfoResponse = await _databaseInfoRepository.VerifyDatabaseInResourceGroupThrowIfNotExistAsync(CurrentResourceGroup.Id, id);
                 //get instant backups
-                if (Request.Query.ContainsKey("request"))
+                if (Request.Query.ContainsKey("request-backup"))
                 {
-                    string responseCode = "failed-request";
-                    switch (Request.Query["request"].ToString()?.Trim().ToLower())
-                    {
-                        case "backup":
-                            //rerun backup
-                            long? backupKeyId = await InitiateDatabaseBackupAsync();
-                            //redirect to backup page
-                            if (backupKeyId != null && backupKeyId != 0)
-                                return Redirect($"/resource-groups/{resourceGroupId}/database-backups/details/{backupKeyId}");
-                            break;
-
-                        default:
-                            responseCode = "unknown-request";
-                            break;
-                    }
-                    return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?response={responseCode}");
+                    long? backupKeyId = await InitiateDatabaseBackupAsync();
+                    if (backupKeyId != null && backupKeyId != 0)
+                        return Redirect($"/resource-groups/{resourceGroupId}/database-backups/details/{backupKeyId}");
+                    return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?response=backup-request-failed");
                 }
-                //Get Backups
+                //reload All
                 await GetBackupRecordsForDatabaseAsync(DatabaseInfoResponse.Id);
                 await GetBackupSchedulesForDatabaseAsync(DatabaseInfoResponse.Id);
+
+                //#Check Other Requests
+                if (Request.Query.ContainsKey("remove-backup-schedule"))
+                {
+                    //user attempting to remove
+                    BackupSchedule backupSchedule = BackupSchedulesResponse.FirstOrDefault(x => x.Id.Equals(Request.Query["remove-backup-schedule"].ToString()?.Trim(), StringComparison.OrdinalIgnoreCase));
+                    if (backupSchedule == null)
+                        return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?schedules=active&response=unknown-backup-schedule");
+                    //proceed
+                    string scheduledRemoved = (await _backupScheduleRepository.RemoveAsync(backupSchedule.Id)) ? "success" : "failed";
+                    return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?schedules=active&response={scheduledRemoved}");
+                }
                 return Page();
             }
             catch (Exception ex)

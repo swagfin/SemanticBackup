@@ -1,32 +1,32 @@
-﻿@page "/resource-groups/delete/{id}"
-@model SemanticBackup.Pages.ResourceGroups.DeleteModel
+﻿@page "/resource-groups/{resourceGroupId}/databases/remove/{id}"
+@model SemanticBackup.Pages.ResourceGroups.Databases.RemoveModel
 @{
-    ViewData["Title"] = string.Format("Confirm Delete {0}", Model.CurrentRecord.Name);
+    ViewData["Title"] = $"Databases | Remove #{Model.CurrentRecord?.DatabaseName}";
 }
 <div class="container pd-x-0">
     <div class="row row-xs">
 
         <div class="col-lg-8 col-xl-12 mg-t-10">
 
-            <h2>Confirm Delete [@(Model.CurrentRecord.Name)]</h2>
+            <h2>Confirm Remove Database [@(Model.CurrentRecord?.DatabaseName)]</h2>
             <div class="ui divider"></div>
             @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
             {
                 <div class="ui warning message"><i class="warning icon"></i><b>@(Model.ErrorMessage)</b></div>
             }
             <form class="ui form" onsubmit="$(this).addClass('loading');" method="POST">
-                <div class="ui message icon">
+                <div class="ui small message icon">
                     <i class="clone outline icon"></i>
                     <div class="content">
                         <div class="ui header red">
-                            Are you sure you want remove <a href="/resource-groups">@(Model.CurrentRecord.Name)</a>, this will delete all related details to this resources ?
+                            Are you sure you want remove <a href="/">@(Model.CurrentRecord?.DatabaseName)</a>, this will remove the the database from being part of backups ?
                         </div>
                         <p align="center">
                         </p>
                         <br />
                         <div class="ui three buttons">
-                            <a href="/resource-groups" class="ui button">No, Cancel</a>
-                            <button type="submit" class="ui red button">Yes, Delete Anyway</button>
+                            <a href="/resource-groups" class="ui small button">No, Cancel</a>
+                            <button type="submit" class="ui red small button">Yes, Remove Anyway</button>
                         </div>
                     </div>
                 </div>

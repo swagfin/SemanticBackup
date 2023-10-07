@@ -69,6 +69,12 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                     //return downloadable content
                     return await DownloadableContentAsync(deliveryRecord);
                 }
+                else if (Request.Query.ContainsKey("abandon-backup"))
+                {
+                    bool isSuccess = await _backupRecordRepository.UpdateExpiryDateByIdAsync(BackupRecordResponse.Id, DateTime.UtcNow.AddMinutes(-1));
+                    if (isSuccess)
+                        return Redirect($"/resource-groups/{resourceGroupId}/database-backups/details/{id}");
+                }
                 //return page
                 return Page();
             }
