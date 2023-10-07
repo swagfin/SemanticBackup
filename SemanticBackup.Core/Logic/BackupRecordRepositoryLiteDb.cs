@@ -56,6 +56,14 @@ namespace SemanticBackup.Core.Logic
         {
             return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDateUTC != null).Where(x => x.ExpiryDateUTC <= DateTime.UtcNow).OrderBy(x => x.Id).ToListAsync();
         }
+        public async Task<bool> UpdateExpiryDateByIdAsync(long id, DateTime expiryDateUtc)
+        {
+            BackupRecord existingRecord = await GetByIdAsync(id);
+            if (existingRecord == null)
+                return false;
+            existingRecord.ExpiryDateUTC = expiryDateUtc;
+            return await UpdateAsync(existingRecord);
+        }
         public async Task<List<BackupRecord>> GetAllByRegisteredDateByStatusAsync(string resourceGroupId, DateTime fromDate, string status = "*")
         {
             List<string> dbCollection = await _databaseInfoRepository.GetDatabaseIdsForResourceGroupAsync(resourceGroupId);

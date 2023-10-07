@@ -26,5 +26,6 @@ namespace SemanticBackup.Core.Interfaces
         Task<int> GetAllCountAsync(string resourcegroup);
         Task<List<BackupRecord>> GetAllByRestoreStatusAsync(string status);
         Task<BackupRecord> VerifyBackupRecordInResourceGroupThrowIfNotExistAsync(string resourceGroupId, long backupRecordId);
+        Task<bool> UpdateExpiryDateByIdAsync(long id, DateTime expiryDateUtc);
     }
 }

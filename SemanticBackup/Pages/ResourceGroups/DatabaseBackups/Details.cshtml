@@ -9,17 +9,18 @@
             <div class="ui header bold">Backup Record Info #@(Model.BackupRecordResponse.Id)</div>
 
         </div>
-        <div class="eight wide column">
+        <div class="eight wide column" style="text-align:right">
             @if (Model.BackupRecordResponse.BackupStatus == "ERROR")
             {
-                <a class="ui small blue button right floated can-reque-enabled" href="?re-run=backup&job=current"><i class="refresh icon"></i>Re-run Backup Job</a>
-                <a class="ui small button disabled right floated can-reque-disabled" hidden onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small blue button can-reque-enabled" href="?re-run=backup&job=current"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small button disabled can-reque-disabled" hidden onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
             }
             else
             {
-                <a class="ui small blue button right floated can-reque-enabled" hidden href="#"><i class="refresh icon"></i>Re-run Backup Job</a>
-                <a class="ui small button disabled right floated can-reque-disabled" onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small blue button can-reque-enabled" hidden href="#"><i class="refresh icon"></i>Re-run Backup Job</a>
+                <a class="ui small button disabled can-reque-disabled" onclick="alert('You can only Requeue On ERROR')" style="cursor:not-allowed"><i class="refresh icon"></i>Re-run Backup Job</a>
             }
+            <a class="ui small negative button" onclick="return confirm('Do you want to abandon this backup record? this will queue this backup record for recursive deletion in the background. This could take serveral minutes. Proceed ?')" href="?abandon-backup=current"><i class="delete icon"></i> Abandon Backup</a>
         </div>
     </section>
 
@@ -51,6 +52,19 @@
                 </div>
 
             }
+        }
+        //check queued for delete
+        if (Model.BackupRecordResponse.ExpiryDateUTC <= DateTime.UtcNow)
+        {
+            <div class="ui icon tiny warning message">
+                <i class="refresh icon"></i>
+                <div class="content">
+                    <div class="header">
+                        This backup will be queued for deletion
+                    </div>
+                    <p>Backup record is being recursively deleted in the background.</p>
+                </div>
+            </div>
         }
     }
 
