@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
@@ -25,10 +24,10 @@ namespace SemanticBackup.Pages.ResourceGroups
         [BindProperty]
         public ResourceGroupRequest request { get; set; }
 
-        public CreateModel(ILogger<IndexModel> logger, IOptions<SystemConfigOptions> options, IResourceGroupRepository resourceGroupPersistance, IBackupProviderForMySQLServer backupProviderForMySQLServer, IBackupProviderForSQLServer backupProviderForSQLServer)
+        public CreateModel(ILogger<IndexModel> logger, SystemConfigOptions options, IResourceGroupRepository resourceGroupPersistance, IBackupProviderForMySQLServer backupProviderForMySQLServer, IBackupProviderForSQLServer backupProviderForSQLServer)
         {
             this._logger = logger;
-            this._persistanceOptions = options.Value;
+            this._persistanceOptions = options;
             this._resourceGroupPersistance = resourceGroupPersistance;
             this._backupProviderForMySQLServer = backupProviderForMySQLServer;
             this._backupProviderForSQLServer = backupProviderForSQLServer;

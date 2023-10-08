@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
@@ -29,14 +28,14 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
         public List<BackupRecord> BackupRecordsResponse { get; private set; }
         public List<BackupSchedule> BackupSchedulesResponse { get; private set; }
 
-        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService, IBackupRecordRepository backupRecordRepository, IBackupScheduleRepository backupScheduleRepository, IOptions<SystemConfigOptions> options)
+        public DetailsModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupRepository, IDatabaseInfoRepository databaseInfoPersistanceService, IBackupRecordRepository backupRecordRepository, IBackupScheduleRepository backupScheduleRepository, SystemConfigOptions options)
         {
             this._logger = logger;
             this._resourceGroupRepository = resourceGroupRepository;
             this._databaseInfoRepository = databaseInfoPersistanceService;
             this._backupRecordRepository = backupRecordRepository;
             this._backupScheduleRepository = backupScheduleRepository;
-            this._options = options.Value;
+            this._options = options;
         }
 
         public async Task<IActionResult> OnGetAsync(string resourceGroupId, string id)
