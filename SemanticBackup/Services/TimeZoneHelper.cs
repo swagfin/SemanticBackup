@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using SemanticBackup.Core;
 using System;
@@ -15,11 +14,11 @@ namespace SemanticBackup.Services
         private readonly ILogger<TimeZoneHelper> _logger;
         private readonly SystemConfigOptions _options;
         private List<string> RecordCollection = new List<string>();
-        public TimeZoneHelper(ILogger<TimeZoneHelper> logger, IOptions<SystemConfigOptions> options)
+        public TimeZoneHelper(ILogger<TimeZoneHelper> logger, SystemConfigOptions options)
         {
             this._filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Configs", "timezones.json");
             this._logger = logger;
-            this._options = options.Value;
+            this._options = options;
         }
         public List<string> GetAll()
         {
