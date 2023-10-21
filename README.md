@@ -9,16 +9,10 @@ SemanticBackup is a powerful .NET API service designed to automate the backup pr
 - **Custom Backup Schedules**: Configure personalized backup schedules to suit your requirements.
 - **Dashboard**: Monitor the backup status and manage settings through an intuitive and user-friendly dashboard.
 
-## Installation and Usage
-
-- Download, Compile and Deploy both WebClient and API
-### Deploy API on Docker 
+## Deploy on Docker
 ```sh
-docker run -d -p 8000:8000 swagfin/semanticbackupapi:latest
-```
-### Deploy WebClient on Docker 
-```sh
-docker run -d -p 8080:8080 swagfin/semanticbackupapi-webclient:latest
+docker pull ghcr.io/swagfin/semantic-backup:latest
+docker run -d -p 8080:8080 ghcr.io/swagfin/semantic-backup:latest
 ```
 ## Screenshots
 
