@@ -1,0 +1,31 @@
+﻿@page "/account"
+@model SemanticBackup.Pages.Account.IndexModel
+@{
+    ViewData["Title"] = "Account";
+    Layout = "_LayoutNoDirectory";
+}
+<div class="content">
+    <div class="text container">
+        <h2>My Account</h2>
+        <div class="ui divider"></div>
+
+
+        <form method="post" class="database-registration-page">
+            <div class="ui segment attached">
+
+                <div class="ui warning tiny message">Unable to update account details</div>
+
+
+                <div class="form-group">
+                    <label for="Description">My Name</label>
+                    <input placeholder="My Name" autocomplete="off" type="text" class="form-control">
+                </div>
+          
+                <button type="submit" class="btn btn-primary">Update Details</button>
+            </div>
+        </form>
+
+
+
+    </div>
+</div>
