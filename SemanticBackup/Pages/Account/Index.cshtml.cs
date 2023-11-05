@@ -25,7 +25,10 @@ namespace SemanticBackup.Pages.Account
         public UserAccount userAccount { get; set; }
 
         [BindProperty]
-        public bool Response { get; set; }
+        public bool updateStatus { get; set; }
+
+        [BindProperty]
+        public string Status { get; set; } = "update";
         public IndexModel(IUserAccountRepository userAccountRepository, ILogger<IndexModel> logger)
         {
             this._userAccountRepository = userAccountRepository;
@@ -69,12 +72,15 @@ namespace SemanticBackup.Pages.Account
                 };
 
                 var response = await _userAccountRepository.UpdateAsync(userUpdate);
-                Response = response;
-                if(response)
+  
+                if (response)
                 {
-
+                    Status = "Success";
                 }
-
+                else
+                {
+                    Status = "Failed";
+                }
             }
 
             catch (Exception ex)
@@ -86,5 +92,12 @@ namespace SemanticBackup.Pages.Account
             return Page();
 
         }
+    }
+
+    public class Status
+    {
+        public string Update { get; set; }
+        public string UpdateFailed { get; set; }
+        public string UpdateSucceed { get; set; }
     }
 }
