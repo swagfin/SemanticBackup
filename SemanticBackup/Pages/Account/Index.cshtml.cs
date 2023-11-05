@@ -23,6 +23,9 @@ namespace SemanticBackup.Pages.Account
 
         [BindProperty]
         public UserAccount userAccount { get; set; }
+
+        [BindProperty]
+        public bool Response { get; set; }
         public IndexModel(IUserAccountRepository userAccountRepository, ILogger<IndexModel> logger)
         {
             this._userAccountRepository = userAccountRepository;
@@ -66,6 +69,11 @@ namespace SemanticBackup.Pages.Account
                 };
 
                 var response = await _userAccountRepository.UpdateAsync(userUpdate);
+                Response = response;
+                if(response)
+                {
+
+                }
 
             }
 
