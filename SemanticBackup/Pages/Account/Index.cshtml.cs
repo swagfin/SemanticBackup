@@ -1,16 +1,9 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
-using SemanticBackup.Core.Models.Requests;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -23,9 +16,6 @@ namespace SemanticBackup.Pages.Account
 
         [BindProperty]
         public UserAccount userAccount { get; set; }
-
-        [BindProperty]
-        public bool updateStatus { get; set; }
 
         [BindProperty]
         public string Status { get; set; } = "update";
@@ -94,10 +84,4 @@ namespace SemanticBackup.Pages.Account
         }
     }
 
-    public class Status
-    {
-        public string Update { get; set; }
-        public string UpdateFailed { get; set; }
-        public string UpdateSucceed { get; set; }
-    }
 }
