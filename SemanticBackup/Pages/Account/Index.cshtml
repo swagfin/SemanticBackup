@@ -16,8 +16,8 @@
                 <div class="ui warning tiny message">Unable to update account details</div>
 
                 <div class="form-group">
-                    <label for="Email">Email (disabled)</label>
-                    <input asp-for="userAccount.EmailAddress" type="text" class="form-control" disabled>
+                    <label for="EmailAddress">Email </label>
+                    <input asp-for="userAccount.EmailAddress" type="text" class="form-control" >
                 </div>
 
                 <div class="form-group">
@@ -39,6 +39,14 @@
                 <div class="UserAccountType">
                     <label for="UserAccountType">UserAccountType</label>
                     <input asp-for="userAccount.UserAccountType" type="text" class="form-control" />
+                </div>
+                <div class="LastLoginToken">
+                    <label for="LastLoginToken">LastLoginToken</label>
+                    <input asp-for="userAccount.LastLoginToken" type="text" class="form-control" />
+                </div>
+                <div class="LastLoginUTC">
+                    <label for="LastLoginUTC">LastLoginUTC</label>
+                    <input asp-for="userAccount.LastLoginUTC" type="text" class="form-control" />
                 </div>
 
                 <div class="Password">
