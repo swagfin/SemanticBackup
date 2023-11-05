@@ -150,7 +150,7 @@
                 @{
                     if (User.Identity.IsAuthenticated)
                     {
-                        <a href="/" class="nav-link active"><i data-feather="user"></i> <span class="ui basic blue label left pointing">@(User.Identity?.Name)</span></a>
+                        <a href="/account" class="nav-link active"><i data-feather="user"></i> <span class="ui basic blue label left pointing">@(User.Identity?.Name)</span></a>
                     }
                     else
                     {
