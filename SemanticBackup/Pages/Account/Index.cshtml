@@ -15,12 +15,37 @@
 
                 <div class="ui warning tiny message">Unable to update account details</div>
 
+                <div class="form-group">
+                    <label for="Email">Email (disabled)</label>
+                    <input asp-for="userAccount.EmailAddress" type="text" class="form-control" disabled>
+                </div>
 
                 <div class="form-group">
-                    <label for="Description">My Name</label>
-                    <input placeholder="My Name" autocomplete="off" type="text" class="form-control">
+                    <label for="Name"> Name</label>
+                    <input asp-for="userAccount.FullName" type="text" class="form-control" />
                 </div>
-          
+
+
+                <div class="TimezoneOffset">
+                    <label for="TimezoneOffset">TimezoneOffset</label>
+                    <input asp-for="userAccount.TimezoneOffset" type="text" class="form-control" />
+                </div>
+
+                <div class="Timezone">
+                    <label for="Timezone">Timezone</label>
+                    <input asp-for="userAccount.Timezone" type="text" class="form-control" />
+                </div>
+
+                <div class="UserAccountType">
+                    <label for="UserAccountType">UserAccountType</label>
+                    <input asp-for="userAccount.UserAccountType" type="text" class="form-control" />
+                </div>
+
+                <div class="Password">
+                    <label for="Password">Password</label>
+                    <input asp-for="userAccount.Password" type="text" class="form-control" />
+                </div>
+
                 <button type="submit" class="btn btn-primary">Update Details</button>
             </div>
         </form>
