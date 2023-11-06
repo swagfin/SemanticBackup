@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -16,6 +17,8 @@ namespace SemanticBackup.Pages.Account
 
         [BindProperty]
         public UserAccount userAccount { get; set; }
+
+        public List<TimeZoneInfo> TimeZones { get; set; } = new List<TimeZoneInfo>();
 
         [BindProperty]
         public string Status { get; set; } = "update";
@@ -37,6 +40,11 @@ namespace SemanticBackup.Pages.Account
                 {
                     userAccount = user;
                 }
+            }
+            //TimeZones = new List<TimeZoneInfo>();
+            foreach (var tz in TimeZoneInfo.GetSystemTimeZones())
+            {
+                TimeZones.Add(tz);
             }
 
             return Page();
@@ -62,7 +70,7 @@ namespace SemanticBackup.Pages.Account
                 };
 
                 var response = await _userAccountRepository.UpdateAsync(userUpdate);
-  
+
                 if (response)
                 {
                     Status = "Success";

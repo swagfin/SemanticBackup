@@ -49,6 +49,12 @@
 
                 <div class="Timezone">
                     <label for="Timezone">Timezone</label>
+                    <select asp-for="userAccount.Timezone" asp-items="@(new SelectList(TimeZoneInfo.GetSystemTimeZones(), "Value", "Text"))" class="form-control"></select>
+                </div>
+
+
+                <div class="Timezone">
+                    <label for="Timezone">Timezone</label>
                     <input asp-for="userAccount.Timezone" type="text" class="form-control" />
                 </div>
 

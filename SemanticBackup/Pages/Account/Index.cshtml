@@ -47,10 +47,19 @@
                     <input asp-for="userAccount.TimezoneOffset" type="text" class="form-control" />
                 </div>
 
-                <div class="Timezone">
-                    <label for="Timezone">Timezone</label>
-                    <input asp-for="userAccount.Timezone" type="text" class="form-control" />
+
+                <div class="form-group">
+                    <label for="name" class="bmd-label-floating"> TimeZone </label>
+                    <select asp-for="userAccount.Timezone" class="selectpicker" data-style="btn btn-primary" data-size="7" title="Select Timezone" required>
+                        @{
+                            foreach (var timezoneSelect in Model.TimeZones)
+                            {
+                                <option value="@timezoneSelect.StandardName">@timezoneSelect.DisplayName</option>
+                            }
+                        }
+                    </select>
                 </div>
+            
 
                 <div class="UserAccountType">
                     <label for="UserAccountType">UserAccountType</label>
