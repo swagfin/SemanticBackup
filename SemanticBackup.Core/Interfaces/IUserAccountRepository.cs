@@ -15,5 +15,6 @@ namespace SemanticBackup.Core.Interfaces
         Task<bool> UpdateAsync(UserAccount record);
         Task<int> GetAllCountAsync();
         Task<bool> UpdateLastSeenAsync(string emailAddress, DateTime lastSeenUTC, string lastToken);
+        Task<UserAccount> GetByIdAsync(string userId);
     }
 }
