@@ -74,5 +74,15 @@ namespace SemanticBackup.Core
             else
                 return string.Format("{0:yyyy-MM-dd HH:mm}", lastRunDateUtc.AdjustWithTimezoneOffset(timezoneOffset));
         }
+        public static (string timezone, string offset) ToTimezoneWithOffset(this TimeZoneInfo timeZoneInfo)
+        {
+            TimeSpan utcOffset = timeZoneInfo.BaseUtcOffset;
+            return (timeZoneInfo.Id, (utcOffset >= TimeSpan.Zero ? "+" : "-") + utcOffset.ToString("hh':'mm"));
+        }
+        public static string ToTimezoneWithOffsetString(this TimeZoneInfo timeZoneInfo)
+        {
+            (string timezone, string offset) timezoneWithOffset = ToTimezoneWithOffset(timeZoneInfo);
+            return string.Format("{0} ({1})", timezoneWithOffset.timezone, timezoneWithOffset.offset);
+        }
     }
 }

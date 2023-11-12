@@ -36,6 +36,10 @@ namespace SemanticBackup.Core.Logic
             return await _db.GetCollection<UserAccount>().UpsertAsync(record);
         }
 
+        public async Task<UserAccount> GetByIdAsync(string userId)
+        {
+            return await _db.GetCollection<UserAccount>().Query().Where(x => x.Id == userId).FirstOrDefaultAsync();
+        }
         public async Task<UserAccount> GetByEmailAsync(string emailAddress)
         {
             return await _db.GetCollection<UserAccount>().Query().Where(x => x.EmailAddress == emailAddress).FirstOrDefaultAsync();
