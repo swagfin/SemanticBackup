@@ -60,7 +60,7 @@ namespace SemanticBackup.Pages.Account
                 string userId = User.GetClaimValue(ClaimTypes.PrimarySid) ?? throw new Exception("no user id provided");
                 UserAccount existingUserInfo = await _userAccountRepository.GetByIdAsync(userId) ?? throw new Exception($"invalid user with id: {userId}");
                 //validate
-                if (!ModelState.TryValidate(out string validationErrors))
+                if (!ModelState.IsValidated(out string validationErrors))
                 {
                     Status = validationErrors;
                     return Page();
