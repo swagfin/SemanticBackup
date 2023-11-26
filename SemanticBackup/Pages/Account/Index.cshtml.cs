@@ -65,6 +65,11 @@ namespace SemanticBackup.Pages.Account
                     Status = validationErrors;
                     return Page();
                 }
+                else if (!string.IsNullOrEmpty(UserAccountRequest.NewPassword) && UserAccountRequest.NewPassword.Length < 4)
+                {
+                    Status = "Password must be at list 4 characters in length";
+                    return Page();
+                }
                 //update details
                 existingUserInfo.FullName = UserAccountRequest.FullName;
                 existingUserInfo.EmailAddress = UserAccountRequest.EmailAddress;

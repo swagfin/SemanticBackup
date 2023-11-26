@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
+using System.Reflection;
 
 namespace SemanticBackup
 {
@@ -24,5 +25,17 @@ namespace SemanticBackup
                        .Build());
                     webBuilder.UseStartup<Startup>();
                 });
+
+        public static string AppVersion
+        {
+            get
+            {
+#if DEBUG
+                return string.Format("v.{0} (Developer Edition)", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+#else
+                return string.Format("v.{0}", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+#endif
+            }
+        }
     }
 }
