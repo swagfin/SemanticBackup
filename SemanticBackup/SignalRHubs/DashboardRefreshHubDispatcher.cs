@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
@@ -14,6 +15,7 @@ using static SemanticBackup.SignalRHubs.DashboardRefreshHubClientStore;
 
 namespace SemanticBackup.SignalRHubs
 {
+    [Authorize]
     public class DashboardRefreshHubDispatcher : Hub, IProcessorInitializable
     {
         private readonly ILogger<DashboardRefreshHubDispatcher> _logger;

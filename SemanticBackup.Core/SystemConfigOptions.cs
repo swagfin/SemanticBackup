@@ -13,6 +13,5 @@
         public bool SMTPEnableSSL { get; set; } = true;
         public string SMTPHost { get; set; } = null;
         public string SMTPDefaultSMTPFromName { get; set; }
-        public bool IsLinuxEnv { get; set; }
     }
 }

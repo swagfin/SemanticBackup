@@ -80,8 +80,8 @@
                                 <tr id="record_for_@(record.Id)" onclick="location.href='/resource-groups/@(Model.CurrentResourceGroup.Key)/database-backups/details/@(record.Id)'">
                                     <td><a style="font-weight:bold" href="/resource-groups/@(Model.CurrentResourceGroup.Key)/database-backups/details/@(record.Id)">&#x23;@(record.Id)</a></td>
                                     <td class="positive" style="font-weight:bold;font-size:12px"> <i class="cloud upload icon"></i> @record.Name</td>
-                                    <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.RegisteredDateUTC)</td>
-                                    <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDateUTC)" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.StatusUpdateDateUTC)</td>
+                                    <td class="warning" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.RegisteredDateUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))</td>
+                                    <td class="last_status_update_for_@(record.Id) use-time-ago" use-time-ago-value="@(record.StatusUpdateDateUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))" style="font-weight:bold">@string.Format("{0:yyyy-MM-dd HH:mm}", record.StatusUpdateDateUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))</td>
                                     <td class="execution_milliseconds_for_@(record.Id)">@record.ExecutionMilliseconds</td>
 
                                     @{
