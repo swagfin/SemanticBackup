@@ -48,10 +48,10 @@
                     //get resource groups
                     if (User.Identity.IsAuthenticated)
                     {
-                        List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
-                        ResourceGroup activeDirectory = allResourceGroups.GetDefaultGroup();
-                        activeResourceGroupId = (activeDirectory != null) ? activeDirectory.Key : "#";
-                        if (allResourceGroups != null && allResourceGroups.Count > 0)
+                            List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
+                            ResourceGroup activeDirectory = allResourceGroups.GetDefaultGroup();
+                            activeResourceGroupId = (activeDirectory != null) ? activeDirectory.Key : "#";
+                            if (allResourceGroups != null && allResourceGroups.Count > 0)
                         {
 
                             <div class="aside-loggedin-user">

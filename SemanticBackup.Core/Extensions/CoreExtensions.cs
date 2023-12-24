@@ -36,8 +36,6 @@ namespace SemanticBackup.Core
             services.AddSingleton<IProcessorInitializable, BackupRecordDeliverySchedulerBackgroundJob>(); //Schedules Backup for Deliveries
             services.AddSingleton<IProcessorInitializable, BackupRecordDeliveryDispatchBackgroundJob>(); //Dispatches out saved Scheduled Jobs
             services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
-
-
         }
 
         public static void UseSemanticBackupCoreServices(this IApplicationBuilder builder)

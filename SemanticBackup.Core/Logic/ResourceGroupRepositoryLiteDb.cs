@@ -74,8 +74,7 @@ namespace SemanticBackup.Core.Logic
             if (objFound != null)
             {
                 objFound.LastAccess = DateTime.UtcNow.ConvertLongFormat();
-                bool updatedSuccess = await collection.UpdateAsync(objFound);
-                return updatedSuccess;
+                return await collection.UpdateAsync(objFound);
             }
             return false;
         }

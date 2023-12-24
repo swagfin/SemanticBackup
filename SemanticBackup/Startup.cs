@@ -62,7 +62,6 @@ namespace SemanticBackup
             else
             {
                 app.UseExceptionHandler("/Error");
-                app.UseHsts();
             }
             //Init SemanticCore Services
             app.UseSemanticBackupCoreServices();
