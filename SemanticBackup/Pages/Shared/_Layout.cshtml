@@ -48,10 +48,10 @@
                     //get resource groups
                     if (User.Identity.IsAuthenticated)
                     {
-                        List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
-                        ResourceGroup activeDirectory = allResourceGroups.GetDefaultGroup();
-                        activeResourceGroupId = (activeDirectory != null) ? activeDirectory.Key : "#";
-                        if (allResourceGroups != null && allResourceGroups.Count > 0)
+                            List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
+                            ResourceGroup activeDirectory = allResourceGroups.GetDefaultGroup();
+                            activeResourceGroupId = (activeDirectory != null) ? activeDirectory.Key : "#";
+                            if (allResourceGroups != null && allResourceGroups.Count > 0)
                         {
 
                             <div class="aside-loggedin-user">
@@ -62,7 +62,7 @@
                             </div>
 
 
-                            <div class="collapse" id="loggedinMenu">
+                            <div class="collapse show" id="loggedinMenu">
                                 <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
                                 <ul class="nav nav-aside mg-b-0">
                                     @{

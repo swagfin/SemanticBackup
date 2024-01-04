@@ -5,10 +5,6 @@ namespace SemanticBackup.Core
 {
     public static class TimeExtensions
     {
-        public static long ConvertLongFormat(this DateTime dateTime)
-        {
-            return long.Parse(dateTime.ToString("yyyyMMddHHmmssffff"));
-        }
         public static DateTime ConvertFromUTC(this DateTime dateTime, string timezone)
         {
             if (string.IsNullOrWhiteSpace(timezone))

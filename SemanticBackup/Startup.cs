@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SemanticBackup.Core;
-using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Extensions;
 using SemanticBackup.Services;
 using SemanticBackup.SignalRHubs;
 
@@ -31,11 +31,14 @@ namespace SemanticBackup
             services.RegisterSemanticBackupCoreServices(configOptions);
 
             //Notifications
-            services.AddSingleton<RecordStatusChangedHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
-            services.AddSingleton<IRecordStatusChangedNotifier>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
+            services.AddSingleton<RecordStatusChangedHubDispatcher>()
+                    .AddSingleton<IRecordStatusChangedNotifier>(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>())
+                    .AddHostedService(svc => svc.GetRequiredService<RecordStatusChangedHubDispatcher>());
+
             services.AddSingleton<IRecordStatusChangedNotifier, StatusNotificationService>();
             //DASHBOARD SIGNAL DISPATCH
-            services.AddSingleton<DashboardRefreshHubDispatcher>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());
+            services.AddSingleton<DashboardRefreshHubDispatcher>()
+                    .AddHostedService(svc => svc.GetRequiredService<DashboardRefreshHubDispatcher>());
             //Signal R and Cors
             services.AddSignalR(options =>
             {
@@ -62,7 +65,6 @@ namespace SemanticBackup
             else
             {
                 app.UseExceptionHandler("/Error");
-                app.UseHsts();
             }
             //Init SemanticCore Services
             app.UseSemanticBackupCoreServices();

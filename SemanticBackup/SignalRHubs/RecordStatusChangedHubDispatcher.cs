@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
-using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Concurrent;
@@ -12,7 +12,7 @@ using static SemanticBackup.SignalRHubs.RecordHubClientStore;
 
 namespace SemanticBackup.SignalRHubs
 {
-    public class RecordStatusChangedHubDispatcher : Hub, IRecordStatusChangedNotifier, IProcessorInitializable
+    public class RecordStatusChangedHubDispatcher : Hub, IRecordStatusChangedNotifier, IHostedService
     {
         private readonly ILogger<RecordStatusChangedHubDispatcher> _logger;
         private readonly IHubContext<RecordStatusChangedHubDispatcher> hub;
@@ -27,12 +27,18 @@ namespace SemanticBackup.SignalRHubs
             ContentDeliveryRecordsQueue = new ConcurrentQueue<ContentDeliveryRecordMetric>();
         }
 
-        public void Initialize()
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Setting up content dispatcher...");
-            StartDispatchDataToConnectedUsers();
-            _logger.LogInformation("Setting up content dispatcher...DONE");
+            StartDispatchDataToConnectedUsers(cancellationToken);
+            return Task.CompletedTask;
         }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
         public override Task OnDisconnectedAsync(Exception exception)
         {
             _logger.LogInformation($"Removing client: {Context.ConnectionId}");
@@ -53,8 +59,7 @@ namespace SemanticBackup.SignalRHubs
                 BackupRecordsQueue.Enqueue(new BackupRecordMetric
                 {
                     Metric = backupRecord,
-                    IsNewMetric = isNewRecord,
-
+                    IsNewMetric = isNewRecord
                 });
             }
             catch { }
@@ -90,11 +95,11 @@ namespace SemanticBackup.SignalRHubs
             }
         }
 
-        private void StartDispatchDataToConnectedUsers()
+        private void StartDispatchDataToConnectedUsers(CancellationToken cancellationToken)
         {
             var t = new Thread(() =>
                 {
-                    while (true)
+                    while (!cancellationToken.IsCancellationRequested)
                     {
                         #region Dequeue and Dispatch BackupRecord Status Changed
                         try
@@ -185,10 +190,8 @@ namespace SemanticBackup.SignalRHubs
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                //throw;
             }
         }
-
     }
     public class BackupRecordMetric
     {

@@ -20,7 +20,7 @@ namespace SemanticBackup.Pages.Account
 
         [BindProperty]
         public SignInRequest signInRequest { get; set; }
-        public SignInModel(IUserAccountRepository userAccountRepository, ILogger<SignInModel> logger)
+        public SignInModel(ILogger<SignInModel> logger, IUserAccountRepository userAccountRepository)
         {
             this._userAccountRepository = userAccountRepository;
             this._logger = logger;
