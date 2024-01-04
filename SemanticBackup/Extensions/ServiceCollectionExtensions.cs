@@ -56,7 +56,7 @@ namespace SemanticBackup.Extensions
             if (userService != null)
             {
                 if (userService.GetAllCountAsync().GetAwaiter().GetResult() == 0)
-                    userService.AddOrUpdateAsync(new Core.Models.UserAccount { EmailAddress = "admin@admin.com", FullName = "Administrator", Password = "admin", UserAccountType = Core.Models.UserAccountType.ADMIN }).GetAwaiter().GetResult();
+                    _ = userService.AddOrUpdateAsync(new Core.Models.UserAccount { EmailAddress = "admin@admin.com", FullName = "Administrator", Password = "admin", UserAccountType = Core.Models.UserAccountType.ADMIN }).GetAwaiter().GetResult();
             }
             #endregion
         }
