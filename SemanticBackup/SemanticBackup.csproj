@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SemanticBackup.Core\SemanticBackup.Core.csproj" />
+    <ProjectReference Include="..\SemanticBackup.Infrastructure\SemanticBackup.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

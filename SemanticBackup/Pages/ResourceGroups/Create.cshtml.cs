@@ -62,7 +62,7 @@ namespace SemanticBackup.Pages.ResourceGroups
                     NotifyEmailDestinations = request.NotifyEmailDestinations,
                     NotifyOnErrorBackupDelivery = request.NotifyOnErrorBackupDelivery,
                     NotifyOnErrorBackups = request.NotifyOnErrorBackups,
-                    LastAccess = DateTime.UtcNow.ConvertLongFormat(),
+                    LastAccess = DateTime.UtcNow.Ticks,
                     BackupDeliveryConfig = new BackupDeliveryConfig
                     {
                         DownloadLink = new DownloadLinkDeliveryConfig

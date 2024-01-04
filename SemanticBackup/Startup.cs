@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Extensions;
 using SemanticBackup.Services;
 using SemanticBackup.SignalRHubs;
 
