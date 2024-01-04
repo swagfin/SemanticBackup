@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs
 {
-    public class BackupRecordDeliveryDispatchBackgroundJob : IProcessorInitializable
+    public class BackupRecordDeliveryDispatchBackgroundJob : IHostedService
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -23,21 +24,26 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             this._serviceScopeFactory = serviceScopeFactory;
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
-        public void Initialize()
+
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting service....");
-            SetupBackgroundService();
-            SetupBackgroundRemovedExpiredBackupsService();
-            _logger.LogInformation("Service Started");
+            SetupBackgroundService(cancellationToken);
+            SetupBackgroundRemovedExpiredBackupsService(cancellationToken);
+            return Task.CompletedTask;
         }
 
-        private void SetupBackgroundService()
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        private void SetupBackgroundService(CancellationToken cancellationToken)
         {
             var t = new Thread(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    //Await
                     await Task.Delay(10000);
                     try
                     {
@@ -141,11 +147,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             t.Start();
         }
 
-        private void SetupBackgroundRemovedExpiredBackupsService()
+        private void SetupBackgroundRemovedExpiredBackupsService(CancellationToken cancellationToken)
         {
             var t = new Thread(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     await Task.Delay(60000); //Runs After 1 Minute
                     try

@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
+using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs
 {
-    public class RestoreBackgroundJob : IProcessorInitializable
+    public class RestoreBackgroundJob : IHostedService
     {
         private readonly ILogger<RestoreBackgroundJob> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -27,20 +28,24 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
 
-        public void Initialize()
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting service....");
-            SetupBackgroundService();
-            _logger.LogInformation("Service Started");
+            SetupBackgroundService(cancellationToken);
+            return Task.CompletedTask;
         }
 
-        private void SetupBackgroundService()
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        private void SetupBackgroundService(CancellationToken cancellationToken)
         {
             var t = new Thread(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    //Delay
                     await Task.Delay(5000);
                     try
                     {
@@ -92,6 +97,5 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             });
             t.Start();
         }
-
     }
 }

@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
-using SemanticBackup.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs
 {
-    public class BotsManagerBackgroundJob : IProcessorInitializable
+    public class BotsManagerBackgroundJob : IHostedService
     {
         private readonly ILogger<BotsManagerBackgroundJob> _logger;
         private List<IBot> Bots { get; set; } = new List<IBot>();
@@ -18,10 +18,17 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         {
             this._logger = logger;
         }
-        public void Initialize()
+
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             Bots = new List<IBot>();
-            SetupBotsBackgroundService();
+            SetupBotsBackgroundService(cancellationToken);
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
 
         public void AddBot(IBot bot) => Bots.Add(bot);
@@ -42,11 +49,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             int availableResourceGrpThreads = maximumThreads - runningResourceGrpThreads;
             return availableResourceGrpThreads > 0;
         }
-        private void SetupBotsBackgroundService()
+        private void SetupBotsBackgroundService(CancellationToken cancellationToken)
         {
             var t = new Thread(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs
 {
-    public class BackupSchedulerBackgroundJob : IProcessorInitializable
+    public class BackupSchedulerBackgroundJob : IHostedService
     {
         private readonly ILogger<BackupSchedulerBackgroundJob> _logger;
         private readonly SystemConfigOptions _persistanceOptions;
@@ -32,19 +33,26 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         }
         public void Initialize()
         {
+
+        }
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
             _logger.LogInformation("Starting service....");
-            SetupBackgroundService();
-            SetupBackgroundNonResponsiveStopService();
-            _logger.LogInformation("Service Started");
+            SetupBackgroundService(cancellationToken);
+            SetupBackgroundNonResponsiveStopService(cancellationToken);
+            return Task.CompletedTask;
         }
 
-        private void SetupBackgroundService()
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+        private void SetupBackgroundService(CancellationToken cancellationToken)
         {
             var t = new Thread(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    //Await
                     await Task.Delay(3000);
                     try
                     {
@@ -123,19 +131,18 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     {
                         _logger.LogError(ex.Message);
                     }
-
                 }
             });
             t.Start();
         }
 
-        private void SetupBackgroundNonResponsiveStopService()
+        private void SetupBackgroundNonResponsiveStopService(CancellationToken cancellationToken)
         {
             var t = new Thread(async () =>
             {
                 List<string> statusChecks = new List<string> { BackupRecordBackupStatus.EXECUTING.ToString(), BackupRecordBackupStatus.COMPRESSING.ToString(), BackupRecordDeliveryStatus.EXECUTING.ToString() };
                 int executionTimeoutInMinutes = _persistanceOptions.ExecutionTimeoutInMinutes < 1 ? 1 : _persistanceOptions.ExecutionTimeoutInMinutes;
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {

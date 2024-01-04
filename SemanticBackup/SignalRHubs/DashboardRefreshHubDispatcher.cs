@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
@@ -16,7 +17,7 @@ using static SemanticBackup.SignalRHubs.DashboardRefreshHubClientStore;
 namespace SemanticBackup.SignalRHubs
 {
     [Authorize]
-    public class DashboardRefreshHubDispatcher : Hub, IProcessorInitializable
+    public class DashboardRefreshHubDispatcher : Hub, IHostedService
     {
         private readonly ILogger<DashboardRefreshHubDispatcher> _logger;
         private readonly IHubContext<DashboardRefreshHubDispatcher> hub;
@@ -32,13 +33,17 @@ namespace SemanticBackup.SignalRHubs
             this._serviceScopeFactory = serviceScopeFactory;
         }
 
-        public void Initialize()
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Setting up content dispatcher...");
-            StartDispatchDataToConnectedUsers();
-            _logger.LogInformation("Setting up content dispatcher...DONE");
+            StartDispatchDataToConnectedUsers(cancellationToken);
+            return Task.CompletedTask;
         }
 
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
         public override Task OnDisconnectedAsync(Exception exception)
         {
             _logger.LogInformation($"Removing client: {Context.ConnectionId}");
@@ -72,11 +77,11 @@ namespace SemanticBackup.SignalRHubs
             }
         }
 
-        private void StartDispatchDataToConnectedUsers()
+        private void StartDispatchDataToConnectedUsers(CancellationToken cancellationToken)
         {
             var t = new Thread(() =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
@@ -196,6 +201,5 @@ namespace SemanticBackup.SignalRHubs
                 //throw;
             }
         }
-
     }
 }

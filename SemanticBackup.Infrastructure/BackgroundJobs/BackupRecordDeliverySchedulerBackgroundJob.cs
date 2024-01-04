@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs
 {
-    public class BackupRecordDeliverySchedulerBackgroundJob : IProcessorInitializable
+    public class BackupRecordDeliverySchedulerBackgroundJob : IHostedService
     {
         private readonly ILogger<BackupRecordDeliverySchedulerBackgroundJob> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -22,20 +23,24 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             this._logger = logger;
             this._serviceScopeFactory = serviceScopeFactory;
         }
-        public void Initialize()
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting service....");
-            SetupBackgroundService();
-            _logger.LogInformation("Service Started");
+            SetupBackgroundService(cancellationToken);
+            return Task.CompletedTask;
         }
 
-        private void SetupBackgroundService()
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        private void SetupBackgroundService(CancellationToken cancellationToken)
         {
             var t = new Thread(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    //Await
                     await Task.Delay(4000);
                     try
                     {
@@ -106,7 +111,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     {
                         _logger.LogError(ex.Message);
                     }
-
                 }
             });
             t.Start();

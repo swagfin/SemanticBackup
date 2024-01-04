@@ -5,7 +5,6 @@ using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Infrastructure.BackgroundJobs;
 using SemanticBackup.Infrastructure.Implementations;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace SemanticBackup.Extensions
@@ -30,12 +29,12 @@ namespace SemanticBackup.Extensions
             services.AddSingleton<IBackupProviderForMySQLServer, BackupProviderForMySQLServer>();
 
             //Background Jobs
-            services.AddSingleton<IProcessorInitializable, BackupSchedulerBackgroundJob>();
-            services.AddSingleton<IProcessorInitializable, BackupBackgroundJob>(); //Main Backup Thread Lunching Bots
-            services.AddSingleton<IProcessorInitializable, BackupBackgroundZIPJob>(); //Zipper Thread Lunching Bots
-            services.AddSingleton<IProcessorInitializable, BackupRecordDeliverySchedulerBackgroundJob>(); //Schedules Backup for Deliveries
-            services.AddSingleton<IProcessorInitializable, BackupRecordDeliveryDispatchBackgroundJob>(); //Dispatches out saved Scheduled Jobs
-            services.AddSingleton<BotsManagerBackgroundJob>().AddSingleton<IProcessorInitializable>(svc => svc.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
+            services.AddSingleton<BackupSchedulerBackgroundJob>().AddHostedService(s => s.GetRequiredService<BackupSchedulerBackgroundJob>());
+            services.AddSingleton<BackupBackgroundJob>().AddHostedService(s => s.GetRequiredService<BackupBackgroundJob>()); //Main Backup Thread Lunching Bots
+            services.AddSingleton<BackupBackgroundZIPJob>().AddHostedService(s => s.GetRequiredService<BackupBackgroundZIPJob>()); //Zipper Thread Lunching Bots
+            services.AddSingleton<BackupRecordDeliverySchedulerBackgroundJob>().AddHostedService(s => s.GetRequiredService<BackupRecordDeliverySchedulerBackgroundJob>()); //Schedules Backup for Deliveries
+            services.AddSingleton<BackupRecordDeliveryDispatchBackgroundJob>().AddHostedService(s => s.GetRequiredService<BackupRecordDeliveryDispatchBackgroundJob>()); //Dispatches out saved Scheduled Jobs
+            services.AddSingleton<BotsManagerBackgroundJob>().AddHostedService(s => s.GetRequiredService<BotsManagerBackgroundJob>()); //Carries Other Resource Group Jobs
         }
 
         public static void UseSemanticBackupCoreServices(this IApplicationBuilder builder)
@@ -47,16 +46,9 @@ namespace SemanticBackup.Extensions
             if (!Directory.Exists(dataDirectory))
                 Directory.CreateDirectory(dataDirectory);
             //Backup Directory
-            var backupDirectory = ((SystemConfigOptions)builder.ApplicationServices.GetService(typeof(SystemConfigOptions)))?.DefaultBackupDirectory;
+            string backupDirectory = ((SystemConfigOptions)builder.ApplicationServices.GetService(typeof(SystemConfigOptions)))?.DefaultBackupDirectory;
             if (!string.IsNullOrWhiteSpace(backupDirectory) && !Directory.Exists(backupDirectory))
                 Directory.CreateDirectory(backupDirectory);
-            #endregion
-
-            #region Init Background Services
-            var processorService = (IEnumerable<IProcessorInitializable>)builder.ApplicationServices.GetService(typeof(IEnumerable<IProcessorInitializable>));
-            if (processorService != null)
-                foreach (IProcessorInitializable processor in processorService)
-                    processor.Initialize();
             #endregion
 
             #region Ensure Atlist One User Exists

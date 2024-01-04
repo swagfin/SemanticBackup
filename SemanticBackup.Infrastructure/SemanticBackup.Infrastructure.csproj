@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
@@ -12,6 +12,7 @@
 		<PackageReference Include="LiteDB.Async" Version="0.1.7" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.32" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.13" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.32" />
 		<PackageReference Include="MySqlBackup.NET" Version="2.3.8" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
