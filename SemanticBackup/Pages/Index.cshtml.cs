@@ -2,11 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
-using SemanticBackup.Core.Models;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Pages
@@ -24,19 +20,6 @@ namespace SemanticBackup.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
-            try
-            {
-                List<ResourceGroup> resourceGroups = await _resourceGroupPersistance.GetAllAsync();
-                ResourceGroup activeResourceGroup = resourceGroups.GetDefaultGroup();
-                if (activeResourceGroup != null)
-                {
-                    return LocalRedirect($"/resource-groups/{activeResourceGroup.Key}/dashboard");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-            }
             return LocalRedirect($"/resource-groups/");
         }
     }

@@ -29,7 +29,6 @@ namespace SemanticBackup.Core.Models
         public bool NotifyOnErrorBackups { get; set; } = false;
         public bool NotifyOnErrorBackupDelivery { get; set; } = false;
         public string NotifyEmailDestinations { get; set; } = null;
-        public long LastAccess { get; set; } = 0;
     }
     public class BackupDeliveryConfig
     {

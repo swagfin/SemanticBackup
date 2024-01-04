@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@{
+    string currentIdentifier = (string)(ViewContext.RouteData.Values["resourceGroupId"] ?? "Unspecified resource-Group");
+    string currentPageRoute = (string)(ViewContext.RouteData.Values["Page"] ?? "/");
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
 
@@ -43,24 +47,20 @@
 
             <div class="aside-loggedin">
                 @{
-                    //** default param
-                    string activeResourceGroupId = "#";
                     //get resource groups
                     if (User.Identity.IsAuthenticated)
                     {
-                            List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
-                            ResourceGroup activeDirectory = allResourceGroups.GetDefaultGroup();
-                            activeResourceGroupId = (activeDirectory != null) ? activeDirectory.Key : "#";
-                            if (allResourceGroups != null && allResourceGroups.Count > 0)
+                        List<ResourceGroup> allResourceGroups = await _injectedResourceGroupService.GetAllAsync();
+                        ResourceGroup currentResource = allResourceGroups.FirstOrDefault(x => x.Id.Equals(currentIdentifier, StringComparison.OrdinalIgnoreCase) || x.Name.Equals(currentIdentifier, StringComparison.OrdinalIgnoreCase)) ?? allResourceGroups.FirstOrDefault();
+                        if (allResourceGroups != null && allResourceGroups.Count > 0)
                         {
 
                             <div class="aside-loggedin-user">
                                 <a href="#loggedinMenu" class="d-flex align-items-center justify-content-between mg-b-2" data-toggle="collapse">
-                                    <span class="ui basic yellow label bottom pointing" title="Directory: @(activeDirectory.Name) (Active)">@(activeDirectory.Name)</span>
+                                    <span class="ui basic yellow label bottom pointing" title="Directory: @(currentResource.Name) (Active)">@(currentResource.Name)</span>
                                     <i data-feather="chevron-down"></i>
                                 </a>
                             </div>
-
 
                             <div class="collapse show" id="loggedinMenu">
                                 <p class="tx-color-03 tx-12 mg-b-0">Switch Resource Group</p>
@@ -68,12 +68,7 @@
                                     @{
                                         foreach (ResourceGroup directory in allResourceGroups)
                                         {
-                                            string class_style = "";
-                                            if (activeDirectory.Id == directory.Id)
-                                            {
-                                                class_style = "active";
-                                            }
-                                            <li class="nav-item @(class_style)"><a href="/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
+                                            <li class="nav-item @string.Format("{0}", (directory.Id == currentResource.Id) ? "active": string.Empty)"><a href="/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
                                         }
                                     }
                                     <li class="nav-item"><a href="/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
@@ -86,7 +81,7 @@
                                 <li class="nav-item"><a href="/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
                             </ul>
                             <script type="text/javascript">
-                                location.href="/resource-groups/";
+                                location.href = "/resource-groups/";
                             </script>
                         }
 
@@ -101,13 +96,13 @@
                     if (User.Identity.IsAuthenticated)
                     {
                         <li class="nav-label">Dashboards</li>
-                        <li class="nav-item active"><a href="/resource-groups/@(activeResourceGroupId)/dashboard")" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
+                        <li class="nav-item @(currentPageRoute.ToLower().Contains("/dashboard") ? "active" : string.Empty)"><a href="/resource-groups/@(currentIdentifier)/dashboard" )" class="nav-link"><i data-feather="globe"></i> <span>Dashboard</span></a></li>
 
                         <li class="nav-label mg-t-25">Backup Menu</li>
 
-                        <li class="nav-item"><a href="/resource-groups/@(activeResourceGroupId)/databases" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
-                        <li class="nav-item"><a href="/resource-groups/@(activeResourceGroupId)/scheduled-backups" class="nav-link"><i data-feather="clock"></i> <span>Scheduled Backups</span></a></li>
-                        <li class="nav-item"><a href="/resource-groups/@(activeResourceGroupId)/database-backups" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
+                        <li class="nav-item @(currentPageRoute.ToLower().Contains("databases") ? "active" : string.Empty)"><a href="/resource-groups/@(currentIdentifier)/databases" class="nav-link"><i data-feather="database"></i> <span>Databases</span></a></li>
+                        <li class="nav-item @(currentPageRoute.ToLower().Contains("scheduledbackups") ? "active" : string.Empty)"><a href="/resource-groups/@(currentIdentifier)/scheduled-backups" class="nav-link"><i data-feather="clock"></i> <span>Scheduled Backups</span></a></li>
+                        <li class="nav-item @(currentPageRoute.ToLower().Contains("databasebackups") ? "active" : string.Empty)"><a href="/resource-groups/@(currentIdentifier)/database-backups" class="nav-link"><i data-feather="upload-cloud"></i> <span>Database Backups</span></a></li>
 
 
                         <li class="nav-label mg-t-25">RESOURCE GROUPS</li>

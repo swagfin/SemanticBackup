@@ -9,7 +9,6 @@ namespace SemanticBackup.Core.Interfaces
         Task<List<ResourceGroup>> GetAllAsync();
         Task<ResourceGroup> GetByIdOrKeyAsync(string resourceGroupIdentifier);
         Task<bool> RemoveAsync(string resourceGroupIdentifier);
-        Task<bool> SwitchAsync(string resourceGroupIdentifier);
         Task<bool> AddAsync(ResourceGroup record);
         Task<bool> UpdateAsync(ResourceGroup record);
         Task<ResourceGroup> VerifyByIdOrKeyThrowIfNotExistAsync(string resourceGroupIdentifier);

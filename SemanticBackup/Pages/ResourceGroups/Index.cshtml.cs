@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
@@ -16,7 +15,7 @@ namespace SemanticBackup.Pages.ResourceGroups
     {
         private readonly ILogger<IndexModel> _logger;
         private readonly IResourceGroupRepository _resourceGroupPersistance;
-        public ResourceGroup CurrentResourceGroup { get { return ResourceGroups.GetDefaultGroup(); } }
+        // public ResourceGroup CurrentResourceGroup { get { return ResourceGroups.FirstOrDefault(); } }
         public List<ResourceGroup> ResourceGroups { get; private set; }
 
         public IndexModel(ILogger<IndexModel> logger, IResourceGroupRepository resourceGroupPersistance)
