@@ -18,12 +18,6 @@ namespace SemanticBackup.Core
                                          .Replace("{{databasetype}}", resourceGroup.DbType);
         }
 
-        public static ResourceGroup GetDefaultGroup(this List<ResourceGroup> resourceGroups)
-        {
-            return resourceGroups?.Where(x => !string.IsNullOrWhiteSpace(x.Id)).OrderByDescending(x => x.LastAccess).FirstOrDefault();
-        }
-
-
         public static string GetDbConnectionString(this ResourceGroup resourceGroup, string databaseName = null)
         {
             if (!string.IsNullOrEmpty(resourceGroup.DbType) && resourceGroup.DbType.Contains("SQLSERVER"))

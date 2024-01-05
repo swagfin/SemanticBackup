@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Azure.Storage.Blobs;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
@@ -59,13 +58,9 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //Proceed
                 using (FileStream stream = File.Open(this._backupRecord.Path, FileMode.Open))
                 {
-                    CloudStorageAccount account = CloudStorageAccount.Parse(settings.ConnectionString);
-                    var blobClient = account.CreateCloudBlobClient();
-                    // Make sure container is there
-                    var blobContainer = blobClient.GetContainerReference(validContainer);
-                    await blobContainer.CreateIfNotExistsAsync();
-                    CloudBlockBlob blockBlob = blobContainer.GetBlockBlobReference(fileName);
-                    await blockBlob.UploadFromStreamAsync(stream);
+                    BlobContainerClient containerClient = new BlobContainerClient(settings.ConnectionString, validContainer);
+                    BlobClient blobClient = containerClient.GetBlobClient(fileName);
+                    _ = await blobClient.UploadAsync(stream, true);
                     executionMessage = $"Uploaded Container: {validContainer}";
                 }
                 stopwatch.Stop();

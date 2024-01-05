@@ -5,7 +5,8 @@ using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -60,29 +61,27 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //Proceed
                 try
                 {
-                    // Get the object used to communicate with the server.
                     string fullServerUrl = string.Format("ftp://{0}{1}{2}", validServerName, validDirectory, fileName);
-                    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(fullServerUrl);
-                    request.Method = WebRequestMethods.Ftp.UploadFile;
-                    request.Credentials = new NetworkCredential(settings.Username, settings.Password);
                     byte[] fileContents;
-                    using (StreamReader sourceStream = new StreamReader(this._backupRecord.Path))
+                    using (FileStream sourceStream = File.OpenRead(this._backupRecord.Path))
                     {
-                        fileContents = Encoding.UTF8.GetBytes(await sourceStream.ReadToEndAsync());
+                        fileContents = new byte[sourceStream.Length];
+                        await sourceStream.ReadAsync(fileContents, 0, fileContents.Length);
                     }
-                    request.ContentLength = fileContents.Length;
-                    using (Stream requestStream = await request.GetRequestStreamAsync())
+                    using (HttpClient client = new HttpClient())
                     {
-                        await requestStream.WriteAsync(fileContents, 0, fileContents.Length);
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{settings.Username}:{settings.Password}")));
+                        ByteArrayContent content = new ByteArrayContent(fileContents);
+                        HttpResponseMessage response = await client.PutAsync(fullServerUrl, content);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            executionMessage = $"Uploaded to Server: {settings.Server}";
+                        }
+                        else
+                        {
+                            throw new Exception($"Failed to upload. Status code: {response.StatusCode}");
+                        }
                     }
-                    using (FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync())
-                    {
-                        executionMessage = $"Uploaded to Server: {settings.Server}";
-                    }
-                }
-                catch (WebException e)
-                {
-                    throw new Exception(e.Message);
                 }
                 catch (Exception ex)
                 {

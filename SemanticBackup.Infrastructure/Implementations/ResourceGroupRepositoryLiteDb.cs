@@ -67,18 +67,6 @@ namespace SemanticBackup.Infrastructure.Implementations
             return false;
         }
 
-        public async Task<bool> SwitchAsync(string id)
-        {
-            var collection = _db.GetCollection<ResourceGroup>();
-            var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
-            if (objFound != null)
-            {
-                objFound.LastAccess = DateTime.UtcNow.Ticks;
-                return await collection.UpdateAsync(objFound);
-            }
-            return false;
-        }
-
         public async Task<bool> UpdateAsync(ResourceGroup record)
         {
             return await _db.GetCollection<ResourceGroup>().UpdateAsync(record);

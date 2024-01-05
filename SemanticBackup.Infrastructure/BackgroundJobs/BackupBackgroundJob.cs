@@ -197,11 +197,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                             //In Depth Remove From DropBox
                             botsManagerBackgroundJob.AddBot(new InDepthDeleteDropboxBot(resourceGroup, rm, rec, _serviceScopeFactory));
                         }
-                        else if (rec.DeliveryType == BackupDeliveryConfigTypes.AzureBlobStorage.ToString())
-                        {
-                            //In Depth remove From Azure Storage
-                            botsManagerBackgroundJob.AddBot(new InDepthDeleteAzureStorageBot(resourceGroup, rm, rec, _serviceScopeFactory));
-                        }
                     }
                 }
             }

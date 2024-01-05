@@ -11,7 +11,7 @@
             <h2>Resource Groups</h2>
             <div class="ui divider"></div>
             @{
-                if (Model.CurrentResourceGroup == null)
+                if (Model.ResourceGroups == null || Model.ResourceGroups.Count == 0)
                 {
                     <div class="ui message icon">
                         <i class="clone outline icon"></i>
@@ -29,31 +29,11 @@
                 {
                     <section class="ui stackable cards">
 
-                        <div class="@(Model.CurrentResourceGroup.GetColorCode()) card">
-                            <div class="content">
-                                <span class="right floated mini ui image" title="Default Directory"><span class="ui mini circular green label"></span></span>
-                                <div class="header">
-                                    @(Model.CurrentResourceGroup.Name)
-                                </div>
-                                <div class="extra meta">
-                                    <div class="ui divider"></div>
-                                    <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", Model.CurrentResourceGroup.MaximumRunningBots)</span><br />
-                                    <span><b><i class="file archive outline icon"></i> Compression:</b> @string.Format("{0}", Model.CurrentResourceGroup.CompressBackupFiles ? "ZIP" : "(none)")</span>
-                                </div>
-                            </div>
-                            <div class="extra content">
-                                <div class="ui two buttons">
-                                    <a class="ui blue button" href="/resource-groups/switch/@(Model.CurrentResourceGroup.Id)"><i class="chart line icon icon"></i>Switch</a>
-                                    <a href="/resource-groups/delete/@(Model.CurrentResourceGroup.Id)" class="ui red button"><i class="delete icon"></i>Delete</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        @foreach (var resourceGrp in Model.ResourceGroups.Where(x=>x.Id != Model.CurrentResourceGroup.Id))
+                        @foreach (var resourceGrp in Model.ResourceGroups)
                             {
                                 <div class="card">
                                     <div class="content">
-                                        <span class="right floated mini ui image"><span class="ui mini circular red label"></span></span>
+                                    <span class="right floated mini ui image"> <a href="/resource-groups/delete/@(resourceGrp.Name)" class="right floated mini ui image"><span class="ui mini red icon label"><i class="trash icon"></i></span> </a></span>
                                         <div class="header">
                                             @(resourceGrp.Name)
                                         </div>
@@ -65,8 +45,8 @@
                                     </div>
                                     <div class="extra content">
                                         <div class="ui two buttons">
-                                            <a class="ui blue button" href="/resource-groups/switch/@(resourceGrp.Id)"><i class="chart line icon icon"></i>Switch</a>
-                                            <a href="/resource-groups/delete/@(resourceGrp.Id)" class="ui red button"><i class="delete icon"></i>Delete</a>
+                                            <a class="ui button" href="/resource-groups/@(resourceGrp.Name)/dashboard"><i class="chart line icon icon"></i>Manage</a>
+                                            <a href="/resource-groups/delete/@(resourceGrp.Name)" class="ui red button"><i class="delete icon"></i>Delete</a>
                                         </div>
                                     </div>
                                 </div>

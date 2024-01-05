@@ -55,7 +55,7 @@ namespace SemanticBackup.Infrastructure.Implementations
         }
         public async Task<List<BackupRecord>> GetAllExpiredAsync()
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDateUTC != null).Where(x => x.ExpiryDateUTC <= DateTime.UtcNow).OrderBy(x => x.Id).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.ExpiryDateUTC <= DateTime.UtcNow).OrderBy(x => x.Id).ToListAsync();
         }
         public async Task<bool> UpdateExpiryDateByIdAsync(long id, DateTime expiryDateUtc)
         {
