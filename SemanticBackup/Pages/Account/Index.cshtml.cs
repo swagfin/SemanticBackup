@@ -43,7 +43,7 @@ namespace SemanticBackup.Pages.Account
                 {
                     FullName = existingUserInfo.FullName,
                     EmailAddress = existingUserInfo.EmailAddress,
-                    TimezoneId = _systemTimeZones.FirstOrDefault(t => t.Id.Equals(existingUserInfo.Timezone)).Id
+                    TimezoneId = _systemTimeZones.FirstOrDefault(t => t.Id.Equals(existingUserInfo.Timezone))?.Id ?? TimeZoneInfo.Local.Id
                 };
                 return Page();
             }
