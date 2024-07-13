@@ -131,8 +131,7 @@ namespace SemanticBackup.SignalRHubs
                     DateTime currentTimeUTC = DateTime.UtcNow;
 
                     DashboardClientGroup clientGrp = DashboardRefreshHubClientStorage.GetClientGroups().FirstOrDefault(x => x.Name == groupRecord);
-                    DateTime metricsFromDatUTC = currentTimeUTC.AddHours(-24);// 24hrs Ago
-                                                                              //Clear All
+                    DateTime metricsFromDatUTC = currentTimeUTC.AddHours(-24);
                     clientGrp.Metric.AvgMetrics = new List<RealTimeViewModel>();
 
                     var recordsLatest = await backupRecordPersistanceService.GetAllByRegisteredDateByStatusAsync(resourcegroup, metricsFromDatUTC, subscriberGroup);
@@ -198,7 +197,6 @@ namespace SemanticBackup.SignalRHubs
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                //throw;
             }
         }
     }

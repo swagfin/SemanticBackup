@@ -17,11 +17,7 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public ResourceGroupRepositoryLiteDb(IBackupRecordRepository backupRecordPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
-#if DEBUG
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
-#else
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.db")) { Password = "12345678", Connection = ConnectionType.Shared });
-#endif
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resource-groups.db")) { Connection = ConnectionType.Shared });
             //Init
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
             //Proceed

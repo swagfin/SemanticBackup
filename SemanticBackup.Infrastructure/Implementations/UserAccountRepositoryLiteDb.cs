@@ -14,11 +14,7 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public UserAccountRepositoryLiteDb()
         {
-#if DEBUG
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "user-accounts.dev.db")) { Password = "12345678", Connection = ConnectionType.Shared });
-#else
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "user-accounts.db")) { Password = "12345678", Connection = ConnectionType.Shared });
-#endif
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "user-accounts.db")) { Connection = ConnectionType.Shared });
             //Init
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
         }
