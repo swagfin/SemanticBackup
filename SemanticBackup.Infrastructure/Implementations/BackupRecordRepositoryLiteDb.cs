@@ -21,7 +21,7 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public BackupRecordRepositoryLiteDb(IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers, IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService, IDatabaseInfoRepository databaseInfoRepository)
         {
-            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-records.db")) { Connection = ConnectionType.Shared });
+            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backups.db")) { Connection = ConnectionType.Shared });
             //Init
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
             //Proceed

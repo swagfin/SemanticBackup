@@ -5,8 +5,9 @@ namespace SemanticBackup.Pages.Webhooks
 {
     public class IndexModel : PageModel
     {
-        public void OnGet()
+        public ActionResult OnGet()
         {
+            return new OkObjectResult("healthy!");
         }
     }
 }

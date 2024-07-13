@@ -15,7 +15,7 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public BackupScheduleRepositoryLiteDb(IDatabaseInfoRepository databaseInfoRepository)
         {
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backup-schedules.db")) { Connection = ConnectionType.Shared });
+            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "schedules.db")) { Connection = ConnectionType.Shared });
             //Init
             this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
             this._databaseInfoRepository = databaseInfoRepository;
