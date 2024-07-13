@@ -116,10 +116,10 @@
     </div><!-- row -->
 </div>
 <!-- container -->
-@section Scripts{
+@section Scripts {
     <script src="/lib/signalr/dist/browser/signalr.js"></script>
-    <script type="text/javascript" src="/assets/js/dashboard.js?v=3"></script>
     <script type="text/javascript">
         var resourcegroupId = @(Html.Raw(Json.Serialize(Model.CurrentResourceGroup.Id)));
     </script>
+    <script type="text/javascript" src="/assets/js/dashboard.js?cache=@Html.Raw(DateTime.UtcNow.ToString("yyyyMMddHHmm"))"></script>
 }
