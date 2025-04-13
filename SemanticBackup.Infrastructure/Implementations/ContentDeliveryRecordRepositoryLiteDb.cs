@@ -58,8 +58,8 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public async Task<bool> UpdateStatusFeedAsync(string id, string status, string message = null, long executionInMilliseconds = 0)
         {
-            var collection = _db.GetCollection<BackupRecordDelivery>();
-            var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
+            ILiteCollectionAsync<BackupRecordDelivery> collection = _db.GetCollection<BackupRecordDelivery>();
+            BackupRecordDelivery objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
                 objFound.CurrentStatus = status;
@@ -98,7 +98,7 @@ namespace SemanticBackup.Infrastructure.Implementations
         private void DispatchUpdatedStatus(BackupRecordDelivery record, bool isNewRecord = false)
         {
             if (_backupRecordStatusChangedNotifiers != null)
-                foreach (var notifier in _backupRecordStatusChangedNotifiers)
+                foreach (IRecordStatusChangedNotifier notifier in _backupRecordStatusChangedNotifiers)
                     try
                     {
                         notifier.DispatchContentDeliveryUpdatedStatus(record, isNewRecord);

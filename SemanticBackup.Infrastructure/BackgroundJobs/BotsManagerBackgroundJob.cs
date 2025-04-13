@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
@@ -12,11 +14,14 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BotsManagerBackgroundJob : IHostedService
     {
         private readonly ILogger<BotsManagerBackgroundJob> _logger;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+
         private List<IBot> Bots { get; set; } = [];
 
-        public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger)
+        public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger, IServiceScopeFactory serviceScopeFactory)
         {
-            this._logger = logger;
+            _logger = logger;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -42,6 +47,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     this.Bots.Remove(bot);
             }
         }
+
         public bool HasAvailableResourceGroupBotsCount(string resourceGroupId, int maximumThreads = 1)
         {
             int resourceBots = this.Bots.Where(x => x.ResourceGroupId == resourceGroupId).Count();
@@ -60,10 +66,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                         if (this.Bots != null && this.Bots.Count > 0)
                         {
                             //Start and Stop Bacup Bots
-                            List<IBot> botsNotStarted = this.Bots.Where(x => !x.IsStarted).OrderBy(x => x.DateCreatedUtc).ToList();
-                            if (botsNotStarted != null && botsNotStarted.Count > 0)
-                                foreach (IBot bot in botsNotStarted)
-                                    _ = bot.RunAsync();
+                            List<IBot> botsNotReady = (Bots.Where(x => x.Status == BotStatus.NotReady).OrderBy(x => x.DateCreatedUtc).ToList()) ?? [];
+                            foreach (IBot bot in botsNotReady)
+                            {
+                                _ = bot.RunAsync(OnDeliveryFeedUpdate, cancellationToken);
+                            }
                             //Remove Completed
                             List<IBot> botsCompleted = this.Bots.Where(x => x.IsCompleted).ToList();
                             if (botsCompleted != null && botsCompleted.Count > 0)
@@ -77,6 +84,20 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                 }
             });
             t.Start();
+        }
+
+        private async Task OnDeliveryFeedUpdate(BackupRecordDeliveryFeed feed, CancellationToken token)
+        {
+            try
+            {
+                using IServiceScope scope = _serviceScopeFactory.CreateScope();
+                IContentDeliveryRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
+                await _persistanceService.UpdateStatusFeedAsync(feed.BackupRecordDeliveryId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Updating Status Feed: {Message}", ex.Message);
+            }
         }
     }
 }
