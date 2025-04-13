@@ -40,7 +40,7 @@ namespace SemanticBackup.Services
             try
             {
                 _logger.LogInformation("Received BackupRecordUpdated Notification....");
-                if (backupRecord.BackupStatus != BackupRecordBackupStatus.ERROR.ToString())
+                if (backupRecord.BackupStatus != BackupRecordStatus.ERROR.ToString())
                     return;
                 using (var scope = _scopeFactory.CreateScope())
                 {
@@ -72,7 +72,7 @@ namespace SemanticBackup.Services
             try
             {
                 _logger.LogInformation("Received BackupRecordUpdated Notification....");
-                if (record.CurrentStatus != BackupRecordBackupStatus.ERROR.ToString())
+                if (record.CurrentStatus != BackupRecordStatus.ERROR.ToString())
                     return;
                 using (var scope = _scopeFactory.CreateScope())
                 {

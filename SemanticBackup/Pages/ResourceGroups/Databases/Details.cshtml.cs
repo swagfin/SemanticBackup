@@ -83,7 +83,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 if (DatabaseInfoResponse == null)
                     return null;
                 //Check if an Existing Queued
-                List<BackupRecord> queuedExisting = await this._backupRecordRepository.GetAllByDatabaseIdByStatusAsync(DatabaseInfoResponse.Id, BackupRecordBackupStatus.QUEUED.ToString());
+                List<BackupRecord> queuedExisting = await this._backupRecordRepository.GetAllByDatabaseIdByStatusAsync(DatabaseInfoResponse.Id, BackupRecordStatus.QUEUED.ToString());
                 if (queuedExisting != null && queuedExisting.Count > 0)
                     return queuedExisting.FirstOrDefault()?.Id;
                 //init requeue db
@@ -93,7 +93,7 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 BackupRecord newRecord = new BackupRecord
                 {
                     BackupDatabaseInfoId = DatabaseInfoResponse.Id,
-                    BackupStatus = BackupRecordBackupStatus.QUEUED.ToString(),
+                    BackupStatus = BackupRecordStatus.QUEUED.ToString(),
                     ExpiryDateUTC = RecordExpiryUTC,
                     Name = $"{DatabaseInfoResponse.DatabaseName} on {CurrentResourceGroup.DbServer}",
                     Path = Path.Combine(_options.DefaultBackupDirectory, CurrentResourceGroup.GetSavingPathFromFormat(DatabaseInfoResponse.DatabaseName, _options.BackupFileSaveFormat, currentTimeUTC)),

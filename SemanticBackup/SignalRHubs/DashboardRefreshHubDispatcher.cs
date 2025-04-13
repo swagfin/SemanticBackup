@@ -154,7 +154,7 @@ namespace SemanticBackup.SignalRHubs
                             }
                         }
 
-                    var recordsFailsLatest = await backupRecordPersistanceService.GetAllByStatusUpdateDateByStatusAsync(resourcegroup, metricsFromDatUTC, BackupRecordBackupStatus.ERROR.ToString());
+                    var recordsFailsLatest = await backupRecordPersistanceService.GetAllByStatusUpdateDateByStatusAsync(resourcegroup, metricsFromDatUTC, BackupRecordStatus.ERROR.ToString());
                     if (recordsFailsLatest != null && recordsFailsLatest.Count > 0)
                         foreach (var record in recordsFailsLatest)
                         {

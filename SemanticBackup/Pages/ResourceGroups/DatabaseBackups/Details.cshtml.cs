@@ -100,11 +100,11 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             {
                 //re-run here
                 //:: ensure backup record exists
-                if (BackupRecordResponse.BackupStatus != BackupRecordBackupStatus.ERROR.ToString())
+                if (BackupRecordResponse.BackupStatus != BackupRecordStatus.ERROR.ToString())
                     throw new Exception($"STATUS need to be ERROR, Current Status for this record is: {BackupRecordResponse.BackupStatus}");
                 //prepare re-run
                 string newBackupPath = BackupRecordResponse.Path.Replace(".zip", ".bak");
-                bool rerunSuccess = await _backupRecordRepository.UpdateStatusFeedAsync(BackupRecordResponse.Id, BackupRecordBackupStatus.QUEUED.ToString(), "Queued for Re-run", 0, newBackupPath);
+                bool rerunSuccess = await _backupRecordRepository.UpdateStatusFeedAsync(BackupRecordResponse.Id, BackupRecordStatus.QUEUED.ToString(), "Queued for Re-run", 0, newBackupPath);
                 //update status
                 this.RerunStatus = "success";
                 this.RerunStatusReason = "Success";
@@ -125,7 +125,7 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
                 if (contentDeliveryRecord == null)
                     throw new Exception($"No delivery content with specified job: {rerunJobId}");
                 //check status
-                else if (contentDeliveryRecord.CurrentStatus != BackupRecordBackupStatus.ERROR.ToString())
+                else if (contentDeliveryRecord.CurrentStatus != BackupRecordStatus.ERROR.ToString())
                     throw new Exception($"STATUS needs to be ERROR state, Current Status for this record is: {contentDeliveryRecord.CurrentStatus}");
                 //prepare re-run
                 bool rerunSuccess = await _contentDeliveryRecordRepository.UpdateStatusFeedAsync(contentDeliveryRecord.Id, BackupRecordDeliveryStatus.QUEUED.ToString(), "Queued for Re-run", 0);

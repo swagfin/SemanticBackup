@@ -10,7 +10,7 @@ namespace SemanticBackup.Infrastructure.Implementations
 {
     public class ResourceGroupRepositoryLiteDb : IResourceGroupRepository
     {
-        private LiteDatabaseAsync _db;
+        private readonly LiteDatabaseAsync _db;
         private readonly IBackupRecordRepository _backupRecordPersistanceService;
         private readonly IBackupScheduleRepository _backupSchedulePersistanceService;
         private readonly IDatabaseInfoRepository _databaseInfoPersistanceService;

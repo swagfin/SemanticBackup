@@ -41,7 +41,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(4000);
+                    await Task.Delay(4000, cancellationToken);
                     try
                     {
                         using (var scope = _serviceScopeFactory.CreateScope())

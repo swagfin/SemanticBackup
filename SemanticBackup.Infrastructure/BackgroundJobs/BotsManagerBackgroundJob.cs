@@ -12,7 +12,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BotsManagerBackgroundJob : IHostedService
     {
         private readonly ILogger<BotsManagerBackgroundJob> _logger;
-        private List<IBot> Bots { get; set; } = new List<IBot>();
+        private List<IBot> Bots { get; set; } = [];
 
         public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger)
         {
@@ -21,7 +21,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            Bots = new List<IBot>();
+            Bots = [];
             SetupBotsBackgroundService(cancellationToken);
             return Task.CompletedTask;
         }

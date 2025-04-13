@@ -2,10 +2,10 @@
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Extensions;
-using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
@@ -17,67 +17,62 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<UploaderLinkGenBot> _logger;
-        public bool IsCompleted { get; private set; } = false;
-        public bool IsStarted { get; private set; } = false;
-
-        public string ResourceGroupId => _resourceGroup.Id;
-        public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderLinkGenBot)}";
+        public string ResourceGroupId => _resourceGroup.Id;
+        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+
         public UploaderLinkGenBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
-            this._contentDeliveryRecord = contentDeliveryRecord;
-            this._resourceGroup = resourceGroup;
-            this._backupRecord = backupRecord;
-            this._scopeFactory = scopeFactory;
+            _contentDeliveryRecord = contentDeliveryRecord;
+            _resourceGroup = resourceGroup;
+            _backupRecord = backupRecord;
+            _scopeFactory = scopeFactory;
             //Logger
-            using (var scope = _scopeFactory.CreateScope())
-                _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderLinkGenBot>>();
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderLinkGenBot>>();
         }
-        public async Task RunAsync()
+
+        public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
-            this.IsStarted = true;
-            this.IsCompleted = false;
-            Stopwatch stopwatch = new Stopwatch();
+            Status = BotStatus.Starting;
+            Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation($"Creating Download Link....");
-                await Task.Delay(new Random().Next(1000));
+                _logger.LogInformation("creating download link for file: {Path}", _backupRecord.Path);
+                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 DownloadLinkDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.DownloadLink ?? throw new Exception("no valid download link config");
                 stopwatch.Start();
+                //get download link::
                 string contentLink = 5.GenerateUniqueId();
                 if (settings.DownloadLinkType == "LONG")
                     contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{this._backupRecord.Id}|{this._resourceGroup.Id}".ToMD5String());
-                //Job to Do
-                await Task.Delay(new Random().Next(3000));
                 stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordDeliveryStatus.READY.ToString(), contentLink, stopwatch.ElapsedMilliseconds);
-                _logger.LogInformation($"Creating Download Link: {_backupRecord.Path}... SUCCESS");
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex.Message);
-                stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), ex.Message, stopwatch.ElapsedMilliseconds);
-            }
-        }
-
-        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed)
-        {
-            try
-            {
-                using (var scope = _scopeFactory.CreateScope())
+                //notify update
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
-                    IContentDeliveryRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
-                }
+                    BotId = BotId,
+                    BackupRecordDeliveryId = _contentDeliveryRecord.Id,
+                    Status = BackupRecordStatus.READY,
+                    Message = contentLink,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
+                _logger.LogInformation("Successfully created download link for file: {Path}", _backupRecord.Path);
+                Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
-                this._logger.LogError("Error Updating Feed: " + ex.Message);
-            }
-            finally
-            {
-                IsCompleted = true;
+                Status = BotStatus.Error;
+                _logger.LogError(ex.Message);
+                stopwatch.Stop();
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
+                {
+                    BotId = BotId,
+                    BackupRecordDeliveryId = _contentDeliveryRecord.Id,
+                    Status = BackupRecordStatus.ERROR,
+                    Message = (ex.InnerException != null) ? $"Error: {ex.InnerException.Message}" : ex.Message,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
             }
         }
     }
