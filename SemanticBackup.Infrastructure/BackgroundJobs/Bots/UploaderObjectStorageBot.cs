@@ -1,6 +1,7 @@
-﻿using Azure.Storage.Blobs;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Minio;
+using Minio.DataModel.Args;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -10,19 +11,19 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
 {
-    internal class UploaderAzureStorageBot : IBot
+    internal class UploaderObjectStorageBot : IBot
     {
         private readonly BackupRecordDelivery _contentDeliveryRecord;
         private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<UploaderAzureStorageBot> _logger;
+        private readonly ILogger<UploaderObjectStorageBot> _logger;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
-        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderAzureStorageBot)}";
+        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderObjectStorageBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
         public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
-        public UploaderAzureStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
+        public UploaderObjectStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
             _contentDeliveryRecord = contentDeliveryRecord;
             _resourceGroup = resourceGroup;
@@ -30,7 +31,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             _scopeFactory = scopeFactory;
             //Logger
             using IServiceScope scope = _scopeFactory.CreateScope();
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderAzureStorageBot>>();
+            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderObjectStorageBot>>();
         }
         public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
@@ -38,31 +39,32 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation("uploading file to AzureBlobStorage: {Path}", _backupRecord.Path);
+                _logger.LogInformation("uploading file to ObjectStorage: {Path}", _backupRecord.Path);
                 //proceed
                 await Task.Delay(Random.Shared.Next(1000), cancellationToken);
-                AzureBlobStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.AzureBlobStorage ?? throw new Exception("no valid azure blob storage config");
+                ObjectStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.ObjectStorage ?? throw new Exception("no valid object storage config");
                 stopwatch.Start();
                 Status = BotStatus.Running;
                 //check path
                 if (!File.Exists(_backupRecord.Path))
                     throw new Exception($"No Database File In Path or May have been deleted, Path: {_backupRecord.Path}");
                 //proceed
-                string executionMessage = "Azure Blob Storage Uploading...";
+                string executionMessage = "Object Storage Uploading...";
                 //Container
-                string validContainer = string.IsNullOrWhiteSpace(settings.BlobContainer) ? "backups" : settings.BlobContainer;
+                string validBucket = string.IsNullOrWhiteSpace(settings.Bucket) ? "backups" : settings.Bucket;
                 //Filename
                 string fileName = Path.GetFileName(this._backupRecord.Path);
                 //Proceed
-                if (string.IsNullOrWhiteSpace(settings.ConnectionString))
-                    throw new Exception("Invalid Connection String");
-                //Proceed
+                using IMinioClient minioClient = new MinioClient().WithEndpoint(settings.Server, settings.Port).WithCredentials(settings.AccessKey, settings.SecretKey).WithSSL(settings.UseSsl).Build();
                 using (FileStream stream = File.Open(_backupRecord.Path, FileMode.Open))
                 {
-                    BlobContainerClient containerClient = new(settings.ConnectionString, validContainer);
-                    BlobClient blobClient = containerClient.GetBlobClient(fileName);
-                    _ = await blobClient.UploadAsync(stream, true, cancellationToken);
-                    executionMessage = $"Uploaded to Container: {validContainer}";
+                    //upload object
+                    await minioClient.PutObjectAsync(new PutObjectArgs()
+                                     .WithBucket(settings.Bucket)
+                                     .WithObject(fileName)
+                                     .WithStreamData(stream)
+                                     .WithObjectSize(stream.Length), cancellationToken);
+                    executionMessage = $"Uploaded to Bucket: {validBucket}";
                 }
                 stopwatch.Stop();
                 //notify update
@@ -75,7 +77,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     Message = executionMessage,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
-                _logger.LogInformation("Successfully uploaded file to AzureBlobStorage: {Path}", _backupRecord.Path);
+                _logger.LogInformation("Successfully uploaded file to ObjectStorage: {Path}", _backupRecord.Path);
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

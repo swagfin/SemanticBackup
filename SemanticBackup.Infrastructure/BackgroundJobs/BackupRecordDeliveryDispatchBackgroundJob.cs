@@ -112,6 +112,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                             //Azure Blob Storage
                                             _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(resourceGroup, backupRecordInfo, contentDeliveryRecord, _serviceScopeFactory));
                                         }
+                                        else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.ObjectStorage.ToString())
+                                        {
+                                            //Object Storage
+                                            _botsManagerBackgroundJob.AddBot(new UploaderObjectStorageBot(resourceGroup, backupRecordInfo, contentDeliveryRecord, _serviceScopeFactory));
+                                        }
                                         else
                                         {
                                             status = BackupRecordDeliveryStatus.ERROR.ToString();
@@ -160,7 +165,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                         List<BackupRecord> expiredBackups = await backupRecordPersistanceService.GetAllExpiredAsync();
                         if (expiredBackups != null && expiredBackups.Count > 0)
                         {
-                            List<long> toDeleteList = new List<long>();
+                            List<long> toDeleteList = new();
                             foreach (BackupRecord backupRecord in expiredBackups)
                                 toDeleteList.Add(backupRecord.Id);
                             _logger.LogInformation($"Queued ({expiredBackups.Count}) Expired Records for Delete");

@@ -35,8 +35,8 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public async Task<bool> AddOrUpdateAsync(BackupRecordDelivery record)
         {
-            var collection = _db.GetCollection<BackupRecordDelivery>();
-            var objFound = await collection.Query().Where(x => x.Id == record.Id).FirstOrDefaultAsync();
+            ILiteCollectionAsync<BackupRecordDelivery> collection = _db.GetCollection<BackupRecordDelivery>();
+            BackupRecordDelivery objFound = await collection.Query().Where(x => x.Id == record.Id).FirstOrDefaultAsync();
             if (objFound != null)
             {
                 objFound.StatusUpdateDateUTC = record.StatusUpdateDateUTC;

@@ -49,10 +49,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
 
         public bool HasAvailableResourceGroupBotsCount(string resourceGroupId, int maximumThreads = 1)
         {
-            int resourceBots = this.Bots.Where(x => x.ResourceGroupId == resourceGroupId).Count();
-            int runningResourceGrpThreads = resourceBots;
-            int availableResourceGrpThreads = maximumThreads - runningResourceGrpThreads;
-            return availableResourceGrpThreads > 0;
+            return Bots.Count(x => x.ResourceGroupId == resourceGroupId) < maximumThreads;
         }
 
         private void SetupBotsBackgroundService(CancellationToken cancellationToken)
