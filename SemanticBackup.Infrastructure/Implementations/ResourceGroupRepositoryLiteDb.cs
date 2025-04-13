@@ -50,14 +50,13 @@ namespace SemanticBackup.Infrastructure.Implementations
             return await GetByIdOrKeyAsync(resourceGroupIdentifier) ?? throw new Exception($"resource group not found with provided identity: {resourceGroupIdentifier}");
         }
 
-        public async Task<bool> RemoveAsync(string id)
+        public async Task<bool> RemoveAsync(string resourceGroupIdentifier)
         {
-            var collection = _db.GetCollection<ResourceGroup>();
-            var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
+            ResourceGroup objFound = await GetByIdOrKeyAsync(resourceGroupIdentifier);
             if (objFound != null)
             {
-                bool success = await collection.DeleteAsync(new BsonValue(objFound.Id));
-                await TryDeleteAllResourcesForGroupAsync(id);
+                bool success = await _db.GetCollection<ResourceGroup>().DeleteAsync(new BsonValue(objFound.Id));
+                await TryDeleteAllResourcesForGroupAsync(objFound.Id);
                 return success;
             }
             return false;
