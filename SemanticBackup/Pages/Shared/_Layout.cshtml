@@ -68,7 +68,7 @@
                                     @{
                                         foreach (ResourceGroup directory in allResourceGroups)
                                         {
-                                            <li class="nav-item @string.Format("{0}", (directory.Id == currentResource.Id) ? "active": string.Empty)"><a href="/resource-groups/switch/@(directory.Id)" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
+                                            <li class="nav-item @string.Format("{0}", (directory.Id == currentResource.Id) ? "active": string.Empty)"><a href="/resource-groups/@(directory.Name)/dashboard" class="nav-link"><i data-feather="grid"></i> <span>@(directory.Name)</span></a></li>
                                         }
                                     }
                                     <li class="nav-item"><a href="/resource-groups/create" class="nav-link"><i data-feather="plus"></i> <span>(Add Resource Group)</span></a></li>
