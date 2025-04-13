@@ -71,7 +71,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
-                    BotId = BotId,
+                    DeliveryFeedType = DeliveryFeedType.BackupDeliveryNotify,
+                    BackupRecordId = _backupRecord.Id,
                     BackupRecordDeliveryId = _contentDeliveryRecord.Id,
                     Status = BackupRecordStatus.READY,
                     Message = executionMessage,
@@ -87,7 +88,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
-                    BotId = BotId,
+                    DeliveryFeedType = DeliveryFeedType.BackupDeliveryNotify,
+                    BackupRecordId = _backupRecord.Id,
                     BackupRecordDeliveryId = _contentDeliveryRecord.Id,
                     Status = BackupRecordStatus.ERROR,
                     Message = (ex.InnerException != null) ? $"Error: {ex.InnerException.Message}" : ex.Message,

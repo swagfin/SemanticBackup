@@ -16,12 +16,19 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
 
     public class BackupRecordDeliveryFeed
     {
-        public string BotId { get; set; }
+        public DeliveryFeedType DeliveryFeedType { get; set; } = DeliveryFeedType.BackupDeliveryNotify;
+        public long BackupRecordId { get; set; } = 0;
         public string BackupRecordDeliveryId { get; set; }
         public BackupRecordStatus Status { get; set; }
         public string Message { get; set; }
         public string NewFilePath { get; set; } = null;
         public long ElapsedMilliseconds { get; set; } = 0;
+    }
+
+    public enum DeliveryFeedType
+    {
+        BackupNotify,
+        BackupDeliveryNotify,
     }
 
     public enum BotStatus
@@ -32,5 +39,4 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         Completed,
         Error
     }
-
 }

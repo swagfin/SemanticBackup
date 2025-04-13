@@ -26,7 +26,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            Bots = [];
             SetupBotsBackgroundService(cancellationToken);
             return Task.CompletedTask;
         }
@@ -40,11 +39,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         public void AddBot(List<IBot> bots) => Bots.AddRange(bots);
         public void TerminateBots(List<string> botIds)
         {
-            if (botIds != null && botIds.Count > 0)
+            if (botIds.Count != 0)
             {
-                List<IBot> botsToRemove = this.Bots.Where(x => botIds.Contains(x.BotId)).ToList();
+                List<IBot> botsToRemove = [.. Bots.Where(x => botIds.Contains(x.BotId))];
                 foreach (IBot bot in botsToRemove)
-                    this.Bots.Remove(bot);
+                    Bots.Remove(bot);
             }
         }
 
@@ -55,32 +54,35 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             int availableResourceGrpThreads = maximumThreads - runningResourceGrpThreads;
             return availableResourceGrpThreads > 0;
         }
+
         private void SetupBotsBackgroundService(CancellationToken cancellationToken)
         {
-            var t = new Thread(async () =>
+            Thread t = new(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
-                        if (this.Bots != null && this.Bots.Count > 0)
+                        if (Bots.Count > 0)
                         {
-                            //Start and Stop Bacup Bots
+                            //Start not ready bots
                             List<IBot> botsNotReady = (Bots.Where(x => x.Status == BotStatus.NotReady).OrderBy(x => x.DateCreatedUtc).ToList()) ?? [];
                             foreach (IBot bot in botsNotReady)
                             {
                                 _ = bot.RunAsync(OnDeliveryFeedUpdate, cancellationToken);
                             }
-                            //Remove Completed
-                            List<IBot> botsCompleted = this.Bots.Where(x => x.IsCompleted).ToList();
-                            if (botsCompleted != null && botsCompleted.Count > 0)
-                                foreach (IBot bot in botsCompleted)
-                                    this.Bots.Remove(bot);
+                            //Remove Completed or Error
+                            List<IBot> botsCompleted = (Bots.Where(x => x.Status == BotStatus.Completed || x.Status == BotStatus.Error).ToList()) ?? [];
+                            foreach (IBot bot in botsCompleted)
+                                this.Bots.Remove(bot);
                         }
                     }
-                    catch (Exception ex) { _logger.LogWarning($"Running Unstarted and Removing Completed Bots Failed: {ex.Message}"); }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Error: {Message}", ex.Message);
+                    }
                     //Delay
-                    await Task.Delay(5000);
+                    await Task.Delay(3000, cancellationToken);
                 }
             });
             t.Start();
@@ -90,9 +92,20 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         {
             try
             {
-                using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                IContentDeliveryRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                await _persistanceService.UpdateStatusFeedAsync(feed.BackupRecordDeliveryId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds);
+                if (feed.DeliveryFeedType == DeliveryFeedType.BackupNotify && feed.BackupRecordId > 0)
+                {
+                    using IServiceScope scope = _serviceScopeFactory.CreateScope();
+                    IBackupRecordRepository _backupRecordRepo = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
+                    await _backupRecordRepo.UpdateStatusFeedAsync(feed.BackupRecordId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds, feed.NewFilePath);
+                }
+                else if (feed.DeliveryFeedType == DeliveryFeedType.BackupDeliveryNotify && !string.IsNullOrWhiteSpace(feed.BackupRecordDeliveryId))
+                {
+                    using IServiceScope scope = _serviceScopeFactory.CreateScope();
+                    IContentDeliveryRecordRepository _contentDeliveryRepo = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
+                    await _contentDeliveryRepo.UpdateStatusFeedAsync(feed.BackupRecordDeliveryId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds);
+                }
+                else
+                    throw new Exception($"unsupported delivery-feed-type: {feed.DeliveryFeedType}");
             }
             catch (Exception ex)
             {
