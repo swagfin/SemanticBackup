@@ -1,5 +1,6 @@
 ﻿using LiteDB;
 using LiteDB.Async;
+using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
@@ -25,9 +26,10 @@ namespace SemanticBackup.Infrastructure.Implementations
             this._backupSchedulePersistanceService = backupSchedulePersistanceService;
             this._databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
+
         public async Task<bool> AddAsync(ResourceGroup record)
         {
-            record.Id = Guid.NewGuid().ToString().ToUpper();
+            record.Id = record.Name.FormatToUrlStyle();
             record.Name = record.Name.Trim();
             //attempt to check if exists
             ResourceGroup preExistingRecord = await GetByIdOrKeyAsync(record.Id);

@@ -1,7 +1,7 @@
-﻿@page "/resource-groups/create"
-@model SemanticBackup.Pages.ResourceGroups.CreateModel
+﻿@page "/resource-groups/edit/{resourceGroupId}"
+@model SemanticBackup.Pages.ResourceGroups.EditModel
 @{
-    ViewData["Title"] = "Resource Groups | Create Resource Group";
+    ViewData["Title"] = string.Format("Edit Resource Group | {0}", Model.ResourceGrp.Name);
     Layout = "_LayoutNoDirectory";
 }
 
@@ -10,7 +10,7 @@
     <div class="row row-xs">
 
         <div class="col-lg-8 col-xl-12 mg-t-10">
-            <h2>Create Resource Group</h2>
+            <h2>@string.Format("Edit Resource Group | {0}", Model.ResourceGrp.Name)</h2>
             <div class="ui divider"></div>
             @{
                 if (!string.IsNullOrWhiteSpace(Model.ErrorResponse))
@@ -19,15 +19,14 @@
                 }
             }
 
-            <form asp-page="AddResourceGroup" method="post">
-
+            <form asp-page="EditResourceGroup" method="post">
                 <h4 class="ui primary header">Backup Resource Hosting</h4>
-
                 <section class="ui segment attached form">
-                    <div class="field">
+                    <div class="disabled field" style="cursor:not-allowed">
                         <label>Resource Group Name</label>
-                        <input asp-for="ResourceGrp.Name" autofocus="true" autocomplete="off" placeholder="e.g. Production Group" type="text" required>
+                        <input value="@(Model.ResourceGrp.Name)" autocomplete="off" placeholder="e.g. mssql_prod" type="text" readonly required>
                     </div>
+
                     <div class="field">
                         <label>Maximum Running Worker Bots</label>
                         <select asp-for="ResourceGrp.MaximumRunningBots" class="ui fluid small dropdown threads-dropdown-search" required>
@@ -58,11 +57,11 @@
                         </div>
                         <div class="form-group col-md-7">
                             <label for="Server">Server</label>
-                            <input asp-for="ResourceGrp.DbServer" type="text" value="127.0.0.1" placeholder="Database Server" autocomplete="off" class="form-control refresh-db-server" required>
+                            <input asp-for="ResourceGrp.DbServer" type="text" placeholder="Database Server" autocomplete="off" class="form-control refresh-db-server" required>
                         </div>
                         <div class="form-group col-md-2">
                             <label for="Port">Port</label>
-                            <input asp-for="ResourceGrp.DbPort" type="text" value="0" autocomplete="off" placeholder="Database Port" class="form-control set-db-port-val refresh-db-port" required>
+                            <input asp-for="ResourceGrp.DbPort" type="text" autocomplete="off" placeholder="Database Port" class="form-control set-db-port-val refresh-db-port" required>
                         </div>
                     </div>
 
@@ -93,7 +92,7 @@
                     </div>
                     <div class="field">
                         <label for="ResourceGroupModel.ackupExpiryAgeInDays">Backup Age Expiry In Days (Max 366 days)</label>
-                        <input asp-for="ResourceGrp.BackupExpiryAgeInDays" autocomplete="off" type="number" min="1" value="7" max="366" required>
+                        <input asp-for="ResourceGrp.BackupExpiryAgeInDays" autocomplete="off" type="number" min="1" max="366" required>
                     </div>
                 </section>
 
@@ -145,12 +144,12 @@
                             </div>
                             <div class="field">
                                 <label>FTP Password</label>
-                                <input asp-for="ResourceGrp.BackupDeliveryConfig.Ftp.Password" autocomplete="off" type="password" placeholder="*******">
+                                <input asp-for="ResourceGrp.BackupDeliveryConfig.Ftp.Password" value="@(Model.ResourceGrp.BackupDeliveryConfig.Ftp.Password)" autocomplete="off" type="password" placeholder="*******">
                             </div>
                         </div>
                         <div class="field">
                             <label>FTP Upload Path</label>
-                            <input asp-for="ResourceGrp.BackupDeliveryConfig.Ftp.Directory" autocomplete="off" value="/backups/" placeholder="e.g. /backups/" value="/">
+                            <input asp-for="ResourceGrp.BackupDeliveryConfig.Ftp.Directory" autocomplete="off" placeholder="e.g. /backups/">
                         </div>
                     </div>
 
@@ -164,11 +163,11 @@
                         <div class="two fields">
                             <div class="field">
                                 <label>SMTP Host</label>
-                                <input asp-for="ResourceGrp.BackupDeliveryConfig.Smtp.SMTPHost" value="smtp.gmail.com" autocomplete="off" placeholder="SMTP Host Address">
+                                <input asp-for="ResourceGrp.BackupDeliveryConfig.Smtp.SMTPHost" autocomplete="off" placeholder="SMTP Host Address">
                             </div>
                             <div class="field">
                                 <label>SMTP Port</label>
-                                <input asp-for="ResourceGrp.BackupDeliveryConfig.Smtp.SMTPPort" value="587" autocomplete="off" placeholder="SMTP Host Port">
+                                <input asp-for="ResourceGrp.BackupDeliveryConfig.Smtp.SMTPPort" autocomplete="off" placeholder="SMTP Host Port">
                             </div>
                         </div>
                         <div class="field">
@@ -177,7 +176,7 @@
                         </div>
                         <div class="field">
                             <label>SMTP Email Password</label>
-                            <input asp-for="ResourceGrp.BackupDeliveryConfig.Smtp.SMTPEmailCredentials" type="password" autocomplete="off" placeholder="Password credential *******">
+                            <input asp-for="ResourceGrp.BackupDeliveryConfig.Smtp.SMTPEmailCredentials" type="password" value="@(Model.ResourceGrp.BackupDeliveryConfig.Smtp.SMTPEmailCredentials)" autocomplete="off" placeholder="Password credential *******">
                         </div>
                         <div class="field">
                             <label>SMTP From Name</label>
@@ -199,17 +198,17 @@
                         <div class="fields">
                             <div class="twelve wide field">
                                 <label>Server</label>
-                                <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.Server" autocomplete="off" value="localhost" placeholder="Server x.x.x.x">
+                                <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.Server" autocomplete="off" placeholder="Server x.x.x.x">
                             </div>
                             <div class="four wide field">
                                 <label>Port</label>
-                                <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.Port" autocomplete="off" value="9000" placeholder="Port xxxx">
+                                <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.Port" autocomplete="off" placeholder="Port xxxx">
                             </div>
                         </div>
 
                         <div class="field">
                             <label>Bucket</label>
-                            <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.Bucket" autocomplete="off" value="backups" placeholder="Bucket">
+                            <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.Bucket" autocomplete="off" placeholder="Bucket">
                         </div>
 
                         <div class="two fields">
@@ -219,7 +218,7 @@
                             </div>
                             <div class="field">
                                 <label>Secret Key</label>
-                                <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.SecretKey" type="password" autocomplete="off" placeholder="Secret Key xxxxxxxxxxxx">
+                                <input asp-for="ResourceGrp.BackupDeliveryConfig.ObjectStorage.SecretKey" type="password" value="@(Model.ResourceGrp.BackupDeliveryConfig.ObjectStorage.SecretKey)" autocomplete="off" placeholder="Secret Key xxxxxxxxxxxx">
                             </div>
                         </div>
 
@@ -242,7 +241,7 @@
                         </div>
                         <div class="field">
                             <label>Upload Directory</label>
-                            <input asp-for="ResourceGrp.BackupDeliveryConfig.Dropbox.Directory" autocomplete="off" value="/backups/" placeholder="e.g. /backups/">
+                            <input asp-for="ResourceGrp.BackupDeliveryConfig.Dropbox.Directory" autocomplete="off" placeholder="e.g. /backups/">
                         </div>
                     </div>
 
@@ -259,7 +258,7 @@
                         </div>
                         <div class="field">
                             <label>Blob Container</label>
-                            <input asp-for="ResourceGrp.BackupDeliveryConfig.AzureBlobStorage.BlobContainer" autocomplete="off" value="backups" placeholder="e.g. backups">
+                            <input asp-for="ResourceGrp.BackupDeliveryConfig.AzureBlobStorage.BlobContainer" autocomplete="off" placeholder="e.g. backups">
                         </div>
                     </div>
 
@@ -286,7 +285,7 @@
                     <div class="field">
                         <label>Notification Addresses (Separate with ",")</label>
                         <input asp-for="ResourceGrp.NotifyEmailDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
-                        <span style="color:gray;margin:7px">The above Emails will receive the notifications if any execution or delivery Content Run Fails</span>
+                        <span style="color:gray;margin:7px">The above Emails will receive the notifications if any execution or delivery content Run Fails</span>
                     </div>
 
                 </section>
@@ -295,7 +294,7 @@
                 <p align="center">
                     <button class="ui fluid button blue" type="submit">
                         <i class="chart line icon"></i>
-                        Create Resource Group
+                        Update Resource Group
                     </button>
                 </p>
 

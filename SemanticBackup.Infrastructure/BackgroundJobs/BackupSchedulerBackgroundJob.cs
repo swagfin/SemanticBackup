@@ -63,7 +63,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                         List<BackupSchedule> dueSchedules = await backupSchedulePersistanceService.GetAllDueByDateAsync();
                         if (dueSchedules != null && dueSchedules.Count > 0)
                         {
-                            List<string> scheduleToDelete = new List<string>();
+                            List<string> scheduleToDelete = [];
                             foreach (BackupSchedule schedule in dueSchedules.OrderBy(x => x.NextRunUTC).ToList())
                             {
                                 _logger.LogInformation($"Queueing Scheduled Backup...");

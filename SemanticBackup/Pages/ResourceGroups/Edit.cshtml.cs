@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 namespace SemanticBackup.Pages.ResourceGroups
 {
     [Authorize]
-    public class CreateModel : PageModel
+    public class EditModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
+        private readonly ILogger<EditModel> _logger;
         private readonly SystemConfigOptions _persistanceOptions;
         private readonly IResourceGroupRepository _resourceGroupPersistance;
         private readonly IBackupProviderForMySQLServer _backupProviderForMySQLServer;
@@ -23,7 +23,7 @@ namespace SemanticBackup.Pages.ResourceGroups
         [BindProperty]
         public ResourceGroup ResourceGrp { get; set; } = new ResourceGroup();
 
-        public CreateModel(ILogger<IndexModel> logger, SystemConfigOptions options, IResourceGroupRepository resourceGroupPersistance, IBackupProviderForMySQLServer backupProviderForMySQLServer, IBackupProviderForSQLServer backupProviderForSQLServer)
+        public EditModel(ILogger<EditModel> logger, SystemConfigOptions options, IResourceGroupRepository resourceGroupPersistance, IBackupProviderForMySQLServer backupProviderForMySQLServer, IBackupProviderForSQLServer backupProviderForSQLServer)
         {
             _logger = logger;
             _persistanceOptions = options;
@@ -32,20 +32,40 @@ namespace SemanticBackup.Pages.ResourceGroups
             _backupProviderForSQLServer = backupProviderForSQLServer;
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnGetAsync(string resourceGroupId)
         {
             try
             {
+                ResourceGrp = await _resourceGroupPersistance.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return Redirect("/resource-groups");
+            }
+        }
+
+        public async Task<IActionResult> OnPostAsync(string resourceGroupId)
+        {
+            try
+            {
+                ResourceGroup existingResourceGrp = await _resourceGroupPersistance.VerifyByIdOrKeyThrowIfNotExistAsync(resourceGroupId);
+                //proceed
                 if (ResourceGrp == null)
                     return Page();
                 //Validate Fields
                 if (!IsValidationPassed())
                     return Page();
-                //Check TimeZone Provided
+                //proceed
+                //proceed
                 ResourceGrp.MaximumRunningBots = (ResourceGrp.MaximumRunningBots < 1) ? 1 : ResourceGrp.MaximumRunningBots;
                 //atttempt check connection string
                 await ValidateDbConnectionAsync(ResourceGrp);
-                bool savedSuccess = await _resourceGroupPersistance.AddAsync(ResourceGrp);
+                //update details
+                ResourceGrp.Id = existingResourceGrp.Id;
+                ResourceGrp.Name = existingResourceGrp.Name;
+                bool savedSuccess = await _resourceGroupPersistance.UpdateAsync(ResourceGrp);
                 if (!savedSuccess)
                     throw new Exception("Data was not Saved");
                 return Redirect("/resource-groups");
