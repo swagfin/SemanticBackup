@@ -97,7 +97,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                                 _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
                                         }
                                         else
-                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} has Exceeded its Maximum Allocated Running Threads Count: {resourceGroup.MaximumRunningBots}");
+                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} Bots are Busy, Running Bots Count: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
                                     }
 
                                 }
