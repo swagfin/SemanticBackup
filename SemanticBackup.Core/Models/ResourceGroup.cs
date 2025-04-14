@@ -86,7 +86,7 @@ namespace SemanticBackup.Core.Models
         public bool IsEnabled { get; set; } = false;
         public string Server { get; set; } = "localhost";
         public int Port { get; set; } = 9000;
-        public string Bucket { get; set; } = "public";
+        public string Bucket { get; set; } = "buckups";
         public string AccessKey { get; set; } = string.Empty;
         public string SecretKey { get; set; } = string.Empty;
         public bool UseSsl { get; set; } = false;

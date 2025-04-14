@@ -10,6 +10,7 @@
 	<ItemGroup>
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.22.2" />
 		<PackageReference Include="Dropbox.Api" Version="7.0.0" />
+		<PackageReference Include="FluentFTP" Version="52.1.0" />
 		<PackageReference Include="LiteDB.Async" Version="0.1.8" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />

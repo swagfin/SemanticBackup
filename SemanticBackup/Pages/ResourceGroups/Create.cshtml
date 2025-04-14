@@ -114,9 +114,9 @@
                         <a class="item active" data-tab="tabdownloadlink"><i class="linkify icon"></i> Download Link</a>
                         <a class="item" data-tab="tabftp"><i class="server icon"></i> FTP</a>
                         <a class="item" data-tab="tabemailsmtp"><i class="envelope icon"></i> SMTP</a>
-                        <a class="item" data-tab="tabdropbox"><i class="dropbox icon"></i> Dropbox</a>
-                        <a class="item" data-tab="tabazureblobstorage"><i class="box icon"></i> Azure Blob</a>
                         <a class="item" data-tab="tabobjectstorage"><i class="upload icon"></i> Object Storage(S3)</a>
+                        <a class="item" data-tab="tabazureblobstorage"><i class="box icon"></i> Azure Blob Storage</a>
+                        <a class="item" data-tab="tabdropbox"><i class="dropbox icon"></i> Dropbox</a>
                     </div>
 
                     <!--DOWNLOAD LINK-->
@@ -197,6 +197,47 @@
                             <input asp-for="request.RSEmailSMTPSetting.SMTPDestinations" autocomplete="off" placeholder="e.g. test@example.com,test@example3.com">
                         </div>
                     </div>
+
+                    <!--Object Storage-->
+                    <div class="ui bottom attached tab segment" data-tab="tabobjectstorage">
+                        <span>
+                            <input id="RSObjectStorageSetting.IsEnabled" asp-for="request.RSObjectStorageSetting.IsEnabled">
+                            <label title="Delivery Backup Records Via Object Storage" style="cursor:pointer;" for="RSObjectStorageSetting.IsEnabled">Enable Object Storage Content Delivery</label>
+                        </span>
+
+                        <div class="fields">
+                            <div class="twelve wide field">
+                                <label>Server</label>
+                                <input asp-for="request.RSObjectStorageSetting.Server" autocomplete="off" value="localhost" placeholder="Server x.x.x.x">
+                            </div>
+                            <div class="four wide field">
+                                <label>Port</label>
+                                <input asp-for="request.RSObjectStorageSetting.Port" autocomplete="off" value="9000" placeholder="Port xxxx">
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label>Bucket</label>
+                            <input asp-for="request.RSObjectStorageSetting.Bucket" autocomplete="off" value="backups" placeholder="Bucket">
+                        </div>
+
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Access Key</label>
+                                <input asp-for="request.RSObjectStorageSetting.AccessKey" autocomplete="off" placeholder="Access Key xxxxxxxxxxxx">
+                            </div>
+                            <div class="field">
+                                <label>Secret Key</label>
+                                <input asp-for="request.RSObjectStorageSetting.SecretKey" type="password" autocomplete="off" placeholder="Secret Key xxxxxxxxxxxx">
+                            </div>
+                        </div>
+
+                        <span>
+                            <input id="RSObjectStorageSetting.UseSsl" asp-for="request.RSObjectStorageSetting.UseSsl">
+                            <label title="Use SSL" style="cursor:pointer" for="RSObjectStorageSetting.UseSsl">Use Ssl</label>
+                        </span>
+                    </div>
+
                     <!--DROPBOX CONTENT DELIVERY LINK-->
                     <div class="ui bottom attached tab segment" data-tab="tabdropbox">
                         <span>
@@ -231,45 +272,6 @@
                         </div>
                     </div>
 
-                    <!--Object Storage-->
-                    <div class="ui bottom attached tab segment" data-tab="tabobjectstorage">
-                        <span>
-                            <input id="RSAzureBlobStorageSetting.IsEnabled" asp-for="request.RSObjectStorageSetting.IsEnabled">
-                            <label title="Delivery Backup Records Via Object Storage" style="cursor:pointer" for="RSAzureBlobStorageSetting.IsEnabled">Enable Object Storage Content Delivery</label>
-                        </span>
-
-                        <div class="fields">
-                            <div class="twelve wide field">
-                                <label>Server</label>
-                                <input asp-for="request.RSObjectStorageSetting.Server" autocomplete="off" placeholder="Server x.x.x.x">
-                            </div>
-                            <div class="four wide field">
-                                <label>Port</label>
-                                <input asp-for="request.RSObjectStorageSetting.Port" autocomplete="off" placeholder="Port xxxx">
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label>Bucket</label>
-                            <input asp-for="request.RSObjectStorageSetting.Bucket" autocomplete="off" placeholder="Bucket">
-                        </div>
-
-                        <div class="two fields">
-                            <div class="field">
-                                <label>Access Key</label>
-                                <input asp-for="request.RSObjectStorageSetting.AccessKey" autocomplete="off" placeholder="Access Key xxxxxxxxxxxx">
-                            </div>
-                            <div class="field">
-                                <label>Secret Key</label>
-                                <input asp-for="request.RSObjectStorageSetting.SecretKey" type="password" autocomplete="off" placeholder="Secret Key xxxxxxxxxxxx">
-                            </div>
-                        </div>
-
-                        <span>
-                            <input id="RSObjectStorageSetting.UseSsl" asp-for="request.RSObjectStorageSetting.UseSsl">
-                            <label title="Use SSL" style="cursor:pointer" for="RSObjectStorageSetting.UseSsl">Use Ssl</label>
-                        </span>
-                    </div>
 
                 </section>
 

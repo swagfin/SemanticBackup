@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Minio;
 using Minio.DataModel.Args;
+using Minio.DataModel.Response;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -59,11 +60,18 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 using (FileStream stream = File.Open(_backupRecord.Path, FileMode.Open))
                 {
                     //upload object
-                    await minioClient.PutObjectAsync(new PutObjectArgs()
-                                     .WithBucket(settings.Bucket)
-                                     .WithObject(fileName)
-                                     .WithStreamData(stream)
-                                     .WithObjectSize(stream.Length), cancellationToken);
+                    PutObjectResponse putResponse = await minioClient.PutObjectAsync(new PutObjectArgs()
+                                                    .WithBucket(settings.Bucket)
+                                                    .WithObject(fileName)
+                                                    .WithStreamData(stream)
+                                                    .WithObjectSize(stream.Length), cancellationToken);
+                    //proceed
+                    if (putResponse.ResponseStatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        executionMessage = $"Failed: {putResponse.ResponseStatusCode}";
+                        throw new Exception(executionMessage);
+                    }
+                    //proceed
                     executionMessage = $"Uploaded to Bucket: {validBucket}";
                 }
                 stopwatch.Stop();

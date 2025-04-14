@@ -139,35 +139,33 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                 {
                     try
                     {
-                        using (var scope = _serviceScopeFactory.CreateScope())
-                        {
-                            //DI INJECTIONS
-                            IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                            IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                            //Proceed
-                            List<string> botsToRemove = new List<string>();
-                            //REMOVE BACKUP RECORDS
-                            List<long> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
-                            if (recordsIds != null && recordsIds.Count > 0)
-                                foreach (long id in recordsIds)
-                                {
-                                    await backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                    botsToRemove.Add(id.ToString());
-                                }
+                        using IServiceScope scope = _serviceScopeFactory.CreateScope();
+                        //DI INJECTIONS
+                        IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
+                        IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
+                        //Proceed
+                        List<string> botsToRemove = [];
+                        //REMOVE BACKUP RECORDS
+                        List<long> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
+                        if (recordsIds != null && recordsIds.Count > 0)
+                            foreach (long id in recordsIds)
+                            {
+                                await backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                                botsToRemove.Add(id.ToString());
+                            }
 
-                            //REMOVE CONTENT DELIVERY RECORDS
-                            List<string> deliveryRecordIds = await contentDeliveryRecordPersistanceService.GetAllNoneResponsiveAsync(statusChecks, executionTimeoutInMinutes);
-                            if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
-                                foreach (string id in deliveryRecordIds)
-                                {
-                                    await contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                    botsToRemove.Add(id);
-                                }
+                        //REMOVE CONTENT DELIVERY RECORDS
+                        List<string> deliveryRecordIds = await contentDeliveryRecordPersistanceService.GetAllNoneResponsiveAsync(statusChecks, executionTimeoutInMinutes);
+                        if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
+                            foreach (string id in deliveryRecordIds)
+                            {
+                                await contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                                botsToRemove.Add(id);
+                            }
 
-                            //Finally Try And Stop
-                            if (botsToRemove.Count > 0)
-                                _botsManagerBackgroundJob.TerminateBots(botsToRemove);
-                        }
+                        //Finally Try And Stop
+                        if (botsToRemove.Count > 0)
+                            _botsManagerBackgroundJob.TerminateBots(botsToRemove);
                     }
                     catch (Exception ex) { _logger.LogWarning($"Stopping Non Responsive Services Error: {ex.Message}"); }
                     //Delay

@@ -4,9 +4,7 @@ using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -61,29 +59,47 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //Proceed
                 try
                 {
-                    string fullServerUrl = string.Format("ftp://{0}{1}{2}", validServerName, validDirectory, fileName);
+                    string fullServerUrl = $"ftp://{validServerName}{validDirectory}{fileName}";
                     byte[] fileContents;
                     using (FileStream sourceStream = File.OpenRead(this._backupRecord.Path))
                     {
                         fileContents = new byte[sourceStream.Length];
                         await sourceStream.ReadAsync(fileContents, cancellationToken);
                     }
-                    using HttpClient client = new();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{settings.Username}:{settings.Password}")));
-                    ByteArrayContent content = new(fileContents);
-                    HttpResponseMessage response = await client.PutAsync(fullServerUrl, content, cancellationToken);
-                    if (response.IsSuccessStatusCode)
+
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
+                    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(fullServerUrl);
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
+                    request.Method = WebRequestMethods.Ftp.UploadFile;
+                    request.Credentials = new NetworkCredential(settings.Username, settings.Password);
+                    request.EnableSsl = false; // Set to true if your FTP server uses FTPS
+                    request.UsePassive = true;
+                    request.UseBinary = true;
+                    request.KeepAlive = false;
+                    request.ContentLength = fileContents.Length;
+
+                    // Write to the request stream
+                    using (Stream requestStream = await request.GetRequestStreamAsync())
                     {
-                        executionMessage = $"Uploaded to Server: {settings.Server}";
+                        await requestStream.WriteAsync(fileContents, 0, fileContents.Length, cancellationToken);
                     }
-                    else
+
+                    // Get the response to ensure upload completed
+                    using (FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync())
                     {
-                        throw new Exception($"Failed to upload. Status code: {response.StatusCode}");
+                        if (response.StatusCode == FtpStatusCode.ClosingData)
+                        {
+                            executionMessage = $"Uploaded to Server: {settings.Server}";
+                        }
+                        else
+                        {
+                            throw new Exception($"Failed to upload. FTP status: {response.StatusDescription}");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception(ex.Message);
+                    throw new Exception($"Upload failed: {ex.Message}");
                 }
                 stopwatch.Stop();
                 //notify update
