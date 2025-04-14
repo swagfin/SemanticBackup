@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <UserSecretsId>98e83838-8ab0-44d3-a023-52d80ba01705</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <AssemblyVersion>5.1.4</AssemblyVersion>
-    <FileVersion>5.1.4</FileVersion>
+    <AssemblyVersion>5.1.5</AssemblyVersion>
+    <FileVersion>5.1.5</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
