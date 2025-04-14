@@ -48,7 +48,7 @@ namespace SemanticBackup.Pages.ResourceGroups
                 //Check TimeZone Provided
                 request.MaximumRunningBots = (request.MaximumRunningBots < 1) ? 1 : request.MaximumRunningBots;
                 //Proceed
-                ResourceGroup saveObj = new ResourceGroup
+                ResourceGroup saveObj = new()
                 {
                     Name = request.Name,
                     MaximumRunningBots = request.MaximumRunningBots,
@@ -99,6 +99,16 @@ namespace SemanticBackup.Pages.ResourceGroups
                             IsEnabled = request.RSAzureBlobStorageSetting.IsEnabled,
                             BlobContainer = request.RSAzureBlobStorageSetting.BlobContainer,
                             ConnectionString = request.RSAzureBlobStorageSetting.ConnectionString
+                        },
+                        ObjectStorage = new ObjectStorageDeliveryConfig
+                        {
+                            IsEnabled = request.RSObjectStorageSetting.IsEnabled,
+                            Server = request.RSObjectStorageSetting.Server,
+                            Port = request.RSObjectStorageSetting.Port,
+                            Bucket = request.RSObjectStorageSetting.Bucket,
+                            AccessKey = request.RSObjectStorageSetting.AccessKey,
+                            SecretKey = request.RSObjectStorageSetting.SecretKey,
+                            UseSsl = request.RSObjectStorageSetting.UseSsl
                         }
                     }
                 };
@@ -117,7 +127,6 @@ namespace SemanticBackup.Pages.ResourceGroups
                 ErrorResponse = ex.Message;
                 return Page();
             }
-
         }
 
         private bool IsValidationPassed()
@@ -164,12 +173,21 @@ namespace SemanticBackup.Pages.ResourceGroups
                         ErrorResponse = "Dropbox API Token provided is Invalid";
                         return false;
                     }
+
                 if (request.RSAzureBlobStorageSetting != null && request.RSAzureBlobStorageSetting.IsEnabled)
                     if (string.IsNullOrEmpty(request.RSAzureBlobStorageSetting.ConnectionString) || string.IsNullOrEmpty(request.RSAzureBlobStorageSetting.BlobContainer))
                     {
                         ErrorResponse = "Azure Blob Storage Connection String and Blob Container fields are required If [Azure Blob Storage Content Delivery] has been Enabled";
                         return false;
                     }
+
+                if (request.RSObjectStorageSetting != null && request.RSObjectStorageSetting.IsEnabled)
+                    if (string.IsNullOrEmpty(request.RSObjectStorageSetting.Server) || string.IsNullOrEmpty(request.RSObjectStorageSetting.Bucket))
+                    {
+                        ErrorResponse = "Object Storage Server and Bucket fields are required If [Object Storage Content Delivery] has been Enabled";
+                        return false;
+                    }
+
                 //Notifications
                 if (request.NotifyOnErrorBackups || request.NotifyOnErrorBackupDelivery)
                     if (string.IsNullOrWhiteSpace(request.NotifyEmailDestinations))

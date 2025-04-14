@@ -25,13 +25,11 @@ namespace SemanticBackup.Services
 
         public void DispatchBackupRecordUpdatedStatus(BackupRecord backupRecord, bool isNewRecord = false)
         {
-            _logger.LogInformation("Received BackupRecordUpdated Notification....");
             _ = SendBackupRecordEmailNotificationAsync(backupRecord);
         }
 
         public void DispatchContentDeliveryUpdatedStatus(BackupRecordDelivery record, bool isNewRecord = false)
         {
-            _logger.LogInformation("Received ContentDeliveryUpdate Notification....");
             _ = SendContentDeliveryNotificationAsync(record);
         }
 
@@ -39,27 +37,24 @@ namespace SemanticBackup.Services
         {
             try
             {
-                _logger.LogInformation("Received BackupRecordUpdated Notification....");
-                if (backupRecord.BackupStatus != BackupRecordBackupStatus.ERROR.ToString())
+                if (backupRecord.BackupStatus != BackupRecordStatus.ERROR.ToString())
                     return;
-                using (var scope = _scopeFactory.CreateScope())
-                {
-                    IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
-                    IDatabaseInfoRepository _databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
-                    //get Database
-                    BackupDatabaseInfo databaseInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
-                    if (databaseInfo == null)
-                        return;
-                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(databaseInfo.ResourceGroupId);
-                    if (resourceGroup == null)
-                        return; //No Valid Resource Group
-                    if (!resourceGroup.NotifyOnErrorBackups)
-                        return; //Disabled
-                    string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] Database Backup Failed";
-                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] Backup Run</h3> <br/> <p> <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date Utc: </b> {backupRecord.RegisteredDateUTC:yyyy-MM-dd HH:mm:ss} <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{backupRecord.BackupStatus}</span> <br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{backupRecord.Id}</span> </p> <p> Execution Message: <b><i>{backupRecord.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Semantic Backup {Program.AppVersion}</span>";
-                    List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
-                    await SendEmailAsync(subject, emailBody, destinations);
-                }
+                using IServiceScope scope = _scopeFactory.CreateScope();
+                IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
+                IDatabaseInfoRepository _databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
+                //get Database
+                BackupDatabaseInfo databaseInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                if (databaseInfo == null)
+                    return;
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(databaseInfo.ResourceGroupId);
+                if (resourceGroup == null)
+                    return; //No Valid Resource Group
+                if (!resourceGroup.NotifyOnErrorBackups)
+                    return; //Disabled
+                string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] Database Backup Failed";
+                string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] Backup Run</h3> <br/> <p> <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date Utc: </b> {backupRecord.RegisteredDateUTC:yyyy-MM-dd HH:mm:ss} <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{backupRecord.BackupStatus}</span> <br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{backupRecord.Id}</span> </p> <p> Execution Message: <b><i>{backupRecord.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Semantic Backup {Program.AppVersion}</span>";
+                List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
+                await SendEmailAsync(subject, emailBody, destinations);
             }
             catch (Exception ex)
             {
@@ -71,35 +66,32 @@ namespace SemanticBackup.Services
         {
             try
             {
-                _logger.LogInformation("Received BackupRecordUpdated Notification....");
-                if (record.CurrentStatus != BackupRecordBackupStatus.ERROR.ToString())
+                if (record.CurrentStatus != BackupRecordStatus.ERROR.ToString())
                     return;
-                using (var scope = _scopeFactory.CreateScope())
-                {
-                    IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
-                    IBackupRecordRepository _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                    IDatabaseInfoRepository _databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
-                    //get details about backup record
-                    BackupRecord backupRecord = await _backupRecordPersistanceService.GetByIdAsync(record.BackupRecordId);
-                    if (backupRecord == null)
-                        return; //No Valid Backup File
-                    //get details about database
-                    BackupDatabaseInfo databaseInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
-                    if (databaseInfo == null)
-                        return; //No Valid Database
-                    //get details about Resource Group
-                    ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(databaseInfo.ResourceGroupId);
-                    if (resourceGroup == null)
-                        return; //No Valid Resource Group
-                    //check if notify is enabled
-                    if (!resourceGroup.NotifyOnErrorBackupDelivery)
-                        return; //Disabled
-                    //proceed
-                    string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed";
-                    string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed</h3> <br/> <p> <b>DELIVERY TYPE: </b> {record.DeliveryType} <br/>   <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date Utc: </b> {backupRecord.RegisteredDateUTC:yyyy-MM-dd HH:mm:ss} <br/>  <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{record.CurrentStatus}</span> <br/><br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{record.Id}</span> <br/> </p> <p> Execution Message: <b><i>{record.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Semantic Backup {Program.AppVersion}</span>";
-                    List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
-                    await SendEmailAsync(subject, emailBody, destinations);
-                }
+                using IServiceScope scope = _scopeFactory.CreateScope();
+                IResourceGroupRepository _resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
+                IBackupRecordRepository _backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
+                IDatabaseInfoRepository _databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
+                //get details about backup record
+                BackupRecord backupRecord = await _backupRecordPersistanceService.GetByIdAsync(record.BackupRecordId);
+                if (backupRecord == null)
+                    return; //No Valid Backup File
+                            //get details about database
+                BackupDatabaseInfo databaseInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                if (databaseInfo == null)
+                    return; //No Valid Database
+                            //get details about Resource Group
+                ResourceGroup resourceGroup = await _resourceGroupPersistanceService.GetByIdOrKeyAsync(databaseInfo.ResourceGroupId);
+                if (resourceGroup == null)
+                    return; //No Valid Resource Group
+                            //check if notify is enabled
+                if (!resourceGroup.NotifyOnErrorBackupDelivery)
+                    return; //Disabled
+                            //proceed
+                string subject = $"[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed";
+                string emailBody = $"<h3>[{resourceGroup.Name}/{backupRecord.Name}] {record.DeliveryType} Failed</h3> <br/> <p> <b>DELIVERY TYPE: </b> {record.DeliveryType} <br/>   <b>DATABASE: </b> {backupRecord.Name} <br/> <b>Resource Group: </b> {resourceGroup.Name} <br/> <b>Backup Date Utc: </b> {backupRecord.RegisteredDateUTC:yyyy-MM-dd HH:mm:ss} <br/>  <br/> <b>Execution Status: </b> <span style='color:red;padding:3px'>{record.CurrentStatus}</span> <br/><br/> <b>Ref No #: </b> <span style='color:brown;padding:2px'>{record.Id}</span> <br/> </p> <p> Execution Message: <b><i>{record.ExecutionMessage}</i></b></p>       <br/><br/><br/><br> <span style='color:gray'>Powered By Semantic Backup {Program.AppVersion}</span>";
+                List<string> destinations = GetValidDestinations(resourceGroup.NotifyEmailDestinations);
+                await SendEmailAsync(subject, emailBody, destinations);
             }
             catch (Exception ex)
             {
@@ -157,7 +149,7 @@ namespace SemanticBackup.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("Error Sending Notification to address", ex.Message);
+                _logger.LogWarning("Error Sending Notification to address: {Message}", ex.Message);
             }
             finally
             {
@@ -168,7 +160,7 @@ namespace SemanticBackup.Services
 
         private List<string> GetValidDestinations(string destinations)
         {
-            List<string> allEmails = new List<string>();
+            List<string> allEmails = [];
             if (destinations == null)
                 return allEmails;
             string[] emailSplits = destinations?.Split(',');

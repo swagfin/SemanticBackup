@@ -1,11 +1,11 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
@@ -17,87 +17,81 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<UploaderAzureStorageBot> _logger;
-        public bool IsCompleted { get; private set; } = false;
-        public bool IsStarted { get; private set; } = false;
-
-        public string ResourceGroupId => _resourceGroup.Id;
-        public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderAzureStorageBot)}";
+        public string ResourceGroupId => _resourceGroup.Id;
+        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+
         public UploaderAzureStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
-            this._contentDeliveryRecord = contentDeliveryRecord;
-            this._resourceGroup = resourceGroup;
-            this._backupRecord = backupRecord;
-            this._scopeFactory = scopeFactory;
+            _contentDeliveryRecord = contentDeliveryRecord;
+            _resourceGroup = resourceGroup;
+            _backupRecord = backupRecord;
+            _scopeFactory = scopeFactory;
             //Logger
-            using (var scope = _scopeFactory.CreateScope())
-                _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderAzureStorageBot>>();
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderAzureStorageBot>>();
         }
-        public async Task RunAsync()
+        public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
-            this.IsStarted = true;
-            this.IsCompleted = false;
-            Stopwatch stopwatch = new Stopwatch();
+            Status = BotStatus.Starting;
+            Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation($"Uploading Backup File via Azure Blob Storage....");
-                await Task.Delay(new Random().Next(1000));
+                _logger.LogInformation("uploading file to AzureBlobStorage: {Path}", _backupRecord.Path);
+                //proceed
+                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 AzureBlobStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.AzureBlobStorage ?? throw new Exception("no valid azure blob storage config");
                 stopwatch.Start();
-                //Upload FTP
-                CheckIfFileExistsOrRemove(this._backupRecord.Path);
-                //FTP Upload
+                Status = BotStatus.Running;
+                //check path
+                if (!File.Exists(_backupRecord.Path))
+                    throw new Exception($"No Database File In Path or May have been deleted, Path: {_backupRecord.Path}");
+                //proceed
                 string executionMessage = "Azure Blob Storage Uploading...";
                 //Container
-                string validContainer = (string.IsNullOrWhiteSpace(settings.BlobContainer)) ? "backups" : settings.BlobContainer;
+                string validContainer = string.IsNullOrWhiteSpace(settings.BlobContainer) ? "backups" : settings.BlobContainer;
                 //Filename
                 string fileName = Path.GetFileName(this._backupRecord.Path);
                 //Proceed
                 if (string.IsNullOrWhiteSpace(settings.ConnectionString))
                     throw new Exception("Invalid Connection String");
                 //Proceed
-                using (FileStream stream = File.Open(this._backupRecord.Path, FileMode.Open))
+                using (FileStream stream = File.Open(_backupRecord.Path, FileMode.Open))
                 {
-                    BlobContainerClient containerClient = new BlobContainerClient(settings.ConnectionString, validContainer);
+                    BlobContainerClient containerClient = new(settings.ConnectionString, validContainer);
                     BlobClient blobClient = containerClient.GetBlobClient(fileName);
-                    _ = await blobClient.UploadAsync(stream, true);
-                    executionMessage = $"Uploaded Container: {validContainer}";
+                    _ = await blobClient.UploadAsync(stream, true, cancellationToken);
+                    executionMessage = $"Uploaded to Container: {validContainer}";
                 }
                 stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordDeliveryStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
-                _logger.LogInformation($"Uploading Backup File via Azure Blob Storage: {_backupRecord.Path}... SUCCESS");
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex.Message);
-                stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), (ex.InnerException != null) ? $"Error Uploading: {ex.InnerException.Message}" : ex.Message, stopwatch.ElapsedMilliseconds);
-            }
-        }
-
-        private void CheckIfFileExistsOrRemove(string path)
-        {
-            if (!File.Exists(path))
-                throw new Exception($"No Database File In Path or May have been deleted, Path: {path}");
-        }
-
-        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed)
-        {
-            try
-            {
-                using (var scope = _scopeFactory.CreateScope())
+                //notify update
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
-                    IContentDeliveryRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
-                }
+                    DeliveryFeedType = DeliveryFeedType.BackupDeliveryNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = _contentDeliveryRecord.Id,
+                    Status = BackupRecordStatus.READY,
+                    Message = executionMessage,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
+                _logger.LogInformation("Successfully uploaded file to AzureBlobStorage: {Path}", _backupRecord.Path);
+                Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
-                this._logger.LogError("Error Updating Feed: " + ex.Message);
-            }
-            finally
-            {
-                IsCompleted = true;
+                Status = BotStatus.Error;
+                _logger.LogError(ex.Message);
+                stopwatch.Stop();
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
+                {
+                    DeliveryFeedType = DeliveryFeedType.BackupDeliveryNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = _contentDeliveryRecord.Id,
+                    Status = BackupRecordStatus.ERROR,
+                    Message = (ex.InnerException != null) ? $"Error: {ex.InnerException.Message}" : ex.Message,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
             }
         }
     }

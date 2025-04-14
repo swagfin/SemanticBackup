@@ -1,6 +1,7 @@
-﻿using Dropbox.Api;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Minio;
+using Minio.DataModel.Args;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -10,19 +11,19 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
 {
-    internal class InDepthDeleteDropboxBot : IBot
+    internal class InDepthDeleteObjectStorageBot : IBot
     {
         private readonly BackupRecordDelivery _contentDeliveryRecord;
         private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<InDepthDeleteDropboxBot> _logger;
+        private readonly ILogger<InDepthDeleteObjectStorageBot> _logger;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
-        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(InDepthDeleteDropboxBot)}";
+        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(InDepthDeleteObjectStorageBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
         public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
-        public InDepthDeleteDropboxBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
+        public InDepthDeleteObjectStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
             _contentDeliveryRecord = contentDeliveryRecord;
             _resourceGroup = resourceGroup;
@@ -30,7 +31,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             _scopeFactory = scopeFactory;
             //Logger
             using IServiceScope scope = _scopeFactory.CreateScope();
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<InDepthDeleteDropboxBot>>();
+            _logger = scope.ServiceProvider.GetRequiredService<ILogger<InDepthDeleteObjectStorageBot>>();
         }
 
         public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
@@ -39,35 +40,31 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation("Deleting backup file from DropBox: {Path}, Id: {Id}", this._backupRecord.Path, _contentDeliveryRecord.Id);
+                _logger.LogInformation("deleting uploaded file from ObjectStorage: {Path}, Id: {Id}", _backupRecord.Path, _contentDeliveryRecord.Id);
                 //proceed
                 await Task.Delay(Random.Shared.Next(1000), cancellationToken);
-                DropboxDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Dropbox ?? throw new Exception("no valid dropbox config");
+                ObjectStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.ObjectStorage ?? throw new Exception("no valid object storage config");
                 stopwatch.Start();
                 Status = BotStatus.Running;
-                //Directory
-                string validDirectory = string.IsNullOrWhiteSpace(settings.Directory) ? "/" : settings.Directory;
-                validDirectory = validDirectory.EndsWith('/') ? validDirectory : validDirectory + "/";
-                validDirectory = validDirectory.StartsWith('/') ? validDirectory : "/" + validDirectory;
+                //Container
+                string validBucket = string.IsNullOrWhiteSpace(settings.Bucket) ? "backups" : settings.Bucket;
                 //Filename
                 string fileName = Path.GetFileName(this._backupRecord.Path);
                 //Proceed
-                if (string.IsNullOrWhiteSpace(settings.AccessToken))
-                    throw new Exception("Access Token is NULL");
-                //Proceed
-                using (DropboxClient dbx = new(settings.AccessToken.Trim()))
+                using IMinioClient minioClient = new MinioClient().WithEndpoint(settings.Server, settings.Port).WithCredentials(settings.AccessKey, settings.SecretKey).WithSSL(settings.UseSsl).Build();
                 {
-                    string initialFileName = string.Format("{0}{1}", validDirectory, fileName);
-                    Dropbox.Api.Files.DeleteResult delResponse = await dbx.Files.DeleteV2Async(initialFileName, null);
+                    await minioClient.RemoveObjectAsync(new RemoveObjectArgs()
+                                     .WithBucket(validBucket)
+                                     .WithObject(fileName), cancellationToken);
                 }
                 stopwatch.Stop();
-                _logger.LogInformation("Successfully deleted Backup File From DropBox: {Path}", _backupRecord.Path);
+                _logger.LogInformation("Successfully deleted file from ObjectStorage: {Path}", _backupRecord.Path);
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                this._logger.LogWarning(ex.Message);
+                _logger.LogError(ex.Message);
                 stopwatch.Stop();
             }
         }

@@ -41,7 +41,6 @@ namespace SemanticBackup.SignalRHubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            _logger.LogInformation($"Removing client: {Context.ConnectionId}");
             BackupRecordHubClientStorage.RemoveClient(Context.ConnectionId);
             base.OnDisconnectedAsync(exception);
             return Task.CompletedTask;
@@ -49,7 +48,6 @@ namespace SemanticBackup.SignalRHubs
 
         public override Task OnConnectedAsync()
         {
-            _logger.LogInformation($"Adding client: {Context.ConnectionId}");
             return base.OnConnectedAsync();
         }
         public void DispatchBackupRecordUpdatedStatus(BackupRecord backupRecord, bool isNewRecord)
@@ -83,10 +81,8 @@ namespace SemanticBackup.SignalRHubs
             try
             {
                 string group = groupObj.ToString();
-                _logger.LogInformation("Adding user to Group: {group}", group);
                 BackupRecordHubClientStorage.AddClient(group, Context.ConnectionId);
                 await Groups.AddToGroupAsync(Context.ConnectionId, group);
-                //No New Data to Push Wait for Notification
             }
             catch (Exception ex)
             {
@@ -159,18 +155,14 @@ namespace SemanticBackup.SignalRHubs
             try
             {
 
-                _logger.LogInformation("Sending Content Delivery Notification to Connected: {group}", clientGrp.Name);
-                //Set Last Update Time
                 clientGrp.LastRefreshUTC = DateTime.UtcNow;
                 contentDeliveryRecord.LastSyncDateUTC = DateTime.UtcNow;
                 contentDeliveryRecord.Subscription = clientGrp.Name;
-                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveContentDeliveryNotification", contentDeliveryRecord); ;
-                _logger.LogInformation("Successfully sent Content Delivery Notification for Group: {group}", clientGrp.Name);
+                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveContentDeliveryNotification", contentDeliveryRecord);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                //throw;
             }
         }
 
@@ -178,14 +170,10 @@ namespace SemanticBackup.SignalRHubs
         {
             try
             {
-
-                _logger.LogInformation("Sending Backup Record Notification to Connected: {group}", clientGrp.Name);
-                //Set Last Update Time
                 clientGrp.LastRefreshUTC = DateTime.UtcNow;
                 backupRecordMetric.LastSyncDateUTC = DateTime.UtcNow;
                 backupRecordMetric.Subscription = clientGrp.Name;
                 _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecordMetric); ;
-                _logger.LogInformation("Successfully sent Backup Record Notification for Group: {group}", clientGrp.Name);
             }
             catch (Exception ex)
             {
@@ -193,6 +181,7 @@ namespace SemanticBackup.SignalRHubs
             }
         }
     }
+
     public class BackupRecordMetric
     {
         public string Subscription { get; set; }

@@ -30,6 +30,7 @@ namespace SemanticBackup.Core.Models
         public bool NotifyOnErrorBackupDelivery { get; set; } = false;
         public string NotifyEmailDestinations { get; set; } = null;
     }
+
     public class BackupDeliveryConfig
     {
         public DownloadLinkDeliveryConfig DownloadLink { get; set; } = new DownloadLinkDeliveryConfig();
@@ -37,12 +38,15 @@ namespace SemanticBackup.Core.Models
         public SmtpDeliveryConfig Smtp { get; set; } = new SmtpDeliveryConfig();
         public DropboxDeliveryConfig Dropbox { get; set; } = new DropboxDeliveryConfig();
         public AzureBlobStorageDeliveryConfig AzureBlobStorage { get; set; } = new AzureBlobStorageDeliveryConfig();
+        public ObjectStorageDeliveryConfig ObjectStorage { get; set; } = new ObjectStorageDeliveryConfig();
     }
+
     public class DownloadLinkDeliveryConfig
     {
         public bool IsEnabled { get; set; } = true;
         public string DownloadLinkType { get; set; }
     }
+
     public class FtpDeliveryConfig
     {
         public bool IsEnabled { get; set; } = false;
@@ -51,6 +55,7 @@ namespace SemanticBackup.Core.Models
         public string Password { get; set; }
         public string Directory { get; set; } = "/";
     }
+
     public class SmtpDeliveryConfig
     {
         public bool IsEnabled { get; set; } = false;
@@ -62,6 +67,7 @@ namespace SemanticBackup.Core.Models
         public string SMTPDefaultSMTPFromName { get; set; }
         public string SMTPDestinations { get; set; }
     }
+
     public class DropboxDeliveryConfig
     {
         public bool IsEnabled { get; set; } = false;
@@ -74,6 +80,18 @@ namespace SemanticBackup.Core.Models
         public string ConnectionString { get; set; }
         public string BlobContainer { get; set; }
     }
+
+    public class ObjectStorageDeliveryConfig
+    {
+        public bool IsEnabled { get; set; } = false;
+        public string Server { get; set; } = "localhost";
+        public int Port { get; set; } = 9000;
+        public string Bucket { get; set; } = "buckups";
+        public string AccessKey { get; set; } = string.Empty;
+        public string SecretKey { get; set; } = string.Empty;
+        public bool UseSsl { get; set; } = false;
+    }
+
     //enums
     public enum DbTypes
     {
@@ -81,6 +99,6 @@ namespace SemanticBackup.Core.Models
     }
     public enum BackupDeliveryConfigTypes
     {
-        DownloadLink, Ftp, Smtp, Dropbox, AzureBlobStorage
+        DownloadLink, Ftp, Smtp, Dropbox, AzureBlobStorage, ObjectStorage
     }
 }

@@ -193,7 +193,7 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public async Task<List<BackupRecord>> GetAllReadyAndPendingDeliveryAsync()
         {
-            return await _db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordBackupStatus.READY.ToString()).OrderBy(x => x.Id).ToListAsync();
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => !x.ExecutedDeliveryRun && x.BackupStatus == BackupRecordStatus.READY.ToString()).OrderBy(x => x.Id).ToListAsync();
         }
         public async Task<bool> UpdateDeliveryRunnedAsync(long backupRecordId, bool hasRun, string executedDeliveryRunStatus)
         {

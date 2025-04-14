@@ -4,12 +4,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <UserSecretsId>98e83838-8ab0-44d3-a023-52d80ba01705</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <AssemblyVersion>5.0.3</AssemblyVersion>
-    <FileVersion>5.0.3</FileVersion>
+    <AssemblyVersion>5.1.4</AssemblyVersion>
+    <FileVersion>5.1.4</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
   </ItemGroup>
 
   <ItemGroup>

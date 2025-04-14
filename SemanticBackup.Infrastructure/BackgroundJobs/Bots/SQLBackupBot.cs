@@ -5,6 +5,7 @@ using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
@@ -16,79 +17,72 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<MySQLBackupBot> _logger;
-        public bool IsCompleted { get; private set; } = false;
-        public bool IsStarted { get; private set; } = false;
-
-        public string ResourceGroupId => _resourceGroup.Id;
-        public string BotId => _backupRecord.Id.ToString();
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(SQLBackupBot)}";
+        public string ResourceGroupId => _resourceGroup.Id;
+        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+
         public SQLBackupBot(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord, IServiceScopeFactory scopeFactory)
         {
-            this._databaseName = databaseName;
-            this._resourceGroup = resourceGroup;
-            this._backupRecord = backupRecord;
-            this._scopeFactory = scopeFactory;
+            _databaseName = databaseName;
+            _resourceGroup = resourceGroup;
+            _backupRecord = backupRecord;
+            _scopeFactory = scopeFactory;
             //Logger
-            using (var scope = _scopeFactory.CreateScope())
-                _logger = scope.ServiceProvider.GetRequiredService<ILogger<MySQLBackupBot>>();
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            _logger = scope.ServiceProvider.GetRequiredService<ILogger<MySQLBackupBot>>();
         }
-        public async Task RunAsync()
+        public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
-            this.IsStarted = true;
-            this.IsCompleted = false;
-            Stopwatch stopwatch = new Stopwatch();
+            Status = BotStatus.Starting;
+            Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation($"Creating Backup of Db: {_databaseName}");
-                EnsureFolderExists(_backupRecord.Path);
-                await Task.Delay(new Random().Next(1000));
+                _logger.LogInformation("creating backup of Db: {_databaseName}", _databaseName);
+                string directory = Path.GetDirectoryName(_backupRecord.Path);
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+                //proceed
+                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 stopwatch.Start();
+                Status = BotStatus.Running;
                 //Execute Service
                 bool backupedUp = false;
-                using (var scope = _scopeFactory.CreateScope())
+                using (IServiceScope scope = _scopeFactory.CreateScope())
                 {
                     IBackupProviderForSQLServer backupProviderService = scope.ServiceProvider.GetRequiredService<IBackupProviderForSQLServer>();
                     backupedUp = await backupProviderService.BackupDatabaseAsync(_databaseName, _resourceGroup, _backupRecord);
                 }
                 stopwatch.Stop();
-                if (backupedUp)
-                    UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.COMPLETED.ToString(), "Successfull", stopwatch.ElapsedMilliseconds);
-                else
+                if (!backupedUp)
                     throw new Exception("Creating Backup Failed to Return Success Completion");
-                _logger.LogInformation($"Creating Backup of Db: {_databaseName}...SUCCESS");
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex.Message);
-                stopwatch.Stop();
-                UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), ex.Message, stopwatch.ElapsedMilliseconds);
-            }
-        }
-
-        private void EnsureFolderExists(string path)
-        {
-            string directory = Path.GetDirectoryName(path);
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-        }
-
-        private void UpdateBackupFeed(long recordId, string status, string message, long elapsed)
-        {
-            try
-            {
-                using (var scope = _scopeFactory.CreateScope())
+                //notify update
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
-                    IBackupRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
-                }
+                    DeliveryFeedType = DeliveryFeedType.BackupNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = null,
+                    Status = BackupRecordStatus.COMPLETED,
+                    Message = "Successfull",
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
+                _logger.LogInformation("Successfully Backup of Db: {_databaseName}", _databaseName);
+                Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
-                this._logger.LogError("Error Updating Feed: " + ex.Message);
-            }
-            finally
-            {
-                IsCompleted = true;
+                Status = BotStatus.Error;
+                _logger.LogError(ex.Message);
+                //notify update
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
+                {
+                    DeliveryFeedType = DeliveryFeedType.BackupNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = null,
+                    Status = BackupRecordStatus.ERROR,
+                    Message = ex.Message,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
             }
         }
     }

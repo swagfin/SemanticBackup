@@ -1,7 +1,6 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -17,44 +16,44 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<BackupZippingRobot> _logger;
-        public bool IsCompleted { get; private set; } = false;
-        public bool IsStarted { get; private set; } = false;
-
-        public string ResourceGroupId => _resourceGroupId;
-
-        public string BotId => _backupRecord.Id.ToString();
-
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+        public string BotId => $"{_resourceGroupId}::{_backupRecord.Id}::{nameof(BackupZippingRobot)}";
+        public string ResourceGroupId => _resourceGroupId;
+        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
         public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IServiceScopeFactory scopeFactory)
         {
-            this._resourceGroupId = resourceGroupId;
-            this._backupRecord = backupRecord;
-            this._scopeFactory = scopeFactory;
-            //Logger
-            using (var scope = _scopeFactory.CreateScope())
-                _logger = scope.ServiceProvider.GetRequiredService<ILogger<BackupZippingRobot>>();
+            _resourceGroupId = resourceGroupId;
+            _backupRecord = backupRecord;
+            _scopeFactory = scopeFactory;
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            _logger = scope.ServiceProvider.GetRequiredService<ILogger<BackupZippingRobot>>();
         }
-        public async Task RunAsync()
+
+        public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
-            this.IsStarted = true;
-            this.IsCompleted = false;
-            Stopwatch stopwatch = new Stopwatch();
+            Status = BotStatus.Starting;
+            Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation($"Creating Zip of Db: {_backupRecord.Path}");
-                CheckIfFileExistsOrRemove(_backupRecord.Path);
-                await Task.Delay(new Random().Next(1000));
+                _logger.LogInformation("creating zip of: {Path}", _backupRecord.Path);
+                if (!File.Exists(_backupRecord.Path))
+                    throw new Exception($"No Database File In Path or may have been deleted, Path: {_backupRecord.Path}");
+                //proceed
+                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 stopwatch.Start();
-
+                Status = BotStatus.Running;
+                //proceed
                 string newZIPPath = _backupRecord.Path.Replace(".bak", ".zip");
-                using (ZipOutputStream s = new ZipOutputStream(File.Create(newZIPPath)))
+                using (ZipOutputStream s = new(File.Create(newZIPPath)))
                 {
 
                     s.SetLevel(9); // 0 - store only to 9 - means best compression
                     byte[] buffer = new byte[4096];
-                    var entry = new ZipEntry(Path.GetFileName(_backupRecord.Path));
-                    entry.DateTime = DateTime.UtcNow;
+                    ZipEntry entry = new(Path.GetFileName(_backupRecord.Path))
+                    {
+                        DateTime = DateTime.UtcNow
+                    };
                     s.PutNextEntry(entry);
                     using (FileStream fs = File.OpenRead(_backupRecord.Path))
                     {
@@ -70,40 +69,35 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 }
                 stopwatch.Stop();
                 TryDeleteOldFile(_backupRecord.Path);
-                UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.READY.ToString(), "Successfull & Ready", stopwatch.ElapsedMilliseconds, newZIPPath);
-                _logger.LogInformation($"Creating Zip of Db: {_backupRecord.Path}... SUCCESS");
+                //notify update
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
+                {
+                    DeliveryFeedType = DeliveryFeedType.BackupNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = null,
+                    Status = BackupRecordStatus.READY,
+                    Message = "Successfull & Ready",
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                    NewFilePath = newZIPPath,
+                }, cancellationToken);
+                _logger.LogInformation("successfully zipped file: {Path}", _backupRecord.Path);
+                Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
+                Status = BotStatus.Error;
                 this._logger.LogError(ex.Message);
                 stopwatch.Stop();
-                UpdateBackupFeed(_backupRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), ex.Message, stopwatch.ElapsedMilliseconds);
-            }
-        }
-
-        private void CheckIfFileExistsOrRemove(string path)
-        {
-            if (!File.Exists(path))
-                throw new Exception($"No Database File In Path or May have been deleted, Path: {path}");
-        }
-
-        private void UpdateBackupFeed(long recordId, string status, string message, long elapsed, string newZIPPath = null)
-        {
-            try
-            {
-                using (var scope = _scopeFactory.CreateScope())
+                //notify update
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
-                    IBackupRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed, newZIPPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError("Error Updating Feed: " + ex.Message);
-            }
-            finally
-            {
-                IsCompleted = true;
+                    DeliveryFeedType = DeliveryFeedType.BackupNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = null,
+                    Status = BackupRecordStatus.ERROR,
+                    Message = ex.Message,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                }, cancellationToken);
             }
         }
 
@@ -132,9 +126,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     }
                 }
                 while (!success);
-
             }
-            catch (Exception ex) { this._logger.LogWarning($"The File Name Failed to Delete,Error: {ex.Message}, File: {path}"); }
+            catch (Exception ex)
+            {
+                this._logger.LogWarning("The File Name Failed to Delete, Error: {Message}, File: {Path}", ex.Message, path);
+            }
         }
     }
 }

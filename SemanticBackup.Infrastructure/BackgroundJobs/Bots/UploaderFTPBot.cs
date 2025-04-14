@@ -1,13 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
@@ -19,109 +17,119 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecord _backupRecord;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<UploaderFTPBot> _logger;
-        public bool IsCompleted { get; private set; } = false;
-        public bool IsStarted { get; private set; } = false;
-
-        public string ResourceGroupId => _resourceGroup.Id;
-        public string BotId => _contentDeliveryRecord.Id;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+        public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderFTPBot)}";
+        public string ResourceGroupId => _resourceGroup.Id;
+        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
         public UploaderFTPBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
         {
-            this._contentDeliveryRecord = contentDeliveryRecord;
-            this._resourceGroup = resourceGroup;
-            this._backupRecord = backupRecord;
-            this._scopeFactory = scopeFactory;
+            _contentDeliveryRecord = contentDeliveryRecord;
+            _resourceGroup = resourceGroup;
+            _backupRecord = backupRecord;
+            _scopeFactory = scopeFactory;
             //Logger
-            using (var scope = _scopeFactory.CreateScope())
-                _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderFTPBot>>();
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderFTPBot>>();
         }
-        public async Task RunAsync()
+
+        public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
-            this.IsStarted = true;
-            this.IsCompleted = false;
-            Stopwatch stopwatch = new Stopwatch();
+            Status = BotStatus.Starting;
+            Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation($"Uploading Backup File via FTP....");
-                await Task.Delay(new Random().Next(1000));
+                _logger.LogInformation("uploading file to FTP Server: {Path}", _backupRecord.Path);
+                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 FtpDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Ftp ?? throw new Exception("no valid ftp config");
                 stopwatch.Start();
-                //Upload FTP
-                CheckIfFileExistsOrRemove(this._backupRecord.Path);
+                Status = BotStatus.Running;
+                //check file
+                if (!File.Exists(_backupRecord.Path))
+                    throw new Exception($"No Database File In Path or May have been deleted, Path: {_backupRecord.Path}");
                 //FTP Upload
                 string executionMessage = "FTP Uploading...";
                 //Directory
                 string validDirectory = (string.IsNullOrWhiteSpace(settings.Directory)) ? "/" : settings.Directory;
-                validDirectory = (validDirectory.EndsWith("/")) ? validDirectory : validDirectory + "/";
-                validDirectory = (validDirectory.StartsWith("/")) ? validDirectory : "/" + validDirectory;
+                validDirectory = validDirectory.EndsWith('/') ? validDirectory : validDirectory + "/";
+                validDirectory = validDirectory.StartsWith('/') ? validDirectory : "/" + validDirectory;
                 string validServerName = settings.Server.Replace("ftp", string.Empty).Replace("/", string.Empty).Replace(":", string.Empty);
                 //Filename
                 string fileName = Path.GetFileName(this._backupRecord.Path);
                 //Proceed
                 try
                 {
-                    string fullServerUrl = string.Format("ftp://{0}{1}{2}", validServerName, validDirectory, fileName);
+                    string fullServerUrl = $"ftp://{validServerName}{validDirectory}{fileName}";
                     byte[] fileContents;
                     using (FileStream sourceStream = File.OpenRead(this._backupRecord.Path))
                     {
                         fileContents = new byte[sourceStream.Length];
-                        await sourceStream.ReadAsync(fileContents, 0, fileContents.Length);
+                        await sourceStream.ReadAsync(fileContents, cancellationToken);
                     }
-                    using (HttpClient client = new HttpClient())
+
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
+                    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(fullServerUrl);
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
+                    request.Method = WebRequestMethods.Ftp.UploadFile;
+                    request.Credentials = new NetworkCredential(settings.Username, settings.Password);
+                    request.EnableSsl = false; // Set to true if your FTP server uses FTPS
+                    request.UsePassive = true;
+                    request.UseBinary = true;
+                    request.KeepAlive = false;
+                    request.ContentLength = fileContents.Length;
+
+                    // Write to the request stream
+                    using (Stream requestStream = await request.GetRequestStreamAsync())
                     {
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{settings.Username}:{settings.Password}")));
-                        ByteArrayContent content = new ByteArrayContent(fileContents);
-                        HttpResponseMessage response = await client.PutAsync(fullServerUrl, content);
-                        if (response.IsSuccessStatusCode)
+                        await requestStream.WriteAsync(fileContents, 0, fileContents.Length, cancellationToken);
+                    }
+
+                    // Get the response to ensure upload completed
+                    using (FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync())
+                    {
+                        if (response.StatusCode == FtpStatusCode.ClosingData)
                         {
                             executionMessage = $"Uploaded to Server: {settings.Server}";
                         }
                         else
                         {
-                            throw new Exception($"Failed to upload. Status code: {response.StatusCode}");
+                            throw new Exception($"Failed to upload. FTP status: {response.StatusDescription}");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception(ex.Message);
+                    throw new Exception($"Upload failed: {ex.Message}");
                 }
                 stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordDeliveryStatus.READY.ToString(), executionMessage, stopwatch.ElapsedMilliseconds);
-                _logger.LogInformation($"Uploading Backup File via FTP: {_backupRecord.Path}... SUCCESS");
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex.Message);
-                stopwatch.Stop();
-                UpdateBackupFeed(_contentDeliveryRecord.Id, BackupRecordBackupStatus.ERROR.ToString(), (ex.InnerException != null) ? $"Error Uploading: {ex.InnerException.Message}" : ex.Message, stopwatch.ElapsedMilliseconds);
-            }
-        }
-
-        private void CheckIfFileExistsOrRemove(string path)
-        {
-            if (!File.Exists(path))
-                throw new Exception($"No Database File In Path or May have been deleted, Path: {path}");
-        }
-
-        private void UpdateBackupFeed(string recordId, string status, string message, long elapsed)
-        {
-            try
-            {
-                using (var scope = _scopeFactory.CreateScope())
+                //notify update
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
-                    IContentDeliveryRecordRepository _persistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                    _persistanceService.UpdateStatusFeedAsync(recordId, status, message, elapsed);
-                }
+                    DeliveryFeedType = DeliveryFeedType.BackupDeliveryNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = _contentDeliveryRecord.Id,
+                    Status = BackupRecordStatus.READY,
+                    Message = executionMessage,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
+
+                _logger.LogInformation("Successfully uploaded file to FTP Server: {Path}", _backupRecord.Path);
+                Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
-                this._logger.LogError("Error Updating Feed: " + ex.Message);
-            }
-            finally
-            {
-                IsCompleted = true;
+                Status = BotStatus.Error;
+                _logger.LogError(ex.Message);
+                stopwatch.Stop();
+                await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
+                {
+                    DeliveryFeedType = DeliveryFeedType.BackupDeliveryNotify,
+                    BackupRecordId = _backupRecord.Id,
+                    BackupRecordDeliveryId = _contentDeliveryRecord.Id,
+                    Status = BackupRecordStatus.ERROR,
+                    Message = (ex.InnerException != null) ? $"Error: {ex.InnerException.Message}" : ex.Message,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                }, cancellationToken);
             }
         }
     }

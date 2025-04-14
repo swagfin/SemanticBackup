@@ -10,7 +10,7 @@ namespace SemanticBackup.Core.Models
         [Required]
         public string BackupDatabaseInfoId { get; set; }
         public string Name { get; set; }
-        public string BackupStatus { get; set; } = BackupRecordBackupStatus.QUEUED.ToString();
+        public string BackupStatus { get; set; } = BackupRecordStatus.QUEUED.ToString();
         [Required]
         public string Path { get; set; }
         public DateTime StatusUpdateDateUTC { get; set; } = DateTime.UtcNow;
@@ -24,7 +24,8 @@ namespace SemanticBackup.Core.Models
         public string RestoreExecutionMessage { get; set; } = string.Empty;
         public string RestoreConfirmationToken { get; set; } = string.Empty;
     }
-    public enum BackupRecordBackupStatus
+
+    public enum BackupRecordStatus
     {
         QUEUED,
         EXECUTING,
@@ -33,6 +34,7 @@ namespace SemanticBackup.Core.Models
         READY,
         ERROR
     }
+
     public enum BackupRecordExecutedDeliveryRunStatus
     {
         PENDING_EXECUTION,
