@@ -30,27 +30,27 @@
                     <section class="ui stackable cards">
 
                         @foreach (var resourceGrp in Model.ResourceGroups)
-                            {
-                                <div class="card">
-                                    <div class="content">
-                                    <span class="right floated mini ui image"> <a href="/resource-groups/delete/@(resourceGrp.Name)" class="right floated mini ui image"><span class="ui mini red icon label"><i class="trash icon"></i></span> </a></span>
-                                        <div class="header">
-                                            @(resourceGrp.Name)
-                                        </div>
-                                        <div class="extra meta">
-                                            <div class="ui divider"></div>
-                                            <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", resourceGrp.MaximumRunningBots)</span><br />
-                                            <span><b><i class="file archive outline icon"></i> Compression:</b> @string.Format("{0}", resourceGrp.CompressBackupFiles ? "ZIP" : "(none)")</span>
-                                        </div>
+                        {
+                            <div class="card">
+                                <div class="content">
+                                    <a title="Delete resource Group" href="/resource-groups/delete/@(resourceGrp.Name)" class="right floated mini ui image"><span class="ui mini red icon label"><i class="trash icon"></i></span> </a>
+                                    <div class="header">
+                                        @(resourceGrp.Name)
                                     </div>
-                                    <div class="extra content">
-                                        <div class="ui two buttons">
-                                            <a class="ui button" href="/resource-groups/@(resourceGrp.Name)/dashboard"><i class="chart line icon icon"></i>Manage</a>
-                                            <a href="/resource-groups/delete/@(resourceGrp.Name)" class="ui red button"><i class="delete icon"></i>Delete</a>
-                                        </div>
+                                    <div class="extra meta">
+                                        <div class="ui divider"></div>
+                                        <span><b><i class="bolt icon"></i> Max Bots:</b> @string.Format("{0:N0} concurrent", resourceGrp.MaximumRunningBots)</span><br />
+                                        <span><b><i class="file archive outline icon"></i> Compression:</b> @string.Format("{0}", resourceGrp.CompressBackupFiles ? "ZIP" : "(none)")</span>
                                     </div>
                                 </div>
-                            }
+                                <div class="extra content">
+                                    <div class="ui two buttons">
+                                        <a class="ui basic blue button" href="/resource-groups/@(resourceGrp.Name)/dashboard"><i class="chart line icon icon"></i>Manage</a>
+                                        <a class="ui basic button" href="/resource-groups/edit/@(resourceGrp.Name)"><i class="edit icon"></i>Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </section>
 
                 }
