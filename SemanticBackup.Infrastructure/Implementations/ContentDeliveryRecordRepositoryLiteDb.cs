@@ -76,15 +76,15 @@ namespace SemanticBackup.Infrastructure.Implementations
             }
             return false;
         }
-        public async Task<bool> RemoveAsync(string id)
+
+        public async Task RemoveAsync(string id)
         {
-            var collection = _db.GetCollection<BackupRecordDelivery>();
-            var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
+            ILiteCollectionAsync<BackupRecordDelivery> collection = _db.GetCollection<BackupRecordDelivery>();
+            BackupRecordDelivery objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
-                return await collection.DeleteAsync(new BsonValue(objFound.Id));
+                await collection.DeleteAsync(new BsonValue(objFound.Id));
             }
-            return false;
         }
 
         public async Task<List<string>> GetAllNoneResponsiveAsync(List<string> statusChecks, int minuteDifference)

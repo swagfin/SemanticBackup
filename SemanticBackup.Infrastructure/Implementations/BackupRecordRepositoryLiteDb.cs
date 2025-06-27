@@ -1,13 +1,13 @@
 ﻿using LiteDB;
 using LiteDB.Async;
 using SemanticBackup.Core;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.Implementations
@@ -154,25 +154,22 @@ namespace SemanticBackup.Infrastructure.Implementations
             _ = await _databaseInfoRepository.VerifyDatabaseInResourceGroupThrowIfNotExistAsync(resourceGroupId, backupRecordResponse.BackupDatabaseInfoId ?? string.Empty);
             return backupRecordResponse;
         }
-        public async Task<bool> RemoveAsync(long id)
+
+        public async Task RemoveAsync(long id)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
                 string pathToRemove = objFound.Path;
-                bool removedSuccess = await collection.DeleteAsync(new BsonValue(objFound.Id));
-                if (removedSuccess)
-                {
-                    TryDeleteContentDispatchRecordsAsync(id);
-                    TryDeleteOldFile(pathToRemove);
-                }
-                return removedSuccess;
+                await collection.DeleteAsync(new BsonValue(objFound.Id));
+                //remove content dispatch records
+                await TryDeleteContentDispatchRecordsAsync(id);
+                await TryDeleteOldFileAsync(pathToRemove);
             }
-            return false;
         }
 
-        private async void TryDeleteContentDispatchRecordsAsync(long id)
+        private async Task TryDeleteContentDispatchRecordsAsync(long id)
         {
             try
             {
@@ -197,8 +194,8 @@ namespace SemanticBackup.Infrastructure.Implementations
         }
         public async Task<bool> UpdateDeliveryRunnedAsync(long backupRecordId, bool hasRun, string executedDeliveryRunStatus)
         {
-            var collection = _db.GetCollection<BackupRecord>();
-            var objFound = await collection.Query().Where(x => x.Id == backupRecordId).FirstOrDefaultAsync();
+            ILiteCollectionAsync<BackupRecord> collection = _db.GetCollection<BackupRecord>();
+            BackupRecord objFound = await collection.Query().Where(x => x.Id == backupRecordId).FirstOrDefaultAsync();
             if (objFound != null)
             {
                 objFound.ExecutedDeliveryRun = hasRun;
@@ -210,6 +207,7 @@ namespace SemanticBackup.Infrastructure.Implementations
             }
             return false;
         }
+
         private void DispatchUpdatedStatus(BackupRecord record, bool isNewRecord = false)
         {
             if (_backupRecordStatusChangedNotifiers != null)
@@ -220,36 +218,21 @@ namespace SemanticBackup.Infrastructure.Implementations
                     }
                     catch { }
         }
-        private void TryDeleteOldFile(string path)
+
+        private static async Task TryDeleteOldFileAsync(string path)
         {
             try
             {
-                bool success = false;
-                int attempts = 0;
-                do
-                {
-                    try
-                    {
-                        attempts++;
-                        if (File.Exists(path))
-                            File.Delete(path);
-                        success = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        if (attempts >= 10)
-                        {
-                            Thread.Sleep(2000);
-                            throw new Exception($"Maximum Deletion Attempts, Error: {ex.Message}");
-                        }
-                    }
-                }
-                while (!success);
+                await WithRetry.TaskAsync(() =>
+                  {
+                      //check file exists
+                      if (File.Exists(path))
+                          File.Delete(path);
+                      return Task.CompletedTask;
 
+                  }, 3, TimeSpan.FromSeconds(5));
             }
-            catch (Exception) { }
+            catch (Exception ex) { Console.WriteLine($"Failed to remove File: {ex.Message}"); }
         }
-
-
     }
 }

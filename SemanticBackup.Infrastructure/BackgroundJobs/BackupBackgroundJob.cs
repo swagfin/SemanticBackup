@@ -103,9 +103,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                 }
                             }
                             //Check if Any Delete
-                            if (scheduleToDelete.Count > 0)
-                                foreach (var rm in scheduleToDelete)
-                                    await backupRecordPersistanceService.RemoveAsync(rm);
+                            foreach (var rm in scheduleToDelete)
+                                await backupRecordPersistanceService.RemoveAsync(rm);
                         }
 
                     }
@@ -124,26 +123,25 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(3000); //Runs After 3sec
+                    await Task.Delay(3000, cancellationToken); //Runs After 3sec
                     try
                     {
                         using IServiceScope scope = _serviceScopeFactory.CreateScope();
                         //DI Injections
                         IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
+                        IContentDeliveryRecordRepository contentDeliveryRecordsService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                         //Proceed
-                        List<BackupRecord> expiredBackups = await backupRecordPersistanceService.GetAllExpiredAsync();
-                        if (expiredBackups != null && expiredBackups.Count > 0)
+                        List<BackupRecord> expiredBackups = (await backupRecordPersistanceService.GetAllExpiredAsync()) ?? [];
+                        //proceed
+                        foreach (BackupRecord rm in expiredBackups.Take(50).ToList())
                         {
-                            foreach (BackupRecord rm in expiredBackups.Take(50).ToList())
-                                if (!await backupRecordPersistanceService.RemoveAsync(rm.Id))
-                                    _logger.LogWarning($"Unable to delete Expired Backup Record: {rm.Id}");
-                                else
-                                {
-                                    _logger.LogInformation($"Removed Expired Backup Record, Id: {rm.Id}");
-                                    //Options InDepth Delete
-                                    if (_persistanceOptions.InDepthBackupRecordDeleteEnabled)
-                                        await StartInDepthDeleteForAsync(rm);
-                                }
+                            //get relation 
+                            List<BackupRecordDelivery> rmBackupRecords = (await contentDeliveryRecordsService.GetAllByBackupRecordIdAsync(rm.Id)) ?? [];
+                            //remove with file
+                            await backupRecordPersistanceService.RemoveAsync(rm.Id);
+                            //Options InDepth Delete
+                            if (_persistanceOptions.InDepthBackupRecordDeleteEnabled)
+                                await StartInDepthDeleteForAsync(rm, rmBackupRecords);
                         }
                     }
                     catch (Exception ex)
@@ -155,7 +153,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             t.Start();
         }
 
-        private async Task StartInDepthDeleteForAsync(BackupRecord rm)
+        private async Task StartInDepthDeleteForAsync(BackupRecord rm, List<BackupRecordDelivery> rmBackupRecords)
         {
             try
             {
@@ -163,7 +161,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                 //scope
                 using IServiceScope scope = _serviceScopeFactory.CreateScope();
                 IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
-                IContentDeliveryRecordRepository contentDeliveryRecordsService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                 BotsManagerBackgroundJob botsManagerBackgroundJob = scope.ServiceProvider.GetRequiredService<BotsManagerBackgroundJob>();
                 IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                 //get db information
@@ -173,11 +170,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                 if (resourceGroup == null)
                     return;
                 //Proceed
-                List<BackupRecordDelivery> dbRecords = await contentDeliveryRecordsService.GetAllByBackupRecordIdAsync(rm.Id); //database record content delivery
-                if (dbRecords == null)
+                if (rmBackupRecords == null)
                     return;
                 List<string> supportedInDepthDelete = [BackupDeliveryConfigTypes.Dropbox.ToString(), BackupDeliveryConfigTypes.AzureBlobStorage.ToString()];
-                List<BackupRecordDelivery> supportedDeliveryRecords = [.. dbRecords.Where(x => supportedInDepthDelete.Contains(x.DeliveryType))];
+                List<BackupRecordDelivery> supportedDeliveryRecords = [.. rmBackupRecords.Where(x => supportedInDepthDelete.Contains(x.DeliveryType))];
                 if (supportedDeliveryRecords == null || supportedDeliveryRecords.Count == 0)
                     return;
                 foreach (BackupRecordDelivery rec in supportedDeliveryRecords)

@@ -134,9 +134,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                 }
                             }
                             //Check if Any Delete
-                            if (scheduleToDeleteRecords.Count > 0)
-                                foreach (var rm in scheduleToDeleteRecords)
-                                    await contentDeliveryRecordPersistanceService.RemoveAsync(rm);
+                            foreach (string rm in scheduleToDeleteRecords)
+                                await contentDeliveryRecordPersistanceService.RemoveAsync(rm);
                         }
                     }
                     catch (Exception ex)
@@ -144,42 +143,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                         _logger.LogError(ex.Message);
                     }
 
-                }
-            });
-            t.Start();
-        }
-
-        private void SetupBackgroundRemovedExpiredBackupsService(CancellationToken cancellationToken)
-        {
-            Thread t = new Thread(async () =>
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    await Task.Delay(60000, cancellationToken); //Runs After 1 Minute
-                    try
-                    {
-                        using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                        //DI INJECTIONS
-                        IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                        //Proceed
-                        List<BackupRecord> expiredBackups = await backupRecordPersistanceService.GetAllExpiredAsync();
-                        if (expiredBackups != null && expiredBackups.Count > 0)
-                        {
-                            List<long> toDeleteList = new();
-                            foreach (BackupRecord backupRecord in expiredBackups)
-                                toDeleteList.Add(backupRecord.Id);
-                            _logger.LogInformation($"Queued ({expiredBackups.Count}) Expired Records for Delete");
-                            //Check if Any Delete
-                            if (toDeleteList.Count > 0)
-                                foreach (var rm in toDeleteList)
-                                    if (!(await backupRecordPersistanceService.RemoveAsync(rm)))
-                                        _logger.LogWarning("Unable to delete Expired Backup Record");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex.Message);
-                    }
                 }
             });
             t.Start();
