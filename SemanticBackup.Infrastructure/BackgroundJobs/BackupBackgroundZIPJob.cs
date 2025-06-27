@@ -77,8 +77,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                         {
                                             _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
                                             //Add to Queue
-                                            _botsManagerBackgroundJob.AddBot(new BackupZippingBot(resourceGroup.Id, backupRecord, _serviceScopeFactory));
-                                            bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
+                                            _botsManagerBackgroundJob.AddBot(new BackupZippingBot(resourceGroup.Id, backupRecord));
+                                            bool updated = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
                                             if (updated)
                                                 _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
                                             else
@@ -88,7 +88,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                     else
                                     {
                                         _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
-                                        bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.READY.ToString());
+                                        bool updated = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.READY.ToString());
                                         if (updated)
                                             _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
                                         else

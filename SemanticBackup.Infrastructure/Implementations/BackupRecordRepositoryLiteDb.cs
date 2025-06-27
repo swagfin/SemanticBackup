@@ -21,13 +21,13 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public BackupRecordRepositoryLiteDb(IEnumerable<IRecordStatusChangedNotifier> backupRecordStatusChangedNotifiers, IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService, IDatabaseInfoRepository databaseInfoRepository)
         {
-            this._db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backups.db")) { Connection = ConnectionType.Shared });
+            _db = new LiteDatabaseAsync(new ConnectionString(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "backups.db")) { Connection = ConnectionType.Shared });
             //Init
-            this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
+            _db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
             //Proceed
-            this._backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
-            this._contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
-            this._databaseInfoRepository = databaseInfoRepository;
+            _backupRecordStatusChangedNotifiers = backupRecordStatusChangedNotifiers;
+            _contentDeliveryRecordPersistanceService = contentDeliveryRecordPersistanceService;
+            _databaseInfoRepository = databaseInfoRepository;
         }
 
 
@@ -102,8 +102,8 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public async Task<bool> UpdateStatusFeedAsync(long id, string status, string message = null, long executionInMilliseconds = 0, string updateFilePath = null)
         {
-            var collection = _db.GetCollection<BackupRecord>();
-            var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
+            ILiteCollectionAsync<BackupRecord> collection = _db.GetCollection<BackupRecord>();
+            BackupRecord objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
                 objFound.BackupStatus = status;
@@ -127,8 +127,8 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public async Task<bool> UpdateRestoreStatusFeedAsync(long id, string status, string message = null, string confirmationToken = null)
         {
-            var collection = _db.GetCollection<BackupRecord>();
-            var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
+            ILiteCollectionAsync<BackupRecord> collection = _db.GetCollection<BackupRecord>();
+            BackupRecord objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();
             if (objFound != null)
             {
                 objFound.RestoreStatus = status;

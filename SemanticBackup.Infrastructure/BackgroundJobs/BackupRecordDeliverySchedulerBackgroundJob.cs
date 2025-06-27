@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
@@ -15,9 +14,26 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BackupRecordDeliverySchedulerBackgroundJob : IHostedService
     {
         private readonly ILogger<BackupRecordDeliverySchedulerBackgroundJob> _logger;
-        public BackupRecordDeliverySchedulerBackgroundJob(ILogger<BackupRecordDeliverySchedulerBackgroundJob> logger)
+
+        private readonly IResourceGroupRepository _resourceGroupRepository;
+        private readonly IBackupRecordRepository _backupRecordRepository;
+        private readonly IContentDeliveryRecordRepository _deliveryRecordRepository;
+        private readonly IDatabaseInfoRepository _databaseInfoRepository;
+
+        public BackupRecordDeliverySchedulerBackgroundJob(
+            ILogger<BackupRecordDeliverySchedulerBackgroundJob> logger,
+
+            IResourceGroupRepository resourceGroupRepository,
+            IBackupRecordRepository backupRecordRepository,
+            IContentDeliveryRecordRepository contentDeliveryRecordRepository,
+            IDatabaseInfoRepository databaseInfoRepository
+            )
         {
-            this._logger = logger;
+            _logger = logger;
+            _resourceGroupRepository = resourceGroupRepository;
+            _backupRecordRepository = backupRecordRepository;
+            _deliveryRecordRepository = contentDeliveryRecordRepository;
+            _databaseInfoRepository = databaseInfoRepository;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -41,29 +57,22 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     await Task.Delay(4000, cancellationToken);
                     try
                     {
-                        using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                        //DI INJECTIONS
-                        IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                         //Proceed
-                        List<BackupRecord> pendingExecutionRecords = await backupRecordPersistanceService.GetAllReadyAndPendingDeliveryAsync();
+                        List<BackupRecord> pendingExecutionRecords = await _backupRecordRepository.GetAllReadyAndPendingDeliveryAsync();
                         foreach (BackupRecord backupRecord in pendingExecutionRecords?.OrderBy(x => x.RegisteredDateUTC)?.ToList())
                         {
                             _logger.LogInformation($"Queueing Content Delivery for Backup Record Id: {backupRecord.Id}...");
-                            //## get other services
-                            IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
-                            IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                            IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                             //get db information
-                            BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                            BackupDatabaseInfo backupRecordDbInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
                             //Check if valid Resource Group
-                            ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
+                            ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
                             //Has Valid Resource Group
 
                             //check if backup delivery config is set
                             if (resourceGroup.BackupDeliveryConfig == null)
                             {
                                 _logger.LogInformation($"Resource Group Id: {backupRecord.Id}, doesn't have any backup delivery config, Skipped");
-                                _ = await backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
+                                _ = await _backupRecordRepository.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
                             }
                             else
                             {
@@ -84,7 +93,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                     //check if enabled
                                     if (isDeliveryEnabled)
                                     {
-                                        bool queuedSuccess = await contentDeliveryRecordPersistanceService.AddOrUpdateAsync(new BackupRecordDelivery
+                                        bool queuedSuccess = await _deliveryRecordRepository.AddOrUpdateAsync(new BackupRecordDelivery
                                         {
                                             Id = $"{backupRecord.Id}|{resourceGroup.Id}|{deliveryType}".ToMD5String().ToUpper(), //Unique Identification
                                             BackupRecordId = backupRecord.Id,
@@ -99,7 +108,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                     }
                                 }
                                 //Update Execution
-                                _ = await backupRecordPersistanceService.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SUCCESSFULLY_EXECUTED.ToString());
+                                _ = await _backupRecordRepository.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SUCCESSFULLY_EXECUTED.ToString());
                             }
                         }
                     }
