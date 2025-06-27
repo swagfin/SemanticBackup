@@ -18,17 +18,14 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         private readonly ILogger<BackupSchedulerBackgroundJob> _logger;
         private readonly SystemConfigOptions _persistanceOptions;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public BackupSchedulerBackgroundJob(
             ILogger<BackupSchedulerBackgroundJob> logger,
             SystemConfigOptions persistanceOptions,
-            IServiceScopeFactory serviceScopeFactory,
             BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             this._logger = logger;
             this._persistanceOptions = persistanceOptions;
-            this._serviceScopeFactory = serviceScopeFactory;
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
         public Task StartAsync(CancellationToken cancellationToken)

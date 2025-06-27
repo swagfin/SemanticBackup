@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Minio;
+﻿using Minio;
 using Minio.DataModel.Args;
 using Minio.DataModel.Response;
 using SemanticBackup.Core.Models;
@@ -17,30 +15,25 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecordDelivery _contentDeliveryRecord;
         private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<UploaderObjectStorageBot> _logger;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderObjectStorageBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
         public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
-        public UploaderObjectStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
+        public UploaderObjectStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord)
         {
             _contentDeliveryRecord = contentDeliveryRecord;
             _resourceGroup = resourceGroup;
             _backupRecord = backupRecord;
-            _scopeFactory = scopeFactory;
-            //Logger
-            using IServiceScope scope = _scopeFactory.CreateScope();
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderObjectStorageBot>>();
         }
+
         public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
             Status = BotStatus.Starting;
             Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation("uploading file to ObjectStorage: {Path}", _backupRecord.Path);
+                Console.WriteLine($"uploading file to ObjectStorage: {_backupRecord.Path}");
                 //proceed
                 await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 ObjectStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.ObjectStorage ?? throw new Exception("no valid object storage config");
@@ -85,13 +78,14 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     Message = executionMessage,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
-                _logger.LogInformation("Successfully uploaded file to ObjectStorage: {Path}", _backupRecord.Path);
+
+                Console.WriteLine($"Successfully uploaded file to ObjectStorage: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                _logger.LogError(ex.Message);
+                Console.WriteLine(ex.Message);
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

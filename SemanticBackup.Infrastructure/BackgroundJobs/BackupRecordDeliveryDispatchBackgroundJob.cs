@@ -15,13 +15,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BackupRecordDeliveryDispatchBackgroundJob : IHostedService
     {
         private readonly ILogger<BackupBackgroundJob> _logger;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
 
-        public BackupRecordDeliveryDispatchBackgroundJob(ILogger<BackupBackgroundJob> logger, IServiceScopeFactory serviceScopeFactory, BotsManagerBackgroundJob botsManagerBackgroundJob)
+        public BackupRecordDeliveryDispatchBackgroundJob(ILogger<BackupBackgroundJob> logger, BotsManagerBackgroundJob botsManagerBackgroundJob)
         {
             _logger = logger;
-            _serviceScopeFactory = serviceScopeFactory;
             _botsManagerBackgroundJob = botsManagerBackgroundJob;
         }
 
@@ -29,7 +27,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         {
             _logger.LogInformation("Starting service....");
             SetupBackgroundService(cancellationToken);
-            SetupBackgroundRemovedExpiredBackupsService(cancellationToken);
             return Task.CompletedTask;
         }
 

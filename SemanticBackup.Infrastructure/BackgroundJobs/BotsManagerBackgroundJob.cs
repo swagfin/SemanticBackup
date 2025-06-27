@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
@@ -14,14 +13,16 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BotsManagerBackgroundJob : IHostedService
     {
         private readonly ILogger<BotsManagerBackgroundJob> _logger;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IBackupRecordRepository _backupRecordRepository;
+        private readonly IContentDeliveryRecordRepository _deliveryRecordRepository;
 
         private List<IBot> Bots { get; set; } = [];
 
-        public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger, IServiceScopeFactory serviceScopeFactory)
+        public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository deliveryRecordRepository)
         {
             _logger = logger;
-            _serviceScopeFactory = serviceScopeFactory;
+            _backupRecordRepository = backupRecordRepository;
+            _deliveryRecordRepository = deliveryRecordRepository;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -91,15 +92,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             {
                 if (feed.DeliveryFeedType == DeliveryFeedType.BackupNotify && feed.BackupRecordId > 0)
                 {
-                    using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                    IBackupRecordRepository _backupRecordRepo = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                    await _backupRecordRepo.UpdateStatusFeedAsync(feed.BackupRecordId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds, feed.NewFilePath);
+                    await _backupRecordRepository.UpdateStatusFeedAsync(feed.BackupRecordId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds, feed.NewFilePath);
                 }
                 else if (feed.DeliveryFeedType == DeliveryFeedType.BackupDeliveryNotify && !string.IsNullOrWhiteSpace(feed.BackupRecordDeliveryId))
                 {
-                    using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                    IContentDeliveryRecordRepository _contentDeliveryRepo = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
-                    await _contentDeliveryRepo.UpdateStatusFeedAsync(feed.BackupRecordDeliveryId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds);
+                    await _deliveryRecordRepository.UpdateStatusFeedAsync(feed.BackupRecordDeliveryId, feed.Status.ToString(), feed.Message, feed.ElapsedMilliseconds);
                 }
                 else
                     throw new Exception($"unsupported delivery-feed-type: {feed.DeliveryFeedType}");

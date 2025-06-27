@@ -15,11 +15,9 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BackupRecordDeliverySchedulerBackgroundJob : IHostedService
     {
         private readonly ILogger<BackupRecordDeliverySchedulerBackgroundJob> _logger;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
-        public BackupRecordDeliverySchedulerBackgroundJob(ILogger<BackupRecordDeliverySchedulerBackgroundJob> logger, IServiceScopeFactory serviceScopeFactory)
+        public BackupRecordDeliverySchedulerBackgroundJob(ILogger<BackupRecordDeliverySchedulerBackgroundJob> logger)
         {
             this._logger = logger;
-            this._serviceScopeFactory = serviceScopeFactory;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
