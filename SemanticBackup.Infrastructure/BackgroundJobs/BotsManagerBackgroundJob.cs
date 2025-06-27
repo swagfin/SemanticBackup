@@ -80,7 +80,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                         _logger.LogWarning("Error: {Message}", ex.Message);
                     }
                     //Delay
-                    await Task.Delay(3000, cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                 }
             });
             t.Start();

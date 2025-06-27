@@ -34,7 +34,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             {
                 Console.WriteLine($"deleting uploaded file from ObjectStorage: {_backupRecord.Path}, Id: {_contentDeliveryRecord.Id}");
                 //proceed
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 ObjectStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.ObjectStorage ?? throw new Exception("no valid object storage config");
                 stopwatch.Start();
                 Status = BotStatus.Running;

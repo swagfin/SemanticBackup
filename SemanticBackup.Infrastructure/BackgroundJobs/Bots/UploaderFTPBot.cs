@@ -32,7 +32,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             try
             {
                 Console.WriteLine($"uploading file to FTP Server: {_backupRecord.Path}");
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 FtpDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Ftp ?? throw new Exception("no valid ftp config");
                 stopwatch.Start();
                 Status = BotStatus.Running;

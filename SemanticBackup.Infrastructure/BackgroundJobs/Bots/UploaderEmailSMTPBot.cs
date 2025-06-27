@@ -35,7 +35,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             try
             {
                 Console.WriteLine($"uploading file to SMTP Mail: {_backupRecord.Path}");
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 SmtpDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Smtp ?? throw new Exception("no valid smtp config");
                 stopwatch.Start();
                 Status = BotStatus.Running;

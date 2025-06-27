@@ -33,7 +33,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             {
                 Console.WriteLine($"Deleting backup file from DropBox: {_backupRecord.Path}, Id: {_contentDeliveryRecord.Id}");
                 //proceed
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 DropboxDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Dropbox ?? throw new Exception("no valid dropbox config");
                 stopwatch.Start();
                 Status = BotStatus.Running;

@@ -33,7 +33,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             {
                 Console.WriteLine($"uploading file to AzureBlobStorage: {_backupRecord.Path}");
                 //proceed
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 AzureBlobStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.AzureBlobStorage ?? throw new Exception("no valid azure blob storage config");
                 stopwatch.Start();
                 Status = BotStatus.Running;

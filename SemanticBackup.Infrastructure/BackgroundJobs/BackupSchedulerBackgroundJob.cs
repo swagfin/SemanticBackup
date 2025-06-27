@@ -65,7 +65,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(3000, cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                     try
                     {
                         //Proceed
@@ -110,17 +110,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
 
                                         bool addedSuccess = await _backupRecordRepository.AddOrUpdateAsync(newRecord);
                                         if (!addedSuccess)
-                                            throw new Exception("Unable to Queue Database for Backup");
-                                        else
-                                            _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
-                                        //Update Schedule
-                                        bool updatedSchedule = await _backupScheduleRepository.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
-                                        if (!updatedSchedule)
-                                            _logger.LogWarning("Unable to Update Scheduled Next Run");
-                                        //Buy Some Seconds to avoid Conflict Name
-                                        await Task.Delay(new Random().Next(100));
+                                            throw new Exception($"Unable to Queue Database for Backup : {newRecord.Name}");
+                                        //set last run 
+                                        await _backupScheduleRepository.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
                                     }
-
                                 }
 
                             }
@@ -142,7 +135,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         {
             var t = new Thread(async () =>
             {
-                List<string> statusChecks = new List<string> { BackupRecordStatus.EXECUTING.ToString(), BackupRecordStatus.COMPRESSING.ToString(), BackupRecordDeliveryStatus.EXECUTING.ToString() };
+                List<string> statusChecks = [BackupRecordStatus.EXECUTING.ToString(), BackupRecordStatus.COMPRESSING.ToString(), BackupRecordDeliveryStatus.EXECUTING.ToString()];
                 int executionTimeoutInMinutes = _persistanceOptions.ExecutionTimeoutInMinutes < 1 ? 1 : _persistanceOptions.ExecutionTimeoutInMinutes;
                 while (!cancellationToken.IsCancellationRequested)
                 {

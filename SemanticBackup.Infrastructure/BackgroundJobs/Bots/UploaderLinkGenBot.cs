@@ -32,7 +32,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             try
             {
                 Console.WriteLine($"creating download link for file: {_backupRecord.Path}");
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 DownloadLinkDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.DownloadLink ?? throw new Exception("no valid download link config");
                 stopwatch.Start();
                 //get download link::

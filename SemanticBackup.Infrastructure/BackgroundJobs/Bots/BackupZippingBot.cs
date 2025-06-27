@@ -34,7 +34,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 if (!File.Exists(_backupRecord.Path))
                     throw new Exception($"No Database File In Path or may have been deleted, Path: {_backupRecord.Path}");
                 //proceed
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 stopwatch.Start();
                 Status = BotStatus.Running;
                 //proceed

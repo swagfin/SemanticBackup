@@ -33,7 +33,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             try
             {
                 Console.WriteLine($"uploading file to Dropbox: {_backupRecord.Path}");
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 DropboxDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Dropbox ?? throw new Exception("no valid dropbox config");
                 stopwatch.Start();
                 Status = BotStatus.Running;

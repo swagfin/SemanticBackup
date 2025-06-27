@@ -38,7 +38,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 if (!Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
                 //proceed
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 stopwatch.Start();
                 Status = BotStatus.Running;
                 //Execute Service
