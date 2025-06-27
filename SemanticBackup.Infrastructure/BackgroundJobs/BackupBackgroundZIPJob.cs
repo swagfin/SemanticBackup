@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
@@ -15,17 +14,26 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BackupBackgroundZIPJob : IHostedService
     {
         private readonly ILogger<BackupBackgroundZIPJob> _logger;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
+
+        private readonly IResourceGroupRepository _resourceGroupRepository;
+        private readonly IDatabaseInfoRepository _databaseInfoRepository;
+        private readonly IBackupRecordRepository _backupRecordRepository;
 
         public BackupBackgroundZIPJob(
             ILogger<BackupBackgroundZIPJob> logger,
-            IServiceScopeFactory serviceScopeFactory,
-            BotsManagerBackgroundJob botsManagerBackgroundJob)
+            BotsManagerBackgroundJob botsManagerBackgroundJob,
+
+            IResourceGroupRepository resourceGroupRepository,
+            IDatabaseInfoRepository databaseInfoRepository,
+            IBackupRecordRepository backupRecordRepository
+            )
         {
             this._logger = logger;
-            this._serviceScopeFactory = serviceScopeFactory;
             this._botsManagerBackgroundJob = botsManagerBackgroundJob;
+            this._resourceGroupRepository = resourceGroupRepository;
+            this._databaseInfoRepository = databaseInfoRepository;
+            this._backupRecordRepository = backupRecordRepository;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -46,24 +54,19 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(7000, cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                     try
                     {
-                        using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                        //DI INJECTIONS
-                        IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                        IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
-                        IDatabaseInfoRepository databaseInfoRepository = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
                         //Proceed
-                        List<BackupRecord> queuedBackups = await backupRecordPersistanceService.GetAllByStatusAsync(BackupRecordStatus.COMPLETED.ToString());
+                        List<BackupRecord> queuedBackups = await _backupRecordRepository.GetAllByStatusAsync(BackupRecordStatus.COMPLETED.ToString());
                         if (queuedBackups != null && queuedBackups.Count > 0)
                         {
                             foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
                             {
                                 //get valid database
-                                BackupDatabaseInfo backupRecordDbInfo = await databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                                BackupDatabaseInfo backupRecordDbInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
                                 //Check if valid Resource Group
-                                ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
+                                ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
                                 if (resourceGroup != null)
                                 {
                                     //Use Resource Group Threads
@@ -74,8 +77,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                         {
                                             _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
                                             //Add to Queue
-                                            _botsManagerBackgroundJob.AddBot(new BackupZippingRobot(resourceGroup.Id, backupRecord, _serviceScopeFactory));
-                                            bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
+                                            _botsManagerBackgroundJob.AddBot(new BackupZippingBot(resourceGroup.Id, backupRecord));
+                                            bool updated = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
                                             if (updated)
                                                 _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
                                             else
@@ -85,7 +88,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                     else
                                     {
                                         _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
-                                        bool updated = await backupRecordPersistanceService.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.READY.ToString());
+                                        bool updated = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.READY.ToString());
                                         if (updated)
                                             _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
                                         else

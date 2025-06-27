@@ -22,17 +22,15 @@ WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10;
             string connectionString = resourceGroup.GetDbConnectionString();
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new Exception($"Invalid connection string provided for Database Type: {resourceGroup.DbType} is not Valid or is not Supported");
-            using (DbConnection connection = new SqlConnection(connectionString))
-            {
-                await connection.OpenAsync();
-                DbCommand command = connection.CreateCommand();
-                command.CommandTimeout = 0; // Backups can take a long time for big databases
-                command.CommandText = string.Format(backupCommandTemplate, databaseName, backupRecord.Path.Trim());
-                //Execute
-                int queryRows = await command.ExecuteNonQueryAsync();
-                await connection.CloseAsync();
-                return true;
-            }
+            using DbConnection connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
+            DbCommand command = connection.CreateCommand();
+            command.CommandTimeout = 0; // Backups can take a long time for big databases
+            command.CommandText = string.Format(backupCommandTemplate, databaseName, backupRecord.Path.Trim());
+            //Execute
+            int queryRows = await command.ExecuteNonQueryAsync();
+            await connection.CloseAsync();
+            return true;
         }
 
         public async Task<bool> RestoreDatabaseAsync(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord)
@@ -48,45 +46,41 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
                 throw new Exception($"Invalid connection string provided for Database Type: {resourceGroup.DbType} is not Valid or is not Supported");
             if (string.IsNullOrEmpty(backupRecord.Path))
                 throw new Exception("Source Location can't be NULL");
-            using (DbConnection connection = new SqlConnection(connectionString))
-            {
-                await connection.OpenAsync();
-                DbCommand command = connection.CreateCommand();
-                command.CommandTimeout = 0; // Backups can take a long time for big databases
-                command.CommandText = string.Format(restoreCommandTemplate, databaseName, backupRecord.Path);
-                //Execute
-                int queryRows = await command.ExecuteNonQueryAsync();
-                connection.Close();
-                return true;
-            }
+            using DbConnection connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
+            DbCommand command = connection.CreateCommand();
+            command.CommandTimeout = 0; // Backups can take a long time for big databases
+            command.CommandText = string.Format(restoreCommandTemplate, databaseName, backupRecord.Path);
+            //Execute
+            int queryRows = await command.ExecuteNonQueryAsync();
+            connection.Close();
+            return true;
         }
 
         public async Task<List<string>> GetAvailableDatabaseCollectionAsync(ResourceGroup resourceGroup)
         {
             List<string> availableDbs = new List<string>();
-            string[] exclude = new string[] { "master", "model", "msdb", "tempdb" };
+            string[] exclude = ["master", "model", "msdb", "tempdb"];
             string connectionString = resourceGroup.GetDbConnectionString();
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                using (SqlCommand cmd = new SqlCommand("SELECT name FROM master.dbo.sysdatabases"))
+                using SqlCommand cmd = new SqlCommand("SELECT name FROM master.dbo.sysdatabases");
+                await conn.OpenAsync();
+                cmd.Connection = conn;
+                using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    await conn.OpenAsync();
-                    cmd.Connection = conn;
-                    using (var reader = await cmd.ExecuteReaderAsync())
+                    if (reader.HasRows)
                     {
-                        if (reader.HasRows)
+                        while (reader.Read())
                         {
-                            while (reader.Read())
-                            {
-                                string dbName = reader?.GetString(0);
-                                if (!exclude.Contains(dbName))
-                                    availableDbs.Add(dbName);
-                            }
+                            string dbName = reader?.GetString(0);
+                            if (!exclude.Contains(dbName))
+                                availableDbs.Add(dbName);
                         }
-                        await reader.CloseAsync();
                     }
-                    await conn.CloseAsync();
+                    await reader.CloseAsync();
                 }
+                await conn.CloseAsync();
             }
             return availableDbs;
         }
@@ -95,12 +89,10 @@ WITH NOUNLOAD, REPLACE, STATS = 5;
             try
             {
                 string connectionString = resourceGroup.GetDbConnectionString();
-                using (SqlConnection conn = new SqlConnection(connectionString))
-                {
-                    await conn.OpenAsync();
-                    await conn.CloseAsync();
-                    return (true, string.Empty);
-                }
+                using SqlConnection conn = new SqlConnection(connectionString);
+                await conn.OpenAsync();
+                await conn.CloseAsync();
+                return (true, string.Empty);
             }
             catch (Exception ex)
             {

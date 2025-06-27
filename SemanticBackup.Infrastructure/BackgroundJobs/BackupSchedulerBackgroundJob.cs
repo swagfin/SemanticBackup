@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core;
 using SemanticBackup.Core.Interfaces;
@@ -18,19 +17,36 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         private readonly ILogger<BackupSchedulerBackgroundJob> _logger;
         private readonly SystemConfigOptions _persistanceOptions;
         private readonly BotsManagerBackgroundJob _botsManagerBackgroundJob;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+
+        private readonly IResourceGroupRepository _resourceGroupRepository;
+        private readonly IBackupScheduleRepository _backupScheduleRepository;
+        private readonly IBackupRecordRepository _backupRecordRepository;
+        private readonly IContentDeliveryRecordRepository _deliveryRecordRepository;
+        private readonly IDatabaseInfoRepository _databaseInfoRepository;
 
         public BackupSchedulerBackgroundJob(
             ILogger<BackupSchedulerBackgroundJob> logger,
             SystemConfigOptions persistanceOptions,
-            IServiceScopeFactory serviceScopeFactory,
-            BotsManagerBackgroundJob botsManagerBackgroundJob)
+            BotsManagerBackgroundJob botsManagerBackgroundJob,
+
+            IResourceGroupRepository resourceGroupRepository,
+            IBackupScheduleRepository backupScheduleRepository,
+            IBackupRecordRepository backupRecordRepository,
+            IContentDeliveryRecordRepository contentDeliveryRecordRepository,
+            IDatabaseInfoRepository databaseInfoRepository
+            )
         {
-            this._logger = logger;
-            this._persistanceOptions = persistanceOptions;
-            this._serviceScopeFactory = serviceScopeFactory;
-            this._botsManagerBackgroundJob = botsManagerBackgroundJob;
+            _logger = logger;
+            _persistanceOptions = persistanceOptions;
+            _botsManagerBackgroundJob = botsManagerBackgroundJob;
+
+            _resourceGroupRepository = resourceGroupRepository;
+            _backupScheduleRepository = backupScheduleRepository;
+            _backupRecordRepository = backupRecordRepository;
+            _deliveryRecordRepository = contentDeliveryRecordRepository;
+            _databaseInfoRepository = databaseInfoRepository;
         }
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting service....");
@@ -49,25 +65,19 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(3000, cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                     try
                     {
-                        using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                        //DI INJECTIONS
-                        IBackupScheduleRepository backupSchedulePersistanceService = scope.ServiceProvider.GetRequiredService<IBackupScheduleRepository>();
-                        IDatabaseInfoRepository databaseInfoPersistanceService = scope.ServiceProvider.GetRequiredService<IDatabaseInfoRepository>();
-                        IResourceGroupRepository resourceGroupPersistanceService = scope.ServiceProvider.GetRequiredService<IResourceGroupRepository>();
-                        IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
                         //Proceed
                         DateTime currentTimeUTC = DateTime.UtcNow;
-                        List<BackupSchedule> dueSchedules = await backupSchedulePersistanceService.GetAllDueByDateAsync();
+                        List<BackupSchedule> dueSchedules = await _backupScheduleRepository.GetAllDueByDateAsync();
                         if (dueSchedules != null && dueSchedules.Count > 0)
                         {
                             List<string> scheduleToDelete = [];
                             foreach (BackupSchedule schedule in dueSchedules.OrderBy(x => x.NextRunUTC).ToList())
                             {
                                 _logger.LogInformation($"Queueing Scheduled Backup...");
-                                BackupDatabaseInfo backupDatabaseInfo = await databaseInfoPersistanceService.GetByIdAsync(schedule.BackupDatabaseInfoId);
+                                BackupDatabaseInfo backupDatabaseInfo = await _databaseInfoRepository.GetByIdAsync(schedule.BackupDatabaseInfoId);
                                 if (backupDatabaseInfo == null)
                                 {
                                     _logger.LogWarning($"No Database Info matches with Id: {schedule.BackupDatabaseInfoId}, Schedule Record will be Deleted: {schedule.Id}");
@@ -76,7 +86,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                 else
                                 {
                                     //Proceed
-                                    ResourceGroup resourceGroup = await resourceGroupPersistanceService.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
+                                    ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
                                     if (resourceGroup == null)
                                     {
                                         _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");
@@ -98,26 +108,18 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                             ExecutedDeliveryRun = false
                                         };
 
-                                        bool addedSuccess = await backupRecordPersistanceService.AddOrUpdateAsync(newRecord);
+                                        bool addedSuccess = await _backupRecordRepository.AddOrUpdateAsync(newRecord);
                                         if (!addedSuccess)
-                                            throw new Exception("Unable to Queue Database for Backup");
-                                        else
-                                            _logger.LogInformation($"Queueing Scheduled Backup...SUCCESS");
-                                        //Update Schedule
-                                        bool updatedSchedule = await backupSchedulePersistanceService.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
-                                        if (!updatedSchedule)
-                                            _logger.LogWarning("Unable to Update Scheduled Next Run");
-                                        //Buy Some Seconds to avoid Conflict Name
-                                        await Task.Delay(new Random().Next(100));
+                                            throw new Exception($"Unable to Queue Database for Backup : {newRecord.Name}");
+                                        //set last run 
+                                        await _backupScheduleRepository.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
                                     }
-
                                 }
 
                             }
                             //Check if Any Delete
-                            if (scheduleToDelete.Count > 0)
-                                foreach (var rm in scheduleToDelete)
-                                    await backupSchedulePersistanceService.RemoveAsync(rm);
+                            foreach (string scheduleId in scheduleToDelete)
+                                await _backupScheduleRepository.RemoveAsync(scheduleId);
                         }
                     }
                     catch (Exception ex)
@@ -133,35 +135,29 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         {
             var t = new Thread(async () =>
             {
-                List<string> statusChecks = new List<string> { BackupRecordStatus.EXECUTING.ToString(), BackupRecordStatus.COMPRESSING.ToString(), BackupRecordDeliveryStatus.EXECUTING.ToString() };
+                List<string> statusChecks = [BackupRecordStatus.EXECUTING.ToString(), BackupRecordStatus.COMPRESSING.ToString(), BackupRecordDeliveryStatus.EXECUTING.ToString()];
                 int executionTimeoutInMinutes = _persistanceOptions.ExecutionTimeoutInMinutes < 1 ? 1 : _persistanceOptions.ExecutionTimeoutInMinutes;
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
-                        using IServiceScope scope = _serviceScopeFactory.CreateScope();
-                        //DI INJECTIONS
-                        IBackupRecordRepository backupRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IBackupRecordRepository>();
-                        IContentDeliveryRecordRepository contentDeliveryRecordPersistanceService = scope.ServiceProvider.GetRequiredService<IContentDeliveryRecordRepository>();
                         //Proceed
                         List<string> botsToRemove = [];
                         //REMOVE BACKUP RECORDS
-                        List<long> recordsIds = await backupRecordPersistanceService.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes);
-                        if (recordsIds != null && recordsIds.Count > 0)
-                            foreach (long id in recordsIds)
-                            {
-                                await backupRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                botsToRemove.Add(id.ToString());
-                            }
+                        List<long> recordsIds = (await _backupRecordRepository.GetAllNoneResponsiveIdsAsync(statusChecks, executionTimeoutInMinutes)) ?? [];
+                        foreach (long id in recordsIds)
+                        {
+                            await _backupRecordRepository.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                            botsToRemove.Add(id.ToString());
+                        }
 
                         //REMOVE CONTENT DELIVERY RECORDS
-                        List<string> deliveryRecordIds = await contentDeliveryRecordPersistanceService.GetAllNoneResponsiveAsync(statusChecks, executionTimeoutInMinutes);
-                        if (deliveryRecordIds != null && deliveryRecordIds.Count > 0)
-                            foreach (string id in deliveryRecordIds)
-                            {
-                                await contentDeliveryRecordPersistanceService.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
-                                botsToRemove.Add(id);
-                            }
+                        List<string> deliveryRecordIds = (await _deliveryRecordRepository.GetAllNoneResponsiveAsync(statusChecks, executionTimeoutInMinutes)) ?? [];
+                        foreach (string id in deliveryRecordIds)
+                        {
+                            await _deliveryRecordRepository.UpdateStatusFeedAsync(id, BackupRecordStatus.ERROR.ToString(), "Bot Execution Timeout", executionTimeoutInMinutes);
+                            botsToRemove.Add(id);
+                        }
 
                         //Finally Try And Stop
                         if (botsToRemove.Count > 0)

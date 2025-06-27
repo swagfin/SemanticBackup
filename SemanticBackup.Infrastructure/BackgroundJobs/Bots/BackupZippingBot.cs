@@ -1,6 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -10,24 +9,19 @@ using System.Threading.Tasks;
 
 namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
 {
-    internal class BackupZippingRobot : IBot
+    internal class BackupZippingBot : IBot
     {
         private readonly string _resourceGroupId;
         private readonly BackupRecord _backupRecord;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<BackupZippingRobot> _logger;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
-        public string BotId => $"{_resourceGroupId}::{_backupRecord.Id}::{nameof(BackupZippingRobot)}";
+        public string BotId => $"{_resourceGroupId}::{_backupRecord.Id}::{nameof(BackupZippingBot)}";
         public string ResourceGroupId => _resourceGroupId;
         public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
-        public BackupZippingRobot(string resourceGroupId, BackupRecord backupRecord, IServiceScopeFactory scopeFactory)
+        public BackupZippingBot(string resourceGroupId, BackupRecord backupRecord)
         {
             _resourceGroupId = resourceGroupId;
             _backupRecord = backupRecord;
-            _scopeFactory = scopeFactory;
-            using IServiceScope scope = _scopeFactory.CreateScope();
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<BackupZippingRobot>>();
         }
 
         public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
@@ -36,11 +30,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation("creating zip of: {Path}", _backupRecord.Path);
+                Console.WriteLine($"creating zip of: {_backupRecord.Path}");
                 if (!File.Exists(_backupRecord.Path))
                     throw new Exception($"No Database File In Path or may have been deleted, Path: {_backupRecord.Path}");
                 //proceed
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 stopwatch.Start();
                 Status = BotStatus.Running;
                 //proceed
@@ -68,7 +61,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     s.Close();
                 }
                 stopwatch.Stop();
-                TryDeleteOldFile(_backupRecord.Path);
+                await TryDeleteOldFileAsync(_backupRecord.Path);
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
@@ -80,13 +73,13 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     NewFilePath = newZIPPath,
                 }, cancellationToken);
-                _logger.LogInformation("successfully zipped file: {Path}", _backupRecord.Path);
+                Console.WriteLine($"successfully zipped file: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                this._logger.LogError(ex.Message);
+                Console.WriteLine(ex.Message);
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
@@ -101,36 +94,20 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             }
         }
 
-        private void TryDeleteOldFile(string path)
+        private async Task TryDeleteOldFileAsync(string path)
         {
             try
             {
-                bool success = false;
-                int attempts = 0;
-                do
+                await WithRetry.TaskAsync(() =>
                 {
-                    try
-                    {
-                        attempts++;
-                        if (File.Exists(path))
-                            File.Delete(path);
-                        success = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        if (attempts >= 10)
-                        {
-                            Thread.Sleep(2000);
-                            throw new Exception($"Maximum Deletion Attempts, Error: {ex.Message}");
-                        }
-                    }
-                }
-                while (!success);
+                    //check file exists
+                    if (File.Exists(path))
+                        File.Delete(path);
+                    return Task.CompletedTask;
+
+                }, 3, TimeSpan.FromSeconds(5));
             }
-            catch (Exception ex)
-            {
-                this._logger.LogWarning("The File Name Failed to Delete, Error: {Message}, File: {Path}", ex.Message, path);
-            }
+            catch (Exception ex) { Console.WriteLine($"Failed to remove File after compression: {ex.Message}"); }
         }
     }
 }

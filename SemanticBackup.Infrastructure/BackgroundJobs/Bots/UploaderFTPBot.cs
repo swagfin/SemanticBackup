@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SemanticBackup.Core.Models;
+﻿using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -15,22 +13,16 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecordDelivery _contentDeliveryRecord;
         private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<UploaderFTPBot> _logger;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderFTPBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
         public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
-        public UploaderFTPBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
+        public UploaderFTPBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord)
         {
             _contentDeliveryRecord = contentDeliveryRecord;
             _resourceGroup = resourceGroup;
             _backupRecord = backupRecord;
-            _scopeFactory = scopeFactory;
-            //Logger
-            using IServiceScope scope = _scopeFactory.CreateScope();
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderFTPBot>>();
         }
 
         public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
@@ -39,8 +31,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation("uploading file to FTP Server: {Path}", _backupRecord.Path);
-                await Task.Delay(Random.Shared.Next(1000), cancellationToken);
+                Console.WriteLine($"uploading file to FTP Server: {_backupRecord.Path}");
                 FtpDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Ftp ?? throw new Exception("no valid ftp config");
                 stopwatch.Start();
                 Status = BotStatus.Running;
@@ -85,16 +76,14 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     }
 
                     // Get the response to ensure upload completed
-                    using (FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync())
+                    using FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync();
+                    if (response.StatusCode == FtpStatusCode.ClosingData)
                     {
-                        if (response.StatusCode == FtpStatusCode.ClosingData)
-                        {
-                            executionMessage = $"Uploaded to Server: {settings.Server}";
-                        }
-                        else
-                        {
-                            throw new Exception($"Failed to upload. FTP status: {response.StatusDescription}");
-                        }
+                        executionMessage = $"Uploaded to Server: {settings.Server}";
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to upload. FTP status: {response.StatusDescription}");
                     }
                 }
                 catch (Exception ex)
@@ -113,13 +102,13 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                _logger.LogInformation("Successfully uploaded file to FTP Server: {Path}", _backupRecord.Path);
+                Console.WriteLine($"Successfully uploaded file to FTP Server: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                _logger.LogError(ex.Message);
+                Console.WriteLine(ex.Message);
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

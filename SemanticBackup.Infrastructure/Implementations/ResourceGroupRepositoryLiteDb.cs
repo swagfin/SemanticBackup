@@ -18,13 +18,13 @@ namespace SemanticBackup.Infrastructure.Implementations
 
         public ResourceGroupRepositoryLiteDb(IBackupRecordRepository backupRecordPersistanceService, IBackupScheduleRepository backupSchedulePersistanceService, IDatabaseInfoRepository databaseInfoPersistanceService)
         {
-            this._db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resources.db")) { Connection = ConnectionType.Shared });
+            _db = new LiteDatabaseAsync(new ConnectionString(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "resources.db")) { Connection = ConnectionType.Shared });
             //Init
-            this._db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
+            _db.PragmaAsync("UTC_DATE", true).GetAwaiter().GetResult();
             //Proceed
-            this._backupRecordPersistanceService = backupRecordPersistanceService;
-            this._backupSchedulePersistanceService = backupSchedulePersistanceService;
-            this._databaseInfoPersistanceService = databaseInfoPersistanceService;
+            _backupRecordPersistanceService = backupRecordPersistanceService;
+            _backupSchedulePersistanceService = backupSchedulePersistanceService;
+            _databaseInfoPersistanceService = databaseInfoPersistanceService;
         }
 
         public async Task<bool> AddAsync(ResourceGroup record)
@@ -95,7 +95,7 @@ namespace SemanticBackup.Infrastructure.Implementations
                 var associatedBackupRecords = await _backupRecordPersistanceService.GetAllAsync(resourceGroupId);
                 if (associatedBackupRecords != null)
                     foreach (var record in associatedBackupRecords)
-                        await _backupRecordPersistanceService.RemoveAsync(record.Id);
+                        await _backupRecordPersistanceService.RemoveWithFileAsync(record.Id);
             }
             catch { }
         }
