@@ -33,7 +33,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                Console.WriteLine("creating backup of Db: {_databaseName}", _databaseName);
+                Console.WriteLine($"creating backup of Db: {_databaseName}");
                 string directory = Path.GetDirectoryName(_backupRecord.Path);
                 if (!Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
@@ -57,7 +57,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine("Successfully Backup of Db: {_databaseName}", _databaseName);
+                Console.WriteLine($"Successfully Backup of Db: {_databaseName}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

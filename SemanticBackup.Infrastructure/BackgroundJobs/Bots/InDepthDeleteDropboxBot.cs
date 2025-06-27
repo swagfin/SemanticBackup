@@ -31,7 +31,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                Console.WriteLine("Deleting backup file from DropBox: {Path}, Id: {Id}", _backupRecord.Path, _contentDeliveryRecord.Id);
+                Console.WriteLine($"Deleting backup file from DropBox: {_backupRecord.Path}, Id: {_contentDeliveryRecord.Id}");
                 //proceed
                 await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 DropboxDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Dropbox ?? throw new Exception("no valid dropbox config");
@@ -53,7 +53,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     Dropbox.Api.Files.DeleteResult delResponse = await dbx.Files.DeleteV2Async(initialFileName, null);
                 }
                 stopwatch.Stop();
-                Console.WriteLine("Successfully deleted Backup File From DropBox: {Path}", _backupRecord.Path);
+                Console.WriteLine($"Successfully deleted Backup File From DropBox: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

@@ -1,6 +1,4 @@
 ﻿using Azure.Storage.Blobs;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -15,30 +13,25 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecordDelivery _contentDeliveryRecord;
         private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<UploaderAzureStorageBot> _logger;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderAzureStorageBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
         public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
-        public UploaderAzureStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
+        public UploaderAzureStorageBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord)
         {
             _contentDeliveryRecord = contentDeliveryRecord;
             _resourceGroup = resourceGroup;
             _backupRecord = backupRecord;
-            _scopeFactory = scopeFactory;
-            //Logger
-            using IServiceScope scope = _scopeFactory.CreateScope();
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<UploaderAzureStorageBot>>();
         }
+
         public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
         {
             Status = BotStatus.Starting;
             Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation("uploading file to AzureBlobStorage: {Path}", _backupRecord.Path);
+                Console.WriteLine($"uploading file to AzureBlobStorage: {_backupRecord.Path}");
                 //proceed
                 await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 AzureBlobStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.AzureBlobStorage ?? throw new Exception("no valid azure blob storage config");
@@ -75,13 +68,14 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     Message = executionMessage,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
-                _logger.LogInformation("Successfully uploaded file to AzureBlobStorage: {Path}", _backupRecord.Path);
+
+                Console.WriteLine($"Successfully uploaded file to AzureBlobStorage: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 Status = BotStatus.Error;
-                _logger.LogError(ex.Message);
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

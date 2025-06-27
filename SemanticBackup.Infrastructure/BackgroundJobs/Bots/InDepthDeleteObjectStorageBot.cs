@@ -32,7 +32,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                Console.WriteLine("deleting uploaded file from ObjectStorage: {Path}, Id: {Id}", _backupRecord.Path, _contentDeliveryRecord.Id);
+                Console.WriteLine($"deleting uploaded file from ObjectStorage: {_backupRecord.Path}, Id: {_contentDeliveryRecord.Id}");
                 //proceed
                 await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 ObjectStorageDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.ObjectStorage ?? throw new Exception("no valid object storage config");
@@ -50,7 +50,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                                      .WithObject(fileName), cancellationToken);
                 }
                 stopwatch.Stop();
-                Console.WriteLine("Successfully deleted file from ObjectStorage: {Path}", _backupRecord.Path);
+                Console.WriteLine($"Successfully deleted file from ObjectStorage: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
