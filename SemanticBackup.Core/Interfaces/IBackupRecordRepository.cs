@@ -11,7 +11,7 @@ namespace SemanticBackup.Core.Interfaces
         Task<BackupRecord> GetByIdAsync(long id);
         Task<bool> AddOrUpdateAsync(BackupRecord record);
         Task<bool> UpdateAsync(BackupRecord record);
-        Task RemoveAsync(long id);
+        Task RemoveWithFileAsync(long id);
         Task<bool> UpdateStatusFeedAsync(long id, string status, string message = null, long executionInMilliseconds = 0, string newFilePath = null);
         Task<bool> UpdateRestoreStatusFeedAsync(long id, string status, string message = null, string confirmationToken = null);
         Task<List<BackupRecord>> GetAllByStatusAsync(string status);

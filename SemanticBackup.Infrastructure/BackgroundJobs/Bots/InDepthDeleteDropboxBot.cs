@@ -1,6 +1,4 @@
 ﻿using Dropbox.Api;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -15,22 +13,16 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         private readonly BackupRecordDelivery _contentDeliveryRecord;
         private readonly ResourceGroup _resourceGroup;
         private readonly BackupRecord _backupRecord;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<InDepthDeleteDropboxBot> _logger;
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(InDepthDeleteDropboxBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
         public BotStatus Status { get; internal set; } = BotStatus.NotReady;
 
-        public InDepthDeleteDropboxBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord, IServiceScopeFactory scopeFactory)
+        public InDepthDeleteDropboxBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord)
         {
             _contentDeliveryRecord = contentDeliveryRecord;
             _resourceGroup = resourceGroup;
             _backupRecord = backupRecord;
-            _scopeFactory = scopeFactory;
-            //Logger
-            using IServiceScope scope = _scopeFactory.CreateScope();
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<InDepthDeleteDropboxBot>>();
         }
 
         public async Task RunAsync(Func<BackupRecordDeliveryFeed, CancellationToken, Task> onDeliveryFeedUpdate, CancellationToken cancellationToken)
@@ -39,7 +31,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             Stopwatch stopwatch = new();
             try
             {
-                _logger.LogInformation("Deleting backup file from DropBox: {Path}, Id: {Id}", this._backupRecord.Path, _contentDeliveryRecord.Id);
+                Console.WriteLine("Deleting backup file from DropBox: {Path}, Id: {Id}", _backupRecord.Path, _contentDeliveryRecord.Id);
                 //proceed
                 await Task.Delay(Random.Shared.Next(1000), cancellationToken);
                 DropboxDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Dropbox ?? throw new Exception("no valid dropbox config");
@@ -61,13 +53,13 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     Dropbox.Api.Files.DeleteResult delResponse = await dbx.Files.DeleteV2Async(initialFileName, null);
                 }
                 stopwatch.Stop();
-                _logger.LogInformation("Successfully deleted Backup File From DropBox: {Path}", _backupRecord.Path);
+                Console.WriteLine("Successfully deleted Backup File From DropBox: {Path}", _backupRecord.Path);
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                this._logger.LogWarning(ex.Message);
+                Console.WriteLine(ex.Message);
                 stopwatch.Stop();
             }
         }

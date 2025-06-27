@@ -155,7 +155,7 @@ namespace SemanticBackup.Infrastructure.Implementations
             return backupRecordResponse;
         }
 
-        public async Task RemoveAsync(long id)
+        public async Task RemoveWithFileAsync(long id)
         {
             var collection = _db.GetCollection<BackupRecord>();
             var objFound = await collection.Query().Where(x => x.Id == id).FirstOrDefaultAsync();

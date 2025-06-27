@@ -95,7 +95,7 @@ namespace SemanticBackup.Infrastructure.Implementations
                 var associatedBackupRecords = await _backupRecordPersistanceService.GetAllAsync(resourceGroupId);
                 if (associatedBackupRecords != null)
                     foreach (var record in associatedBackupRecords)
-                        await _backupRecordPersistanceService.RemoveAsync(record.Id);
+                        await _backupRecordPersistanceService.RemoveWithFileAsync(record.Id);
             }
             catch { }
         }
