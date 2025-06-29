@@ -70,57 +70,53 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     {
                         //Proceed
                         DateTime currentTimeUTC = DateTime.UtcNow;
-                        List<BackupSchedule> dueSchedules = await _backupScheduleRepository.GetAllDueByDateAsync();
-                        if (dueSchedules != null && dueSchedules.Count > 0)
+                        List<BackupSchedule> dueSchedules = (await _backupScheduleRepository.GetAllDueByDateAsync()) ?? [];
+                        //proceed
+                        List<string> scheduleToDelete = [];
+                        foreach (BackupSchedule schedule in dueSchedules.OrderBy(x => x.Id).ToList())
                         {
-                            List<string> scheduleToDelete = [];
-                            foreach (BackupSchedule schedule in dueSchedules.OrderBy(x => x.NextRunUTC).ToList())
+                            BackupDatabaseInfo backupDatabaseInfo = await _databaseInfoRepository.GetByIdAsync(schedule.BackupDatabaseInfoId);
+                            if (backupDatabaseInfo == null)
                             {
-                                _logger.LogInformation($"Queueing Scheduled Backup...");
-                                BackupDatabaseInfo backupDatabaseInfo = await _databaseInfoRepository.GetByIdAsync(schedule.BackupDatabaseInfoId);
-                                if (backupDatabaseInfo == null)
+                                _logger.LogWarning("No Database Info matches with Id: {BackupDatabaseInfoId}, Schedule Record will be Deleted: {Id}", schedule.BackupDatabaseInfoId, schedule.Id);
+                                scheduleToDelete.Add(schedule.Id);
+                            }
+                            else
+                            {
+                                //Proceed
+                                ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
+                                if (resourceGroup == null)
                                 {
-                                    _logger.LogWarning($"No Database Info matches with Id: {schedule.BackupDatabaseInfoId}, Schedule Record will be Deleted: {schedule.Id}");
+                                    _logger.LogWarning("Can NOT queue Database for Backup Id: {Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {ResourceGroupId}, Schedule will be Removed", backupDatabaseInfo.Id, backupDatabaseInfo.ResourceGroupId);
                                     scheduleToDelete.Add(schedule.Id);
                                 }
                                 else
                                 {
-                                    //Proceed
-                                    ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
-                                    if (resourceGroup == null)
+                                    //has valid Resource Group Proceed
+                                    DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
+                                    BackupRecord newRecord = new BackupRecord
                                     {
-                                        _logger.LogWarning($"Can NOT queue Database for Backup Id: {backupDatabaseInfo.Id}, Reason: Assigned Resource Group doen't exist, Resource Group Id: {backupDatabaseInfo.Id}, Schedule will be Removed");
-                                        scheduleToDelete.Add(schedule.Id);
-                                    }
-                                    else
-                                    {
-                                        //has valid Resource Group Proceed
-                                        DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
-                                        BackupRecord newRecord = new BackupRecord
-                                        {
-                                            BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
-                                            BackupStatus = BackupRecordStatus.QUEUED.ToString(),
-                                            ExpiryDateUTC = RecordExpiryUTC,
-                                            Name = $"{backupDatabaseInfo.DatabaseName} on {resourceGroup.DbServer}",
-                                            Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, resourceGroup.GetSavingPathFromFormat(backupDatabaseInfo.DatabaseName, _persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
-                                            StatusUpdateDateUTC = currentTimeUTC,
-                                            RegisteredDateUTC = currentTimeUTC,
-                                            ExecutedDeliveryRun = false
-                                        };
+                                        BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
+                                        BackupStatus = BackupRecordStatus.QUEUED.ToString(),
+                                        ExpiryDateUTC = RecordExpiryUTC,
+                                        Name = $"{backupDatabaseInfo.DatabaseName} on {resourceGroup.DbServer}",
+                                        Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, resourceGroup.GetSavingPathFromFormat(backupDatabaseInfo.DatabaseName, _persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
+                                        StatusUpdateDateUTC = currentTimeUTC,
+                                        RegisteredDateUTC = currentTimeUTC,
+                                        ExecutedDeliveryRun = false
+                                    };
 
-                                        bool addedSuccess = await _backupRecordRepository.AddOrUpdateAsync(newRecord);
-                                        if (!addedSuccess)
-                                            throw new Exception($"Unable to Queue Database for Backup : {newRecord.Name}");
-                                        //set last run 
-                                        await _backupScheduleRepository.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
-                                    }
+                                    //schedule run
+                                    _ = await _backupRecordRepository.AddOrUpdateAsync(newRecord);
+                                    //set last run 
+                                    _ = await _backupScheduleRepository.UpdateLastRunAsync(schedule.Id, currentTimeUTC);
                                 }
-
                             }
-                            //Check if Any Delete
-                            foreach (string scheduleId in scheduleToDelete)
-                                await _backupScheduleRepository.RemoveAsync(scheduleId);
+
                         }
+                        //Check if Any Delete
+                        foreach (string scheduleId in scheduleToDelete)
+                            await _backupScheduleRepository.RemoveAsync(scheduleId);
                     }
                     catch (Exception ex)
                     {
@@ -139,6 +135,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                 int executionTimeoutInMinutes = _persistanceOptions.ExecutionTimeoutInMinutes < 1 ? 1 : _persistanceOptions.ExecutionTimeoutInMinutes;
                 while (!cancellationToken.IsCancellationRequested)
                 {
+                    //Delay
+                    await Task.Delay(TimeSpan.FromMinutes(1));
                     try
                     {
                         //Proceed
@@ -164,8 +162,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                             _botsManagerBackgroundJob.TerminateBots(botsToRemove);
                     }
                     catch (Exception ex) { _logger.LogWarning($"Stopping Non Responsive Services Error: {ex.Message}"); }
-                    //Delay
-                    await Task.Delay(TimeSpan.FromMinutes(1));
+
                 }
             });
             t.Start();

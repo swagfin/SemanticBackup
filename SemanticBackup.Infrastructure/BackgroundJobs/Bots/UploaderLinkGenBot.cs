@@ -1,5 +1,6 @@
 ﻿using SemanticBackup.Core;
 using SemanticBackup.Core.Extensions;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -16,7 +17,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderLinkGenBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
-        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+        public BotStatus Status { get; internal set; } = BotStatus.PendingStart;
 
         public UploaderLinkGenBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord)
         {
@@ -34,10 +35,19 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 Console.WriteLine($"creating download link for file: {_backupRecord.Path}");
                 DownloadLinkDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.DownloadLink ?? throw new Exception("no valid download link config");
                 stopwatch.Start();
-                //get download link::
-                string contentLink = 5.GenerateUniqueId();
-                if (settings.DownloadLinkType == "LONG")
-                    contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{_backupRecord.Id}|{_resourceGroup.Id}".ToMD5String());
+                //proceed
+                string contentLink = string.Empty;
+                await WithRetry.TaskAsync(() =>
+                {
+                    //get download link::
+                    string contentLink = 5.GenerateUniqueId();
+                    if (settings.DownloadLinkType == "LONG")
+                        contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{_backupRecord.Id}|{_resourceGroup.Id}".ToMD5String());
+
+                    return Task.CompletedTask;
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
@@ -50,13 +60,12 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine($"Successfully created download link for file: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(UploaderLinkGenBot)}: {ex.Message}");
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

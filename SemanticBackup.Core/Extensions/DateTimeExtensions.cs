@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace SemanticBackup.Core
 {
-    public static class TimeExtensions
+    public static class DateTimeExtensions
     {
         public static DateTime ConvertFromUTC(this DateTime dateTime, string timezone)
         {
@@ -22,22 +23,27 @@ namespace SemanticBackup.Core
             dateTime = SetKind(dateTime);
             return TimeZoneInfo.ConvertTimeToUtc(dateTime, tz);
         }
+
         private static DateTime SetKind(DateTime date) => DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
+
         public static DateTime IgnoreSeconds(this DateTime time, bool end)
         {
             time = new DateTime(time.Year, time.Month, time.Day, time.Hour, time.Minute, 0, 0, time.Kind);
             return end ? time.AddMinutes(1) : time;
         }
+
         public static DateTime StartOfWeek(this DateTime dt, DayOfWeek startOfWeek = DayOfWeek.Monday)
         {
             int diff = (7 + (dt.DayOfWeek - startOfWeek)) % 7;
             return dt.AddDays(-1 * diff).Date;
         }
+
         public static DateTime EndOfWeek(this DateTime dt, DayOfWeek startOfWeek = DayOfWeek.Sunday)
         {
             int diff = (7 + (startOfWeek - dt.DayOfWeek)) % 7;
             return dt.AddDays(diff).Date;
         }
+
         public static DateTime AdjustWithTimezoneOffset(this DateTime dateTime, string timezoneOffset = "00:00")
         {
             try
@@ -79,6 +85,24 @@ namespace SemanticBackup.Core
         {
             (string timezone, string offset) timezoneWithOffset = ToTimezoneWithOffset(timeZoneInfo);
             return string.Format("{0} ({1})", timezoneWithOffset.timezone, timezoneWithOffset.offset);
+        }
+
+        public static string ToUtcDifferenceString(this DateTime targetUtc, DateTime? compareUtc = null)
+        {
+            DateTime baseTime = compareUtc ?? DateTime.UtcNow;
+            TimeSpan diff = targetUtc - baseTime;
+            if (diff.TotalSeconds <= 0) return "Expired";
+
+            int days = diff.Days;
+            int hours = diff.Hours;
+            int minutes = diff.Minutes;
+
+            List<string> parts = [];
+            if (days > 0) parts.Add($"{days} day(s)");
+            if (hours > 0) parts.Add($"{hours}hr{(hours == 1 ? "" : "s")}");
+            if (minutes > 0) parts.Add($"{minutes}min");
+
+            return parts.Count > 0 ? string.Join(" ", parts) : "Expired";
         }
     }
 }

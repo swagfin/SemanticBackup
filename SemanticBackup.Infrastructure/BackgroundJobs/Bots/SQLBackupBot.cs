@@ -1,4 +1,5 @@
-﻿using SemanticBackup.Core.Interfaces;
+﻿using SemanticBackup.Core.Helpers;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -17,7 +18,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(SQLBackupBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
-        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+        public BotStatus Status { get; internal set; } = BotStatus.PendingStart;
 
         public SQLBackupBot(string databaseName, ResourceGroup resourceGroup, BackupRecord backupRecord, IBackupProviderForSQLServer providerForSQLServer)
         {
@@ -40,12 +41,17 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //proceed
                 stopwatch.Start();
                 Status = BotStatus.Running;
-                //Execute Service
-                bool backupedUp = await _providerForSQLServer.BackupDatabaseAsync(_databaseName, _resourceGroup, _backupRecord);
+                //proceed
+                await WithRetry.TaskAsync(async () =>
+                {
+
+                    //Execute Service
+                    if (!await _providerForSQLServer.BackupDatabaseAsync(_databaseName, _resourceGroup, _backupRecord))
+                        throw new Exception("Creating Backup Failed to Return Success Completion");
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
 
                 stopwatch.Stop();
-                if (!backupedUp)
-                    throw new Exception("Creating Backup Failed to Return Success Completion");
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
@@ -57,13 +63,12 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine($"Successfully Backup of Db: {_databaseName}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(SQLBackupBot)}: {ex.Message}");
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

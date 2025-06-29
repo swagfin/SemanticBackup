@@ -1,4 +1,5 @@
 ﻿using Dropbox.Api;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -16,7 +17,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(InDepthDeleteDropboxBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
-        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+        public BotStatus Status { get; internal set; } = BotStatus.PendingStart;
 
         public InDepthDeleteDropboxBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord)
         {
@@ -36,29 +37,33 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 DropboxDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.Dropbox ?? throw new Exception("no valid dropbox config");
                 stopwatch.Start();
                 Status = BotStatus.Running;
-                //Directory
-                string validDirectory = string.IsNullOrWhiteSpace(settings.Directory) ? "/" : settings.Directory;
-                validDirectory = validDirectory.EndsWith('/') ? validDirectory : validDirectory + "/";
-                validDirectory = validDirectory.StartsWith('/') ? validDirectory : "/" + validDirectory;
-                //Filename
-                string fileName = Path.GetFileName(this._backupRecord.Path);
-                //Proceed
-                if (string.IsNullOrWhiteSpace(settings.AccessToken))
-                    throw new Exception("Access Token is NULL");
-                //Proceed
-                using (DropboxClient dbx = new(settings.AccessToken.Trim()))
+                //proceed
+                await WithRetry.TaskAsync(async () =>
                 {
+                    //Directory
+                    string validDirectory = string.IsNullOrWhiteSpace(settings.Directory) ? "/" : settings.Directory;
+                    validDirectory = validDirectory.EndsWith('/') ? validDirectory : validDirectory + "/";
+                    validDirectory = validDirectory.StartsWith('/') ? validDirectory : "/" + validDirectory;
+                    //Filename
+                    string fileName = Path.GetFileName(this._backupRecord.Path);
+                    //Proceed
+                    if (string.IsNullOrWhiteSpace(settings.AccessToken))
+                        throw new Exception("Access Token is NULL");
+                    //Proceed
+                    using DropboxClient dbx = new(settings.AccessToken.Trim());
                     string initialFileName = string.Format("{0}{1}", validDirectory, fileName);
                     Dropbox.Api.Files.DeleteResult delResponse = await dbx.Files.DeleteV2Async(initialFileName, null);
-                }
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
-                Console.WriteLine($"Successfully deleted Backup File From DropBox: {_backupRecord.Path}");
+
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(InDepthDeleteDropboxBot)}: {ex.Message}");
                 stopwatch.Stop();
             }
         }

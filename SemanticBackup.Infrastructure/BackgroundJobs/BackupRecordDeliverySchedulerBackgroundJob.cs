@@ -58,10 +58,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     try
                     {
                         //Proceed
-                        List<BackupRecord> pendingExecutionRecords = await _backupRecordRepository.GetAllReadyAndPendingDeliveryAsync();
-                        foreach (BackupRecord backupRecord in pendingExecutionRecords?.OrderBy(x => x.RegisteredDateUTC)?.ToList())
+                        List<BackupRecord> pendingExecutionRecords = (await _backupRecordRepository.GetAllReadyAndPendingDeliveryAsync()) ?? [];
+                        foreach (BackupRecord backupRecord in pendingExecutionRecords.OrderBy(x => x.Id).ToList())
                         {
-                            _logger.LogInformation($"Queueing Content Delivery for Backup Record Id: {backupRecord.Id}...");
+                            _logger.LogInformation("Queueing Content Delivery for Backup Record Id: {Id}...", backupRecord.Id);
                             //get db information
                             BackupDatabaseInfo backupRecordDbInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
                             //Check if valid Resource Group
@@ -71,7 +71,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                             //check if backup delivery config is set
                             if (resourceGroup.BackupDeliveryConfig == null)
                             {
-                                _logger.LogInformation($"Resource Group Id: {backupRecord.Id}, doesn't have any backup delivery config, Skipped");
+                                _logger.LogInformation("Resource Group Id: {Id}, doesn't have any backup delivery config, Skipped", backupRecord.Id);
                                 _ = await _backupRecordRepository.UpdateDeliveryRunnedAsync(backupRecord.Id, true, BackupRecordExecutedDeliveryRunStatus.SKIPPED_EXECUTION.ToString());
                             }
                             else
@@ -93,9 +93,9 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                     //check if enabled
                                     if (isDeliveryEnabled)
                                     {
-                                        bool queuedSuccess = await _deliveryRecordRepository.AddOrUpdateAsync(new BackupRecordDelivery
+                                        _ = await _deliveryRecordRepository.AddOrUpdateAsync(new BackupRecordDelivery
                                         {
-                                            Id = $"{backupRecord.Id}|{resourceGroup.Id}|{deliveryType}".ToMD5String().ToUpper(), //Unique Identification
+                                            Id = $"{backupRecord.Id}|{resourceGroup.Id}|{deliveryType}".ToMD5String().ToUpper(),
                                             BackupRecordId = backupRecord.Id,
                                             CurrentStatus = BackupRecordDeliveryStatus.QUEUED.ToString(),
                                             DeliveryType = deliveryType.ToString(),
@@ -103,8 +103,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                             StatusUpdateDateUTC = DateTime.UtcNow,
                                             ExecutionMessage = "Queued for Dispatch"
                                         });
-                                        if (!queuedSuccess)
-                                            _logger.LogWarning($"unable to queue Backup Record Id: {backupRecord.Id} for delivery via : {deliveryType}, resource group: {resourceGroup.Name}");
                                     }
                                 }
                                 //Update Execution

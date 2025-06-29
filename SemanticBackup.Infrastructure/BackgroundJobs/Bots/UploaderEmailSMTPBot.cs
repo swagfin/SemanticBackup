@@ -1,4 +1,5 @@
 ﻿using SemanticBackup.Core;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroup.Id}::{_backupRecord.Id}::{nameof(UploaderEmailSMTPBot)}";
         public string ResourceGroupId => _resourceGroup.Id;
-        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+        public BotStatus Status { get; internal set; } = BotStatus.PendingStart;
 
         public UploaderEmailSMTPBot(ResourceGroup resourceGroup, BackupRecord backupRecord, BackupRecordDelivery contentDeliveryRecord)
         {
@@ -48,8 +49,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //proceed
                 string fileName = Path.GetFileName(this._backupRecord.Path);
                 string executionMessage = "Sending Email....";
-                using (MailMessage e_mail = new())
+                //proceed
+                await WithRetry.TaskAsync(async () =>
                 {
+                    using MailMessage e_mail = new();
                     using SmtpClient Smtp_Server = new();
                     //Configs
                     Smtp_Server.UseDefaultCredentials = false;
@@ -89,7 +92,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     //Finally Send
                     await Smtp_Server.SendMailAsync(e_mail, cancellationToken);
                     executionMessage = $"Sent to: {settings.SMTPDestinations}";
-                }
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
+
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
@@ -102,13 +108,12 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine($"Successfully uploaded file to SMTP Server: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(UploaderEmailSMTPBot)}: {ex.Message}");
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

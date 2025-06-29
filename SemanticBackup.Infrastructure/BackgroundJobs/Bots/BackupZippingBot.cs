@@ -16,7 +16,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroupId}::{_backupRecord.Id}::{nameof(BackupZippingBot)}";
         public string ResourceGroupId => _resourceGroupId;
-        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+        public BotStatus Status { get; internal set; } = BotStatus.PendingStart;
 
         public BackupZippingBot(string resourceGroupId, BackupRecord backupRecord)
         {
@@ -36,11 +36,12 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //proceed
                 stopwatch.Start();
                 Status = BotStatus.Running;
-                //proceed
                 string newZIPPath = _backupRecord.Path.Replace(".bak", ".zip");
-                using (ZipOutputStream s = new(File.Create(newZIPPath)))
+                //proceed
+                await WithRetry.TaskAsync(() =>
                 {
 
+                    using ZipOutputStream s = new(File.Create(newZIPPath));
                     s.SetLevel(9); // 0 - store only to 9 - means best compression
                     byte[] buffer = new byte[4096];
                     ZipEntry entry = new(Path.GetFileName(_backupRecord.Path))
@@ -59,7 +60,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     }
                     s.Finish();
                     s.Close();
-                }
+
+                    return Task.CompletedTask;
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
                 await TryDeleteOldFileAsync(_backupRecord.Path);
                 //notify update
@@ -73,13 +78,13 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     NewFilePath = newZIPPath,
                 }, cancellationToken);
-                Console.WriteLine($"successfully zipped file: {_backupRecord.Path}");
+
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(BackupZippingBot)}: {ex.Message}");
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed

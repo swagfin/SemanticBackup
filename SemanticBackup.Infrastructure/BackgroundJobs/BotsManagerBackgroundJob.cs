@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
+using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,14 +15,15 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
     public class BotsManagerBackgroundJob : IHostedService
     {
         private readonly ILogger<BotsManagerBackgroundJob> _logger;
+        private readonly IResourceGroupRepository _resourceGroupRepository;
         private readonly IBackupRecordRepository _backupRecordRepository;
         private readonly IContentDeliveryRecordRepository _deliveryRecordRepository;
-
         private List<IBot> Bots { get; set; } = [];
 
-        public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository deliveryRecordRepository)
+        public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger, IResourceGroupRepository resourceGroupRepository, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository deliveryRecordRepository)
         {
             _logger = logger;
+            _resourceGroupRepository = resourceGroupRepository;
             _backupRecordRepository = backupRecordRepository;
             _deliveryRecordRepository = deliveryRecordRepository;
         }
@@ -48,39 +51,40 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
             }
         }
 
-        public bool HasAvailableResourceGroupBotsCount(string resourceGroupId, int maximumThreads = 1)
-        {
-            return Bots.Count(x => x.ResourceGroupId == resourceGroupId) < maximumThreads;
-        }
-
         private void SetupBotsBackgroundService(CancellationToken cancellationToken)
         {
             Thread t = new(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
+                    //Delay
+                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
                     try
                     {
-                        if (Bots.Count > 0)
+                        //Remove Bots with status: [Completed] or [Error]
+                        List<IBot> botsCompleted = (Bots.Where(x => x.Status == BotStatus.Completed || x.Status == BotStatus.Error).ToList()) ?? [];
+                        foreach (IBot bot in botsCompleted)
+                            this.Bots.Remove(bot);
+
+                        //Start Bots with status: [PendingStart]
+                        List<IBot> botsNotReady = (Bots.Where(x => x.Status == BotStatus.PendingStart).OrderBy(x => x.DateCreatedUtc).ToList()) ?? [];
+                        foreach (IBot bot in botsNotReady)
                         {
-                            //Start not ready bots
-                            List<IBot> botsNotReady = (Bots.Where(x => x.Status == BotStatus.NotReady).OrderBy(x => x.DateCreatedUtc).ToList()) ?? [];
-                            foreach (IBot bot in botsNotReady)
+                            ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(bot.ResourceGroupId ?? string.Empty);
+                            int runningPods = Bots.Count(x => x.ResourceGroupId == resourceGroup.Id && x.Status != BotStatus.PendingStart);
+                            if (runningPods < resourceGroup.MaximumRunningBots)
                             {
+                                Debug.WriteLine($"Running bot #{bot.BotId}");
                                 _ = bot.RunAsync(OnDeliveryFeedUpdate, cancellationToken);
                             }
-                            //Remove Completed or Error
-                            List<IBot> botsCompleted = (Bots.Where(x => x.Status == BotStatus.Completed || x.Status == BotStatus.Error).ToList()) ?? [];
-                            foreach (IBot bot in botsCompleted)
-                                this.Bots.Remove(bot);
+                            else
+                                Debug.WriteLine($"[{nameof(BotsManagerBackgroundJob)}] Resource Group({resourceGroup.Id}) {runningPods}-Bot(s) are Busy, maximum pods configured to: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
                         }
                     }
                     catch (Exception ex)
                     {
                         _logger.LogWarning("Error: {Message}", ex.Message);
                     }
-                    //Delay
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                 }
             });
             t.Start();
