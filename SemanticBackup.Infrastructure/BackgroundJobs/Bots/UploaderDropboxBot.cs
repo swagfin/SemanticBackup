@@ -68,7 +68,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     Message = executionMessage,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
-                Console.WriteLine($"uploading file to Dropbox: {_backupRecord.Path}");
+
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

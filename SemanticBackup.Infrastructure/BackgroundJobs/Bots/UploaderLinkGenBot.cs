@@ -50,7 +50,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine($"Successfully created download link for file: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

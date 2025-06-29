@@ -49,7 +49,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                                      .WithObject(fileName), cancellationToken);
                 }
                 stopwatch.Stop();
-                Console.WriteLine($"Successfully deleted file from ObjectStorage: {_backupRecord.Path}");
+
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

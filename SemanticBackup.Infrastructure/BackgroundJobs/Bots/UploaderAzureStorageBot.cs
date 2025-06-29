@@ -68,7 +68,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine($"Successfully uploaded file to AzureBlobStorage: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

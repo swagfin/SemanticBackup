@@ -56,7 +56,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine($"Successfully Backup of Db: {_databaseName}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

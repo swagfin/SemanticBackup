@@ -52,7 +52,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     Dropbox.Api.Files.DeleteResult delResponse = await dbx.Files.DeleteV2Async(initialFileName, null);
                 }
                 stopwatch.Stop();
-                Console.WriteLine($"Successfully deleted Backup File From DropBox: {_backupRecord.Path}");
+
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

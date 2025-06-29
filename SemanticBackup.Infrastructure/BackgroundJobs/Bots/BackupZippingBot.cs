@@ -73,7 +73,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     NewFilePath = newZIPPath,
                 }, cancellationToken);
-                Console.WriteLine($"successfully zipped file: {_backupRecord.Path}");
+
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

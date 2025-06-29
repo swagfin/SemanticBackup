@@ -161,15 +161,9 @@
             <div class="item">
                 <i class="clock info blue icon"></i>
                 <div class="content">
-                    <div class="header">Backup Expiry</div>
-                    @if (Model.BackupRecordResponse.ExpiryDateUTC == null)
-                    {
-                        <span>No Expiry</span>
-                    }
-                    else
-                    {
-                        <span style="color:darkorange">@string.Format("{0:yyyy-MM-dd HH:mm}", Model.BackupRecordResponse.ExpiryDateUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))</span> <span style="margin-left:7px;color:red"> @string.Format("{0:N0} Day(s) left", ((DateTime)Model.BackupRecordResponse.ExpiryDateUTC - DateTime.UtcNow).TotalDays)</span>
-                    }
+                    <div class="header">Backup Expiry</div>                   
+                     <span style="color:darkorange">@string.Format("{0:yyyy-MM-dd HH:mm}", Model.BackupRecordResponse.ExpiryDateUTC.AdjustWithTimezoneOffset(User.GetUserTimeZoneOffset()))</span>
+                     <span style="margin-left:7px;color:red">@(Model.BackupRecordResponse.ExpiryDateUTC.ToUtcDifferenceString())</span>
                 </div>
             </div>
 

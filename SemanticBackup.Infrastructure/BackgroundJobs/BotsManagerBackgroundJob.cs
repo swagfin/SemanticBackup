@@ -15,7 +15,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
         private readonly ILogger<BotsManagerBackgroundJob> _logger;
         private readonly IBackupRecordRepository _backupRecordRepository;
         private readonly IContentDeliveryRecordRepository _deliveryRecordRepository;
-
         private List<IBot> Bots { get; set; } = [];
 
         public BotsManagerBackgroundJob(ILogger<BotsManagerBackgroundJob> logger, IBackupRecordRepository backupRecordRepository, IContentDeliveryRecordRepository deliveryRecordRepository)

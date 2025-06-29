@@ -102,7 +102,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
                 }, cancellationToken);
 
-                Console.WriteLine($"Successfully uploaded file to FTP Server: {_backupRecord.Path}");
                 Status = BotStatus.Completed;
             }
             catch (Exception ex)

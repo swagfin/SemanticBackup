@@ -6,6 +6,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,55 +75,48 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     try
                     {
                         //Proceed
-                        List<BackupRecord> queuedBackups = await _backupRecordRepository.GetAllByStatusAsync(BackupRecordStatus.QUEUED.ToString());
-                        if (queuedBackups != null && queuedBackups.Count > 0)
+                        List<BackupRecord> queuedBackups = (await _backupRecordRepository.GetAllByStatusAsync(BackupRecordStatus.QUEUED.ToString())) ?? [];
+                        List<long> scheduleToDelete = [];
+                        foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.Id).ToList())
                         {
-                            List<long> scheduleToDelete = [];
-                            foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
+                            _logger.LogInformation("Processing Queued Backup Record Key: #{Id}...", backupRecord.Id);
+                            BackupDatabaseInfo backupDatabaseInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                            if (backupDatabaseInfo == null)
                             {
-                                _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...");
-                                BackupDatabaseInfo backupDatabaseInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
-                                if (backupDatabaseInfo == null)
+                                _logger.LogWarning("No Database Info matches with Id: {BackupDatabaseInfoId}, Backup Database Record will be Deleted: {Id}", backupRecord.BackupDatabaseInfoId, backupRecord.Id);
+                                scheduleToDelete.Add(backupRecord.Id);
+                            }
+                            else
+                            {
+                                //Check if valid Resource Group
+                                ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
+                                if (resourceGroup == null)
                                 {
-                                    _logger.LogWarning($"No Database Info matches with Id: {backupRecord.BackupDatabaseInfoId}, Backup Database Record will be Deleted: {backupRecord.Id}");
+                                    _logger.LogWarning("The Database Id: {BackupDatabaseInfoId}, doesn't seem to have been assigned to a valid Resource Group Id: {ResourceGroupId}, Record will be Deleted", backupRecord.BackupDatabaseInfoId, backupDatabaseInfo.ResourceGroupId);
                                     scheduleToDelete.Add(backupRecord.Id);
                                 }
                                 else
                                 {
-                                    //Check if valid Resource Group
-                                    ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupDatabaseInfo.ResourceGroupId);
-                                    if (resourceGroup == null)
+                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                     {
-                                        _logger.LogWarning($"The Database Id: {backupRecord.BackupDatabaseInfoId}, doesn't seem to have been assigned to a valid Resource Group Id: {backupDatabaseInfo.ResourceGroupId}, Record will be Deleted");
-                                        scheduleToDelete.Add(backupRecord.Id);
+                                        if (resourceGroup.DbType.Contains("SQLSERVER"))
+                                            _botsManagerBackgroundJob.AddBot(new SQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForSQLServer));
+                                        else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
+                                            _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForMySqlServer));
+                                        else
+                                            throw new Exception($"No Bot is registered to Handle Database Backups of Type: {resourceGroup.DbType}");
+                                        //Finally Update Status
+                                        _ = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.EXECUTING.ToString());
                                     }
                                     else
-                                    {
-                                        if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
-                                        {
-                                            if (resourceGroup.DbType.Contains("SQLSERVER"))
-                                                _botsManagerBackgroundJob.AddBot(new SQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForSQLServer));
-                                            else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
-                                                _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForMySqlServer));
-                                            else
-                                                throw new Exception($"No Bot is registered to Handle Database Backups of Type: {resourceGroup.DbType}");
-                                            //Finally Update Status
-                                            bool updated = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.EXECUTING.ToString());
-                                            if (updated)
-                                                _logger.LogInformation($"Processing Queued Backup Record Key: #{backupRecord.Id}...SUCCESS");
-                                            else
-                                                _logger.LogWarning($"Queued for Backup but was unable to update backup record Key: #{backupRecord.Id} status");
-                                        }
-                                        else
-                                            _logger.LogInformation($"Resource Group With Id: {resourceGroup.Id} Bots are Busy, Running Bots Count: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
-                                    }
-
+                                        Debug.WriteLine($"[{nameof(BackupBackgroundJob)}] Resource Group({resourceGroup.Id}) Bots are Busy, Running Bots: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
                                 }
+
                             }
-                            //Check if Any Delete
-                            foreach (var rm in scheduleToDelete)
-                                await _backupRecordRepository.RemoveWithFileAsync(rm);
                         }
+                        //Check if Any Delete
+                        foreach (long backupRecordId in scheduleToDelete)
+                            await _backupRecordRepository.RemoveWithFileAsync(backupRecordId);
 
                     }
                     catch (Exception ex)
@@ -146,7 +140,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                         //Proceed
                         List<BackupRecord> expiredBackups = (await _backupRecordRepository.GetAllExpiredAsync()) ?? [];
                         //proceed
-                        foreach (BackupRecord rm in expiredBackups.Take(50).ToList())
+                        foreach (BackupRecord rm in expiredBackups.OrderBy(x => x.Id).Take(50).ToList())
                         {
                             //get relation 
                             List<BackupRecordDelivery> rmBackupRecords = (await _deliveryRecordRepository.GetAllByBackupRecordIdAsync(rm.Id)) ?? [];

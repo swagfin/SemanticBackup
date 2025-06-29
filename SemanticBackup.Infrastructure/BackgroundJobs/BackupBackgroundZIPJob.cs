@@ -5,6 +5,7 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -58,46 +59,39 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                     try
                     {
                         //Proceed
-                        List<BackupRecord> queuedBackups = await _backupRecordRepository.GetAllByStatusAsync(BackupRecordStatus.COMPLETED.ToString());
-                        if (queuedBackups != null && queuedBackups.Count > 0)
+                        List<BackupRecord> queuedBackups = (await _backupRecordRepository.GetAllByStatusAsync(BackupRecordStatus.COMPLETED.ToString())) ?? [];
+                        foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.Id).ToList())
                         {
-                            foreach (BackupRecord backupRecord in queuedBackups.OrderBy(x => x.RegisteredDateUTC).ToList())
+                            //get valid database
+                            BackupDatabaseInfo backupRecordDbInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
+                            //Check if valid Resource Group
+                            ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
+                            if (resourceGroup != null)
                             {
-                                //get valid database
-                                BackupDatabaseInfo backupRecordDbInfo = await _databaseInfoRepository.GetByIdAsync(backupRecord.BackupDatabaseInfoId);
-                                //Check if valid Resource Group
-                                ResourceGroup resourceGroup = await _resourceGroupRepository.GetByIdOrKeyAsync(backupRecordDbInfo?.ResourceGroupId ?? string.Empty);
-                                if (resourceGroup != null)
+                                //Use Resource Group Threads
+                                if (resourceGroup.CompressBackupFiles)
                                 {
-                                    //Use Resource Group Threads
-                                    if (resourceGroup.CompressBackupFiles)
+                                    //Check Resource Group Maximum Threads
+                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
                                     {
-                                        //Check Resource Group Maximum Threads
-                                        if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
-                                        {
-                                            _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...");
-                                            //Add to Queue
-                                            _botsManagerBackgroundJob.AddBot(new BackupZippingBot(resourceGroup.Id, backupRecord));
-                                            bool updated = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
-                                            if (updated)
-                                                _logger.LogInformation($"Queueing Zip Database Record Key: #{backupRecord.Id}...SUCCESS");
-                                            else
-                                                _logger.LogWarning($"Queued for Zipping But Failed to Update Status for Backup Record Key: #{backupRecord.Id}");
-                                        }
+                                        _logger.LogInformation("Queueing Zip Database Record Key: #{Id}...", backupRecord.Id);
+                                        //Add to Queue
+                                        _botsManagerBackgroundJob.AddBot(new BackupZippingBot(resourceGroup.Id, backupRecord));
+                                        //Finally Update Status
+                                        _ = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
                                     }
                                     else
-                                    {
-                                        _logger.LogInformation($">> Skipping Compression for Database Record Key: #{backupRecord.Id}...");
-                                        bool updated = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.READY.ToString());
-                                        if (updated)
-                                            _logger.LogInformation($">> Skipped Compression and Completed Backup Updated Record Key: #{backupRecord.Id}...SUCCESS");
-                                        else
-                                            _logger.LogWarning($"Failed to Update Status as READY for Backup Record Key: #{backupRecord.Id}");
-                                    }
+                                        Debug.WriteLine($"[{nameof(BackupBackgroundZIPJob)}] Resource Group({resourceGroup.Id}) Bots are Busy, Running Bots: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
                                 }
                                 else
-                                    _logger.LogWarning($"The Backup Record Id: {backupRecord.Id}, doesn't seem to have been assigned to a valid Resource Group, Zipping Skipped");
+                                {
+                                    _logger.LogInformation(">> Skipping Compression for Database Record Key: #{Id}...", backupRecord.Id);
+                                    //Finally Update Status
+                                    _ = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.READY.ToString());
+                                }
                             }
+                            else
+                                _logger.LogWarning("The Backup Record Id: {Id}, doesn't seem to have been assigned to a valid Resource Group, Zipping Skipped", backupRecord.Id);
                         }
                     }
                     catch (Exception ex)
