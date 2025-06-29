@@ -1,4 +1,5 @@
 ﻿using SemanticBackup.Core;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -48,8 +49,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //proceed
                 string fileName = Path.GetFileName(this._backupRecord.Path);
                 string executionMessage = "Sending Email....";
-                using (MailMessage e_mail = new())
+                //proceed
+                await WithRetry.TaskAsync(async () =>
                 {
+                    using MailMessage e_mail = new();
                     using SmtpClient Smtp_Server = new();
                     //Configs
                     Smtp_Server.UseDefaultCredentials = false;
@@ -89,7 +92,10 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     //Finally Send
                     await Smtp_Server.SendMailAsync(e_mail, cancellationToken);
                     executionMessage = $"Sent to: {settings.SMTPDestinations}";
-                }
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
+
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed

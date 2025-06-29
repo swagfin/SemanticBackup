@@ -1,5 +1,6 @@
 ﻿using SemanticBackup.Core;
 using SemanticBackup.Core.Extensions;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -34,10 +35,19 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 Console.WriteLine($"creating download link for file: {_backupRecord.Path}");
                 DownloadLinkDeliveryConfig settings = _resourceGroup.BackupDeliveryConfig.DownloadLink ?? throw new Exception("no valid download link config");
                 stopwatch.Start();
-                //get download link::
-                string contentLink = 5.GenerateUniqueId();
-                if (settings.DownloadLinkType == "LONG")
-                    contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{_backupRecord.Id}|{_resourceGroup.Id}".ToMD5String());
+                //proceed
+                string contentLink = string.Empty;
+                await WithRetry.TaskAsync(() =>
+                {
+                    //get download link::
+                    string contentLink = 5.GenerateUniqueId();
+                    if (settings.DownloadLinkType == "LONG")
+                        contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{_backupRecord.Id}|{_resourceGroup.Id}".ToMD5String());
+
+                    return Task.CompletedTask;
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed

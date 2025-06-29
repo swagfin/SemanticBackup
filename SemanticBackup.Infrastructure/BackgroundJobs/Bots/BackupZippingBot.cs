@@ -36,11 +36,12 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //proceed
                 stopwatch.Start();
                 Status = BotStatus.Running;
-                //proceed
                 string newZIPPath = _backupRecord.Path.Replace(".bak", ".zip");
-                using (ZipOutputStream s = new(File.Create(newZIPPath)))
+                //proceed
+                await WithRetry.TaskAsync(() =>
                 {
 
+                    using ZipOutputStream s = new(File.Create(newZIPPath));
                     s.SetLevel(9); // 0 - store only to 9 - means best compression
                     byte[] buffer = new byte[4096];
                     ZipEntry entry = new(Path.GetFileName(_backupRecord.Path))
@@ -59,7 +60,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     }
                     s.Finish();
                     s.Close();
-                }
+
+                    return Task.CompletedTask;
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
                 await TryDeleteOldFileAsync(_backupRecord.Path);
                 //notify update

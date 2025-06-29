@@ -1,4 +1,5 @@
-﻿using SemanticBackup.Core.Models;
+﻿using SemanticBackup.Core.Helpers;
+using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -40,56 +41,62 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     throw new Exception($"No Database File In Path or May have been deleted, Path: {_backupRecord.Path}");
                 //FTP Upload
                 string executionMessage = "FTP Uploading...";
-                //Directory
-                string validDirectory = (string.IsNullOrWhiteSpace(settings.Directory)) ? "/" : settings.Directory;
-                validDirectory = validDirectory.EndsWith('/') ? validDirectory : validDirectory + "/";
-                validDirectory = validDirectory.StartsWith('/') ? validDirectory : "/" + validDirectory;
-                string validServerName = settings.Server.Replace("ftp", string.Empty).Replace("/", string.Empty).Replace(":", string.Empty);
-                //Filename
-                string fileName = Path.GetFileName(this._backupRecord.Path);
-                //Proceed
-                try
+                //proceed
+                await WithRetry.TaskAsync(async () =>
                 {
-                    string fullServerUrl = $"ftp://{validServerName}{validDirectory}{fileName}";
-                    byte[] fileContents;
-                    using (FileStream sourceStream = File.OpenRead(this._backupRecord.Path))
+                    //Directory
+                    string validDirectory = (string.IsNullOrWhiteSpace(settings.Directory)) ? "/" : settings.Directory;
+                    validDirectory = validDirectory.EndsWith('/') ? validDirectory : validDirectory + "/";
+                    validDirectory = validDirectory.StartsWith('/') ? validDirectory : "/" + validDirectory;
+                    string validServerName = settings.Server.Replace("ftp", string.Empty).Replace("/", string.Empty).Replace(":", string.Empty);
+                    //Filename
+                    string fileName = Path.GetFileName(this._backupRecord.Path);
+                    //Proceed
+                    try
                     {
-                        fileContents = new byte[sourceStream.Length];
-                        await sourceStream.ReadAsync(fileContents, cancellationToken);
-                    }
+                        string fullServerUrl = $"ftp://{validServerName}{validDirectory}{fileName}";
+                        byte[] fileContents;
+                        using (FileStream sourceStream = File.OpenRead(this._backupRecord.Path))
+                        {
+                            fileContents = new byte[sourceStream.Length];
+                            await sourceStream.ReadAsync(fileContents, cancellationToken);
+                        }
 
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
-                    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(fullServerUrl);
+                        FtpWebRequest request = (FtpWebRequest)WebRequest.Create(fullServerUrl);
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
-                    request.Method = WebRequestMethods.Ftp.UploadFile;
-                    request.Credentials = new NetworkCredential(settings.Username, settings.Password);
-                    request.EnableSsl = false; // Set to true if your FTP server uses FTPS
-                    request.UsePassive = true;
-                    request.UseBinary = true;
-                    request.KeepAlive = false;
-                    request.ContentLength = fileContents.Length;
+                        request.Method = WebRequestMethods.Ftp.UploadFile;
+                        request.Credentials = new NetworkCredential(settings.Username, settings.Password);
+                        request.EnableSsl = false; // Set to true if your FTP server uses FTPS
+                        request.UsePassive = true;
+                        request.UseBinary = true;
+                        request.KeepAlive = false;
+                        request.ContentLength = fileContents.Length;
 
-                    // Write to the request stream
-                    using (Stream requestStream = await request.GetRequestStreamAsync())
+                        // Write to the request stream
+                        using (Stream requestStream = await request.GetRequestStreamAsync())
+                        {
+                            await requestStream.WriteAsync(fileContents, 0, fileContents.Length, cancellationToken);
+                        }
+
+                        // Get the response to ensure upload completed
+                        using FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync();
+                        if (response.StatusCode == FtpStatusCode.ClosingData)
+                        {
+                            executionMessage = $"Uploaded to Server: {settings.Server}";
+                        }
+                        else
+                        {
+                            throw new Exception($"Failed to upload. FTP status: {response.StatusDescription}");
+                        }
+                    }
+                    catch (Exception ex)
                     {
-                        await requestStream.WriteAsync(fileContents, 0, fileContents.Length, cancellationToken);
+                        throw new Exception($"Upload failed: {ex.Message}");
                     }
 
-                    // Get the response to ensure upload completed
-                    using FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync();
-                    if (response.StatusCode == FtpStatusCode.ClosingData)
-                    {
-                        executionMessage = $"Uploaded to Server: {settings.Server}";
-                    }
-                    else
-                    {
-                        throw new Exception($"Failed to upload. FTP status: {response.StatusDescription}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Upload failed: {ex.Message}");
-                }
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed

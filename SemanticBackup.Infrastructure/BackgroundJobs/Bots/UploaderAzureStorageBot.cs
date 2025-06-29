@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -41,21 +42,24 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     throw new Exception($"No Database File In Path or May have been deleted, Path: {_backupRecord.Path}");
                 //proceed
                 string executionMessage = "Azure Blob Storage Uploading...";
-                //Container
-                string validContainer = string.IsNullOrWhiteSpace(settings.BlobContainer) ? "backups" : settings.BlobContainer;
-                //Filename
-                string fileName = Path.GetFileName(this._backupRecord.Path);
-                //Proceed
-                if (string.IsNullOrWhiteSpace(settings.ConnectionString))
-                    throw new Exception("Invalid Connection String");
-                //Proceed
-                using (FileStream stream = File.Open(_backupRecord.Path, FileMode.Open))
+                await WithRetry.TaskAsync(async () =>
                 {
+                    //Container
+                    string validContainer = string.IsNullOrWhiteSpace(settings.BlobContainer) ? "backups" : settings.BlobContainer;
+                    //Filename
+                    string fileName = Path.GetFileName(this._backupRecord.Path);
+                    //Proceed
+                    if (string.IsNullOrWhiteSpace(settings.ConnectionString))
+                        throw new Exception("Invalid Connection String");
+                    //Proceed
+                    using FileStream stream = File.Open(_backupRecord.Path, FileMode.Open);
                     BlobContainerClient containerClient = new(settings.ConnectionString, validContainer);
                     BlobClient blobClient = containerClient.GetBlobClient(fileName);
                     _ = await blobClient.UploadAsync(stream, true, cancellationToken);
                     executionMessage = $"Uploaded to Container: {validContainer}";
-                }
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed

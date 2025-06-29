@@ -1,4 +1,5 @@
-﻿using SemanticBackup.Core.Interfaces;
+﻿using SemanticBackup.Core.Helpers;
+using SemanticBackup.Core.Interfaces;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -40,12 +41,17 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 //proceed
                 stopwatch.Start();
                 Status = BotStatus.Running;
-                //Execute Service
-                bool backupedUp = await _providerForSQLServer.BackupDatabaseAsync(_databaseName, _resourceGroup, _backupRecord);
+                //proceed
+                await WithRetry.TaskAsync(async () =>
+                {
+
+                    //Execute Service
+                    if (!await _providerForSQLServer.BackupDatabaseAsync(_databaseName, _resourceGroup, _backupRecord))
+                        throw new Exception("Creating Backup Failed to Return Success Completion");
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
 
                 stopwatch.Stop();
-                if (!backupedUp)
-                    throw new Exception("Creating Backup Failed to Return Success Completion");
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

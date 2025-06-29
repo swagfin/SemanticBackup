@@ -1,6 +1,7 @@
 ﻿using Minio;
 using Minio.DataModel.Args;
 using Minio.DataModel.Response;
+using SemanticBackup.Core.Helpers;
 using SemanticBackup.Core.Models;
 using System;
 using System.Diagnostics;
@@ -43,14 +44,16 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     throw new Exception($"No Database File In Path or May have been deleted, Path: {_backupRecord.Path}");
                 //proceed
                 string executionMessage = "Object Storage Uploading...";
-                //Container
-                string validBucket = string.IsNullOrWhiteSpace(settings.Bucket) ? "backups" : settings.Bucket;
-                //Filename
-                string fileName = Path.GetFileName(this._backupRecord.Path);
-                //Proceed
-                using IMinioClient minioClient = new MinioClient().WithEndpoint(settings.Server, settings.Port).WithCredentials(settings.AccessKey, settings.SecretKey).WithSSL(settings.UseSsl).Build();
-                using (FileStream stream = File.Open(_backupRecord.Path, FileMode.Open))
+                //proceed
+                await WithRetry.TaskAsync(async () =>
                 {
+                    //Container
+                    string validBucket = string.IsNullOrWhiteSpace(settings.Bucket) ? "backups" : settings.Bucket;
+                    //Filename
+                    string fileName = Path.GetFileName(this._backupRecord.Path);
+                    //Proceed
+                    using IMinioClient minioClient = new MinioClient().WithEndpoint(settings.Server, settings.Port).WithCredentials(settings.AccessKey, settings.SecretKey).WithSSL(settings.UseSsl).Build();
+                    using FileStream stream = File.Open(_backupRecord.Path, FileMode.Open);
                     //upload object
                     PutObjectResponse putResponse = await minioClient.PutObjectAsync(new PutObjectArgs()
                                                     .WithBucket(settings.Bucket)
@@ -65,7 +68,9 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     }
                     //proceed
                     executionMessage = $"Uploaded to Bucket: {validBucket}";
-                }
+
+                }, maxRetries: 2, delay: TimeSpan.FromSeconds(5), cancellationToken: cancellationToken);
+
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
