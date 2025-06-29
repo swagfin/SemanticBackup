@@ -79,7 +79,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(BackupZippingBot)}: {ex.Message}");
                 stopwatch.Stop();
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed

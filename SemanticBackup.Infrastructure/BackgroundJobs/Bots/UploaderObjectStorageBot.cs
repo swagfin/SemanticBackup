@@ -83,7 +83,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(UploaderObjectStorageBot)}: {ex.Message}");
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

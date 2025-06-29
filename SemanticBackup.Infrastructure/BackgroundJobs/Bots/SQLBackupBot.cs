@@ -62,7 +62,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(SQLBackupBot)}: {ex.Message}");
                 //notify update
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {

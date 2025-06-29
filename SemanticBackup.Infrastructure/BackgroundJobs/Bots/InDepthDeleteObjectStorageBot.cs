@@ -55,7 +55,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             catch (Exception ex)
             {
                 Status = BotStatus.Error;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[Error] {nameof(InDepthDeleteObjectStorageBot)}: {ex.Message}");
                 stopwatch.Stop();
             }
         }

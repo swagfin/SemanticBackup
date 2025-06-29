@@ -72,8 +72,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 Status = BotStatus.Error;
+                Console.WriteLine($"[Error] {nameof(UploaderAzureStorageBot)}: {ex.Message}");
                 stopwatch.Stop();
                 await onDeliveryFeedUpdate(new BackupRecordDeliveryFeed
                 {
