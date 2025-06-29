@@ -33,7 +33,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
 
     public enum BotStatus
     {
-        NotReady,
+        PendingStart,
         Starting,
         Running,
         Completed,

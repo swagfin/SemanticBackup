@@ -16,7 +16,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
         public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
         public string BotId => $"{_resourceGroupId}::{_backupRecord.Id}::{nameof(BackupZippingBot)}";
         public string ResourceGroupId => _resourceGroupId;
-        public BotStatus Status { get; internal set; } = BotStatus.NotReady;
+        public BotStatus Status { get; internal set; } = BotStatus.PendingStart;
 
         public BackupZippingBot(string resourceGroupId, BackupRecord backupRecord)
         {

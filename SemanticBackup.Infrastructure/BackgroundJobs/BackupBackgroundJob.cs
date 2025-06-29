@@ -6,7 +6,6 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -97,19 +96,14 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                 }
                                 else
                                 {
-                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
-                                    {
-                                        if (resourceGroup.DbType.Contains("SQLSERVER"))
-                                            _botsManagerBackgroundJob.AddBot(new SQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForSQLServer));
-                                        else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
-                                            _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForMySqlServer));
-                                        else
-                                            throw new Exception($"No Bot is registered to Handle Database Backups of Type: {resourceGroup.DbType}");
-                                        //Finally Update Status
-                                        _ = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.EXECUTING.ToString());
-                                    }
+                                    if (resourceGroup.DbType.Contains("SQLSERVER"))
+                                        _botsManagerBackgroundJob.AddBot(new SQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForSQLServer));
+                                    else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
+                                        _botsManagerBackgroundJob.AddBot(new MySQLBackupBot(backupDatabaseInfo.DatabaseName, resourceGroup, backupRecord, _providerForMySqlServer));
                                     else
-                                        Debug.WriteLine($"[{nameof(BackupBackgroundJob)}] Resource Group({resourceGroup.Id}) Bots are Busy, Running Bots: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
+                                        throw new Exception($"No Bot is registered to Handle Database Backups of Type: {resourceGroup.DbType}");
+                                    //Finally Update Status
+                                    _ = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.EXECUTING.ToString());
                                 }
 
                             }

@@ -5,7 +5,6 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,52 +88,48 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                             }
                             else
                             {
-                                if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
+
+                                string status = BackupRecordDeliveryStatus.EXECUTING.ToString();
+                                string statusMsg = "Dispatching Backup Record";
+                                if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.DownloadLink.ToString())
                                 {
-                                    string status = BackupRecordDeliveryStatus.EXECUTING.ToString();
-                                    string statusMsg = "Dispatching Backup Record";
-                                    if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.DownloadLink.ToString())
-                                    {
-                                        //Download Link Generator
-                                        _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
-                                    }
-                                    else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Ftp.ToString())
-                                    {
-                                        //FTP Uploader
-                                        _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
-                                    }
-                                    else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Smtp.ToString())
-                                    {
-                                        //Email Send and Uploader
-                                        _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
-                                    }
-                                    else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Dropbox.ToString())
-                                    {
-                                        //Email Send and Uploader
-                                        _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
-                                    }
-                                    else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.AzureBlobStorage.ToString())
-                                    {
-                                        //Azure Blob Storage
-                                        _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
-                                    }
-                                    else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.ObjectStorage.ToString())
-                                    {
-                                        //Object Storage
-                                        _botsManagerBackgroundJob.AddBot(new UploaderObjectStorageBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
-                                    }
-                                    else
-                                    {
-                                        status = BackupRecordDeliveryStatus.ERROR.ToString();
-                                        statusMsg = $"Backup Record Id: {contentDeliveryRecord.BackupRecordId}, Queued for Content Delivery has UNSUPPORTED Delivery Type, Record Will be Removed";
-                                        _logger.LogWarning(statusMsg);
-                                        scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
-                                    }
-                                    //Finally Update Status
-                                    _ = await _deliveryRecordRepository.UpdateStatusFeedAsync(contentDeliveryRecord.Id, status, statusMsg);
+                                    //Download Link Generator
+                                    _botsManagerBackgroundJob.AddBot(new UploaderLinkGenBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
+                                }
+                                else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Ftp.ToString())
+                                {
+                                    //FTP Uploader
+                                    _botsManagerBackgroundJob.AddBot(new UploaderFTPBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
+                                }
+                                else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Smtp.ToString())
+                                {
+                                    //Email Send and Uploader
+                                    _botsManagerBackgroundJob.AddBot(new UploaderEmailSMTPBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
+                                }
+                                else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.Dropbox.ToString())
+                                {
+                                    //Email Send and Uploader
+                                    _botsManagerBackgroundJob.AddBot(new UploaderDropboxBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
+                                }
+                                else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.AzureBlobStorage.ToString())
+                                {
+                                    //Azure Blob Storage
+                                    _botsManagerBackgroundJob.AddBot(new UploaderAzureStorageBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
+                                }
+                                else if (contentDeliveryRecord.DeliveryType == BackupDeliveryConfigTypes.ObjectStorage.ToString())
+                                {
+                                    //Object Storage
+                                    _botsManagerBackgroundJob.AddBot(new UploaderObjectStorageBot(resourceGroup, backupRecordInfo, contentDeliveryRecord));
                                 }
                                 else
-                                    Debug.WriteLine($"[{nameof(BackupRecordDeliveryDispatchBackgroundJob)}] Resource Group({resourceGroup.Id}) Bots are Busy, Running Bots: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
+                                {
+                                    status = BackupRecordDeliveryStatus.ERROR.ToString();
+                                    statusMsg = $"Backup Record Id: {contentDeliveryRecord.BackupRecordId}, Queued for Content Delivery has UNSUPPORTED Delivery Type, Record Will be Removed";
+                                    _logger.LogWarning(statusMsg);
+                                    scheduleToDeleteRecords.Add(contentDeliveryRecord.Id);
+                                }
+                                //Finally Update Status
+                                _ = await _deliveryRecordRepository.UpdateStatusFeedAsync(contentDeliveryRecord.Id, status, statusMsg);
                             }
                         }
                         //Check if Any Delete

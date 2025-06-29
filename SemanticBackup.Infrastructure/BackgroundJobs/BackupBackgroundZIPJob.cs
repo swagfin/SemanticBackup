@@ -5,7 +5,6 @@ using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -71,17 +70,11 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                 //Use Resource Group Threads
                                 if (resourceGroup.CompressBackupFiles)
                                 {
-                                    //Check Resource Group Maximum Threads
-                                    if (_botsManagerBackgroundJob.HasAvailableResourceGroupBotsCount(resourceGroup.Id, resourceGroup.MaximumRunningBots))
-                                    {
-                                        _logger.LogInformation("Queueing Zip Database Record Key: #{Id}...", backupRecord.Id);
-                                        //Add to Queue
-                                        _botsManagerBackgroundJob.AddBot(new BackupZippingBot(resourceGroup.Id, backupRecord));
-                                        //Finally Update Status
-                                        _ = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
-                                    }
-                                    else
-                                        Debug.WriteLine($"[{nameof(BackupBackgroundZIPJob)}] Resource Group({resourceGroup.Id}) Bots are Busy, Running Bots: {resourceGroup.MaximumRunningBots}, waiting for available Bots....");
+                                    _logger.LogInformation("Queueing Zip Database Record Key: #{Id}...", backupRecord.Id);
+                                    //Add to Queue
+                                    _botsManagerBackgroundJob.AddBot(new BackupZippingBot(resourceGroup.Id, backupRecord));
+                                    //Finally Update Status
+                                    _ = await _backupRecordRepository.UpdateStatusFeedAsync(backupRecord.Id, BackupRecordStatus.COMPRESSING.ToString());
                                 }
                                 else
                                 {
