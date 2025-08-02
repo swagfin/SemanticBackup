@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using SemanticBackup.Core.Interfaces;
-using System.Threading.Tasks;
 
 namespace SemanticBackup.Pages
 {
@@ -18,7 +17,7 @@ namespace SemanticBackup.Pages
             this._resourceGroupPersistance = resourceGroupPersistance;
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        public IActionResult OnGetAsync()
         {
             return LocalRedirect($"/resource-groups/");
         }
