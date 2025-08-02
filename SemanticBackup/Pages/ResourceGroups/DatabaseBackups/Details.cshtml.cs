@@ -148,12 +148,12 @@ namespace SemanticBackup.Pages.ResourceGroups.DatabaseBackups
             new FileExtensionContentTypeProvider().TryGetContentType(BackupRecordResponse.Path, out string contentType);
             contentType = contentType ?? "application/octet-stream";
             string fileName = System.IO.Path.GetFileName(BackupRecordResponse.Path);
-            var cd = new System.Net.Mime.ContentDisposition
+            System.Net.Mime.ContentDisposition cd = new()
             {
                 FileName = fileName,
                 Inline = true,
             };
-            Response.Headers.Add("Content-Disposition", cd.ToString());
+            Response.Headers.TryAdd("Content-Disposition", cd.ToString());
             byte[] filedata = await System.IO.File.ReadAllBytesAsync(BackupRecordResponse.Path);
             return File(filedata, contentType);
         }
