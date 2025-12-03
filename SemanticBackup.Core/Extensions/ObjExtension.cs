@@ -26,7 +26,7 @@ namespace SemanticBackup.Core
             }
             else if (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB"))
             {
-                return string.Format("{0}{1}", $"server={resourceGroup.DbServer};uid={resourceGroup.DbUsername};pwd={resourceGroup.DbPassword};port={resourceGroup.DbPort};CharSet=utf8;Connection Timeout=300;", string.IsNullOrWhiteSpace(databaseName) ? string.Empty : $"database={databaseName};");
+                return string.Format("{0}{1}", $"server={resourceGroup.DbServer};uid={resourceGroup.DbUsername};pwd={resourceGroup.DbPassword};port={resourceGroup.DbPort};CharSet=utf8;Connection Timeout=300;Allow Zero Datetime=True;Convert Zero Datetime=True;", string.IsNullOrWhiteSpace(databaseName) ? string.Empty : $"database={databaseName};");
             }
             else
                 return string.Empty;
