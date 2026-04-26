@@ -86,7 +86,6 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                         case BackupDeliveryConfigTypes.Ftp: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.Ftp?.IsEnabled ?? false; break;
                                         case BackupDeliveryConfigTypes.Smtp: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.Smtp?.IsEnabled ?? false; break;
                                         case BackupDeliveryConfigTypes.Dropbox: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.Dropbox?.IsEnabled ?? false; break;
-                                        case BackupDeliveryConfigTypes.AzureBlobStorage: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.AzureBlobStorage?.IsEnabled ?? false; break;
                                         case BackupDeliveryConfigTypes.ObjectStorage: isDeliveryEnabled = resourceGroup.BackupDeliveryConfig.ObjectStorage?.IsEnabled ?? false; break;
                                         default: isDeliveryEnabled = false; break;
                                     }

@@ -173,7 +173,6 @@ namespace SemanticBackup.Infrastructure.Implementations
                 Ftp = CopyFtp(uploadConfigurations.Ftp),
                 Smtp = CopySmtp(uploadConfigurations.Smtp),
                 Dropbox = CopyDropbox(uploadConfigurations.Dropbox),
-                AzureBlobStorage = CopyAzure(uploadConfigurations.AzureBlob),
                 ObjectStorage = CopyObjectStorage(uploadConfigurations.ObjectStorage)
             };
 
@@ -181,7 +180,6 @@ namespace SemanticBackup.Infrastructure.Implementations
             backupDeliveryConfig.Ftp.IsEnabled = IsEnabled(uploadsEnabled, "ftp");
             backupDeliveryConfig.Smtp.IsEnabled = IsEnabled(uploadsEnabled, "smtp");
             backupDeliveryConfig.Dropbox.IsEnabled = IsEnabled(uploadsEnabled, "dropbox", "dropdobx");
-            backupDeliveryConfig.AzureBlobStorage.IsEnabled = IsEnabled(uploadsEnabled, "azureblob", "azureblobstorage");
             backupDeliveryConfig.ObjectStorage.IsEnabled = IsEnabled(uploadsEnabled, "objectstorage", "minio", "s3");
             return backupDeliveryConfig;
         }
@@ -202,7 +200,7 @@ namespace SemanticBackup.Infrastructure.Implementations
             return new DownloadLinkDeliveryConfig
             {
                 IsEnabled = config.IsEnabled,
-                DownloadLinkType = config.DownloadLinkType
+                UseShortDownloadLink = config.UseShortDownloadLink
             };
         }
 
@@ -243,17 +241,6 @@ namespace SemanticBackup.Infrastructure.Implementations
                 IsEnabled = config.IsEnabled,
                 AccessToken = config.AccessToken,
                 Directory = config.Directory
-            };
-        }
-
-        private static AzureBlobStorageDeliveryConfig CopyAzure(AzureBlobStorageDeliveryConfig source)
-        {
-            AzureBlobStorageDeliveryConfig config = source ?? new AzureBlobStorageDeliveryConfig();
-            return new AzureBlobStorageDeliveryConfig
-            {
-                IsEnabled = config.IsEnabled,
-                ConnectionString = config.ConnectionString,
-                BlobContainer = config.BlobContainer
             };
         }
 

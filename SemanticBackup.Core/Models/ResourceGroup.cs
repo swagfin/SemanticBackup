@@ -38,14 +38,13 @@ namespace SemanticBackup.Core.Models
         public FtpDeliveryConfig Ftp { get; set; } = new FtpDeliveryConfig();
         public SmtpDeliveryConfig Smtp { get; set; } = new SmtpDeliveryConfig();
         public DropboxDeliveryConfig Dropbox { get; set; } = new DropboxDeliveryConfig();
-        public AzureBlobStorageDeliveryConfig AzureBlobStorage { get; set; } = new AzureBlobStorageDeliveryConfig();
         public ObjectStorageDeliveryConfig ObjectStorage { get; set; } = new ObjectStorageDeliveryConfig();
     }
 
     public class DownloadLinkDeliveryConfig
     {
         public bool IsEnabled { get; set; } = true;
-        public string DownloadLinkType { get; set; }
+        public bool UseShortDownloadLink { get; set; } = true;
     }
 
     public class FtpDeliveryConfig
@@ -75,13 +74,6 @@ namespace SemanticBackup.Core.Models
         public string AccessToken { get; set; }
         public string Directory { get; set; } = "/";
     }
-    public class AzureBlobStorageDeliveryConfig
-    {
-        public bool IsEnabled { get; set; } = false;
-        public string ConnectionString { get; set; }
-        public string BlobContainer { get; set; }
-    }
-
     public class ObjectStorageDeliveryConfig
     {
         public bool IsEnabled { get; set; } = false;
@@ -100,6 +92,6 @@ namespace SemanticBackup.Core.Models
     }
     public enum BackupDeliveryConfigTypes
     {
-        DownloadLink, Ftp, Smtp, Dropbox, AzureBlobStorage, ObjectStorage
+        DownloadLink, Ftp, Smtp, Dropbox, ObjectStorage
     }
 }

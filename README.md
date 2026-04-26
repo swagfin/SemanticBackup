@@ -1,6 +1,6 @@
 # SemanticBackup
 
-SemanticBackup is a .NET 8 backup service for SQL Server, MySQL, and MariaDB with a web dashboard, background workers, automatic scheduling, compression, and optional delivery targets (FTP, SMTP, Azure Blob, Dropbox, Object Storage, and download links).
+SemanticBackup is a .NET 8 backup service for SQL Server, MySQL, and MariaDB with a web dashboard, background workers, automatic scheduling, compression, and optional delivery targets (FTP, SMTP, Dropbox, Object Storage, and download links).
 
 ## What The System Does
 
@@ -51,7 +51,6 @@ Global settings for each upload channel:
 - `Ftp`
 - `Smtp`
 - `ObjectStorage`
-- `AzureBlob`
 - `Dropbox`
 
 These values are used when a resource enables the matching upload type in `UploadTo`.
@@ -106,7 +105,7 @@ Core runtime options:
   ],
   "UploadConfigurations": {
     "DownloadLink": {
-      "DownloadLinkType": "SHORT"
+      "UseShortDownloadLink": true
     },
     "Ftp": {
       "Server": "ftp.example.com",

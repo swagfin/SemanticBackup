@@ -48,13 +48,20 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                     string validDirectory = (string.IsNullOrWhiteSpace(settings.Directory)) ? "/" : settings.Directory;
                     validDirectory = validDirectory.EndsWith('/') ? validDirectory : validDirectory + "/";
                     validDirectory = validDirectory.StartsWith('/') ? validDirectory : "/" + validDirectory;
-                    string validServerName = settings.Server.Replace("ftp", string.Empty).Replace("/", string.Empty).Replace(":", string.Empty);
                     //Filename
                     string fileName = Path.GetFileName(this._backupRecord.Path);
                     //Proceed
                     try
                     {
-                        string fullServerUrl = $"ftp://{validServerName}{validDirectory}{fileName}";
+                        string normalizedServer = (settings.Server ?? string.Empty).Trim();
+                        if (string.IsNullOrWhiteSpace(normalizedServer))
+                            throw new Exception("Invalid FTP server");
+                        if (!normalizedServer.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase))
+                            normalizedServer = $"ftp://{normalizedServer}";
+                        if (!Uri.TryCreate(normalizedServer, UriKind.Absolute, out Uri ftpServer))
+                            throw new Exception("Invalid FTP server");
+                        string hostAndPort = ftpServer.IsDefaultPort ? ftpServer.Host : $"{ftpServer.Host}:{ftpServer.Port}";
+                        string fullServerUrl = $"ftp://{hostAndPort}{validDirectory}{fileName}";
                         byte[] fileContents;
                         using (FileStream sourceStream = File.OpenRead(this._backupRecord.Path))
                         {

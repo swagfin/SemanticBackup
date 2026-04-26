@@ -41,7 +41,6 @@ namespace SemanticBackup.Core.Models
         public FtpDeliveryConfig Ftp { get; set; } = new FtpDeliveryConfig();
         public SmtpDeliveryConfig Smtp { get; set; } = new SmtpDeliveryConfig();
         public ObjectStorageDeliveryConfig ObjectStorage { get; set; } = new ObjectStorageDeliveryConfig();
-        public AzureBlobStorageDeliveryConfig AzureBlob { get; set; } = new AzureBlobStorageDeliveryConfig();
         public DropboxDeliveryConfig Dropbox { get; set; } = new DropboxDeliveryConfig();
     }
 }
