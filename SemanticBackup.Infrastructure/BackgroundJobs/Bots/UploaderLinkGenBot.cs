@@ -40,8 +40,8 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs.Bots
                 await WithRetry.TaskAsync(() =>
                 {
                     //get download link::
-                    string contentLink = 5.GenerateUniqueId();
-                    if (settings.DownloadLinkType == "LONG")
+                    contentLink = 5.GenerateUniqueId();
+                    if (!settings.UseShortDownloadLink)
                         contentLink = string.Format("{0}?token={1}", 55.GenerateUniqueId(), $"{_backupRecord.Id}|{_resourceGroup.Id}".ToMD5String());
 
                     return Task.CompletedTask;

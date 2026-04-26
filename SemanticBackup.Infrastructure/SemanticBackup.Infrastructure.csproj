@@ -8,7 +8,6 @@
 		<ProjectReference Include="..\SemanticBackup.Core\SemanticBackup.Core.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.22.2" />
 		<PackageReference Include="Dropbox.Api" Version="7.0.0" />
 		<PackageReference Include="FluentFTP" Version="52.1.0" />
 		<PackageReference Include="LiteDB.Async" Version="0.1.8" />
@@ -25,5 +24,10 @@
 		<None Update="Data\README.txt">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>SemanticBackup.IntegrationTests</_Parameter1>
+		</AssemblyAttribute>
 	</ItemGroup>
 </Project>

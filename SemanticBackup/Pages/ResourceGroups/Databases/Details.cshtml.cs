@@ -56,17 +56,6 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                 await GetBackupRecordsForDatabaseAsync(DatabaseInfoResponse.Id);
                 await GetBackupSchedulesForDatabaseAsync(DatabaseInfoResponse.Id);
 
-                //#Check Other Requests
-                if (Request.Query.ContainsKey("remove-backup-schedule"))
-                {
-                    //user attempting to remove
-                    BackupSchedule backupSchedule = BackupSchedulesResponse.FirstOrDefault(x => x.Id.Equals(Request.Query["remove-backup-schedule"].ToString()?.Trim(), StringComparison.OrdinalIgnoreCase));
-                    if (backupSchedule == null)
-                        return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?schedules=active&response=unknown-backup-schedule");
-                    //proceed
-                    string scheduledRemoved = (await _backupScheduleRepository.RemoveAsync(backupSchedule.Id)) ? "success" : "failed";
-                    return Redirect($"/resource-groups/{resourceGroupId}/databases/details/{id}/?schedules=active&response={scheduledRemoved}");
-                }
                 return Page();
             }
             catch (Exception ex)
@@ -88,7 +77,6 @@ namespace SemanticBackup.Pages.ResourceGroups.Databases
                     return queuedExisting.FirstOrDefault()?.Id;
                 //init requeue db
                 DateTime currentTimeUTC = DateTime.UtcNow;
-                DateTime currentTimeLocal = DateTime.Now;
                 DateTime RecordExpiryUTC = currentTimeUTC.AddDays(CurrentResourceGroup.BackupExpiryAgeInDays);
                 BackupRecord newRecord = new BackupRecord
                 {

@@ -4,6 +4,8 @@
     {
         public string DefaultBackupDirectory { get; set; } = "c:\\backups\\";
         public string BackupFileSaveFormat { get; set; } = "{{database}}\\{{database}}-{{datetime}}.{{databasetype}}.bak";
+        public int MaxWorkers { get; set; } = 2;
+        public bool AutoCompressToZip { get; set; } = true;
         public int ExecutionTimeoutInMinutes { get; set; } = 10;
         public bool InDepthBackupRecordDeleteEnabled { get; set; } = true;
 

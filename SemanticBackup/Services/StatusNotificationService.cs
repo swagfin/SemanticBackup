@@ -158,15 +158,12 @@ namespace SemanticBackup.Services
             }
         }
 
-        private List<string> GetValidDestinations(string destinations)
+        private List<string> GetValidDestinations(List<string> destinations)
         {
             List<string> allEmails = [];
-            if (destinations == null)
+            if (destinations == null || destinations.Count == 0)
                 return allEmails;
-            string[] emailSplits = destinations?.Split(',');
-            if (emailSplits.Length < 1)
-                return allEmails;
-            foreach (string email in emailSplits)
+            foreach (string email in destinations)
                 if (!string.IsNullOrEmpty(email))
                     allEmails.Add(email.Replace(" ", string.Empty).Trim());
             return allEmails;

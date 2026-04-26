@@ -14,6 +14,7 @@ namespace SemanticBackup.SignalRHubs
 {
     public class RecordStatusChangedHubDispatcher : Hub, IRecordStatusChangedNotifier, IHostedService
     {
+        public const string GlobalLiveUpdatesGroup = "__all_signalr_updates__";
         private readonly ILogger<RecordStatusChangedHubDispatcher> _logger;
         private readonly IHubContext<RecordStatusChangedHubDispatcher> hub;
         private ConcurrentQueue<BackupRecordMetric> BackupRecordsQueue = new ConcurrentQueue<BackupRecordMetric>();
@@ -159,6 +160,7 @@ namespace SemanticBackup.SignalRHubs
                 contentDeliveryRecord.LastSyncDateUTC = DateTime.UtcNow;
                 contentDeliveryRecord.Subscription = clientGrp.Name;
                 _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveContentDeliveryNotification", contentDeliveryRecord);
+                _ = hub.Clients.Group(GlobalLiveUpdatesGroup).SendAsync("ReceiveContentDeliveryNotification", contentDeliveryRecord);
             }
             catch (Exception ex)
             {
@@ -173,7 +175,8 @@ namespace SemanticBackup.SignalRHubs
                 clientGrp.LastRefreshUTC = DateTime.UtcNow;
                 backupRecordMetric.LastSyncDateUTC = DateTime.UtcNow;
                 backupRecordMetric.Subscription = clientGrp.Name;
-                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecordMetric); ;
+                _ = hub.Clients.Group(clientGrp.Name).SendAsync("ReceiveNotification", backupRecordMetric);
+                _ = hub.Clients.Group(GlobalLiveUpdatesGroup).SendAsync("ReceiveNotification", backupRecordMetric);
             }
             catch (Exception ex)
             {

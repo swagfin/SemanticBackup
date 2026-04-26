@@ -16,12 +16,7 @@
                     <div class="ui message icon">
                         <i class="clone outline icon"></i>
                         <div class="content">
-                            You have not created any Resource Group, <a href="/resource-groups/create"> create a Resource Group</a> and monitor their status and statistics
-                            <p align="center">
-                            </p><div class="ui two buttons">
-                                <a class="ui button blue" href="/resource-groups/create"><i class="plus add icon"></i>Create Resource Group</a>
-                                <a class="ui button " href="/resource-groups/"><i class="list icon"></i>Resource Groups</a>
-                            </div>
+                            No resource groups were found. Add entries under <b>BackupConfigurations</b> to start.
                         </div>
                     </div>
                 }
@@ -33,7 +28,6 @@
                         {
                             <div class="card">
                                 <div class="content">
-                                    <a title="Delete resource Group" href="/resource-groups/delete/@(resourceGrp.Name)" class="right floated mini ui image"><span class="ui mini red icon label"><i class="trash icon"></i></span> </a>
                                     <div class="header">
                                         @(resourceGrp.Name)
                                     </div>
@@ -44,10 +38,7 @@
                                     </div>
                                 </div>
                                 <div class="extra content">
-                                    <div class="ui two buttons">
-                                        <a class="ui basic blue button" href="/resource-groups/@(resourceGrp.Name)/dashboard"><i class="chart line icon icon"></i>Manage</a>
-                                        <a class="ui basic button" href="/resource-groups/edit/@(resourceGrp.Name)"><i class="edit icon"></i>Edit</a>
-                                    </div>
+                                    <div class="ui one buttons"><a class="ui basic blue button" href="/resource-groups/@(resourceGrp.Name)/dashboard"><i class="chart line icon icon"></i>Open Dashboard</a></div>
                                 </div>
                             </div>
                         }
