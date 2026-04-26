@@ -10,7 +10,7 @@
         <div class="ui divider"></div>
 
 
-        <form method="post" class="ui segment attached form" onsubmit="$(this).addClass('loading');">
+        <form method="post" class="ui segment attached form">
             <section>
 
                 @{
@@ -27,20 +27,21 @@
                         <div class="ui red tiny message">@Model.Status</div>
                     }
                 }
+                <div class="ui info tiny message">This account is configured from <b>Configs/appsettings*.json</b> under <b>AdminUsers</b>. UI updates are disabled.</div>
                 <div class="field">
                     <label>Full Name</label>
-                    <input asp-for="UserAccountRequest.FullName" placeholder="My Full Name..." />
+                    <input asp-for="UserAccountRequest.FullName" placeholder="My Full Name..." readonly />
                 </div>
 
                 <div class="field">
                     <label>Email Address</label>
-                    <input asp-for="UserAccountRequest.EmailAddress" placeholder="My Email Address...">
+                    <input asp-for="UserAccountRequest.EmailAddress" placeholder="My Email Address..." readonly>
                 </div>
 
 
                 <div class="field">
                     <label>Timezone Preference</label>
-                    <select asp-for="UserAccountRequest.TimezoneId" class="ui fluid search small dropdown timezone-dropdown-search" required>
+                    <select asp-for="UserAccountRequest.TimezoneId" class="ui fluid search small dropdown timezone-dropdown-search" required disabled>
                         @{
                             if (Model._systemTimeZones != null && Model._systemTimeZones.Count > 0)
                             {
@@ -61,20 +62,7 @@
                 </div>
 
                 <div></div>
-                <div class="two warning fields">
-
-                    <div class="field">
-                        <label>New Password</label>
-                        <input asp-for="UserAccountRequest.NewPassword" placeholder="To change password, Enter new Password">
-                    </div> 
-                    
-                    <div class="field">
-                        <label>Confirm New Password</label>
-                        <input asp-for="UserAccountRequest.ConfirmNewPassword" placeholder="To change password, Confirm new Password">
-                    </div>
-
-                </div>
-                <button type="submit" class="btn btn-primary">Update Details</button>
+                <button type="submit" class="btn btn-secondary">Refresh Notice</button>
             </section>
         </form>
 

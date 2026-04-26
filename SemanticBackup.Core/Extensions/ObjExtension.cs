@@ -20,6 +20,8 @@ namespace SemanticBackup.Core
 
         public static string GetDbConnectionString(this ResourceGroup resourceGroup, string databaseName = null)
         {
+            if (!string.IsNullOrWhiteSpace(resourceGroup.ConnectionString))
+                return resourceGroup.ConnectionString.Trim();
             if (!string.IsNullOrEmpty(resourceGroup.DbType) && resourceGroup.DbType.Contains("SQLSERVER"))
             {
                 return string.Format("{0}{1}", $"Data Source={resourceGroup.DbServer},{resourceGroup.DbPort};Persist Security Info=True;User ID={resourceGroup.DbUsername};Password={resourceGroup.DbPassword};", string.IsNullOrWhiteSpace(databaseName) ? string.Empty : $"Initial Catalog={databaseName};");

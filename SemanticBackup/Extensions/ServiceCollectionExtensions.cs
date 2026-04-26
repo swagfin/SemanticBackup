@@ -17,12 +17,12 @@ namespace SemanticBackup.Extensions
             //Register Core
 
             //Repositories
-            services.AddSingleton<IDatabaseInfoRepository, DatabaseInfoRepositoryLiteDb>();
+            services.AddSingleton<IDatabaseInfoRepository, DatabaseInfoRepositoryAppSettings>();
             services.AddSingleton<IBackupRecordRepository, BackupRecordRepositoryLiteDb>();
-            services.AddSingleton<IBackupScheduleRepository, BackupScheduleRepositoryLiteDb>();
-            services.AddSingleton<IResourceGroupRepository, ResourceGroupRepositoryLiteDb>();
+            services.AddSingleton<IBackupScheduleRepository, BackupScheduleRepositoryAppSettings>();
+            services.AddSingleton<IResourceGroupRepository, ResourceGroupRepositoryAppSettings>();
             services.AddSingleton<IContentDeliveryRecordRepository, ContentDeliveryRecordRepositoryLiteDb>();
-            services.AddSingleton<IUserAccountRepository, UserAccountRepositoryLiteDb>();
+            services.AddSingleton<IUserAccountRepository, UserAccountRepositoryAppSettings>();
 
             //Backup Provider Engines
             services.AddSingleton<IBackupProviderForSQLServer, BackupProviderForSQLServer>();
@@ -51,14 +51,6 @@ namespace SemanticBackup.Extensions
                 Directory.CreateDirectory(backupDirectory);
             #endregion
 
-            #region Ensure Atlist One User Exists
-            var userService = (IUserAccountRepository)builder.ApplicationServices.GetService(typeof(IUserAccountRepository));
-            if (userService != null)
-            {
-                if (userService.GetAllCountAsync().GetAwaiter().GetResult() == 0)
-                    _ = userService.AddOrUpdateAsync(new Core.Models.UserAccount { EmailAddress = "admin@admin.com", FullName = "Administrator", Password = "admin", UserAccountType = Core.Models.UserAccountType.ADMIN }).GetAwaiter().GetResult();
-            }
-            #endregion
         }
     }
 }
