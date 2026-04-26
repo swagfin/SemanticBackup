@@ -107,13 +107,7 @@
                         <li class="nav-label mg-t-25">RESOURCE GROUPS</li>
                         <li class="nav-item"><a href="/resource-groups/" class="nav-link"><i data-feather="grid"></i> <span>View Resource Groups</span></a></li>
 
-                        <li class="nav-item with-sub">
-                            <a href="" class="nav-link"><i data-feather="edit"></i> <span>System Integrations</span></a>
-                            <ul>
-                                <li><a href="/webhooks">Webhooks</a></li>
-                                <li><a href="/">Live signalR updates</a></li>
-                            </ul>
-                        </li>
+                        <li class="nav-item @(currentPageRoute.ToLower().Contains("livesignalr") ? "active" : string.Empty)"><a href="/resource-groups/@(currentIdentifier)/live-signalr-updates" class="nav-link"><i data-feather="activity"></i> <span>Live SignalR Updates</span></a></li>
 
                     }
                 }

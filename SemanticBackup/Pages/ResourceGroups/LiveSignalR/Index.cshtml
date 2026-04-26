@@ -1,0 +1,267 @@
+@page "/resource-groups/{resourceGroupId}/live-signalr-updates"
+@model SemanticBackup.Pages.ResourceGroups.LiveSignalR.IndexModel
+@{
+    ViewData["Title"] = "Live SignalR Updates";
+}
+
+<div class="container pd-x-0">
+    <div class="ui container">
+        <div class="ui header large">Live SignalR Updates</div>
+        <div class="ui divider"></div>
+
+        <div class="ui segment">
+            <div class="ui stackable grid">
+                <div class="ten wide column">
+                    <div class="ui tiny labels">
+                        <span class="ui basic label">Resource Group: <b>@Model.CurrentResourceGroup?.Name</b></span>
+                        <span class="ui basic label">Databases Subscribed: <b>@(Model.DatabaseSubscriptions?.Count ?? 0)</b></span>
+                    </div>
+                </div>
+                <div class="six wide column right aligned">
+                    <div class="ui small buttons">
+                        <button id="btnConnectLive" class="ui green button">Connect</button>
+                        <button id="btnDisconnectLive" class="ui orange button">Disconnect</button>
+                        <button id="btnClearLive" class="ui button">Clear</button>
+                        <button id="btnPauseLive" class="ui red basic button" data-paused="false">Pause</button>
+                    </div>
+                </div>
+            </div>
+            <div class="ui divider"></div>
+            <div class="ui stackable grid">
+                <div class="eight wide column">
+                    <div>Record Hub: <span id="recordHubStatus" class="ui mini orange label">Disconnected</span></div>
+                </div>
+                <div class="eight wide column">
+                    <div>Dashboard Hub: <span id="dashboardHubStatus" class="ui mini orange label">Disconnected</span></div>
+                </div>
+            </div>
+        </div>
+
+        <table class="ui very compact celled small table">
+            <thead>
+                <tr>
+                    <th style="width:160px">Time (UTC)</th>
+                    <th style="width:210px">Channel</th>
+                    <th style="width:260px">Event</th>
+                    <th style="width:220px">Subscription</th>
+                    <th>Payload</th>
+                </tr>
+            </thead>
+            <tbody id="liveSignalRRows">
+                <tr id="liveSignalREmptyRow">
+                    <td colspan="5" class="center aligned">No events yet. Click Connect to start streaming.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/lib/signalr/dist/browser/signalr.js"></script>
+    <script type="text/javascript">
+        var resourceGroupId = @(Html.Raw(Json.Serialize(Model.CurrentResourceGroup?.Id ?? string.Empty)));
+        var databaseSubscriptions = @(Html.Raw(Json.Serialize(Model.DatabaseSubscriptions)));
+    </script>
+    <script type="text/javascript">
+        (function () {
+            var recordConnection = null;
+            var dashboardConnection = null;
+            var paused = false;
+            var maxRows = 500;
+            var subscribedBackupRecordGroups = {};
+            var selectedDashboardGroup = "*";
+
+            function setStatus(elementId, state, isConnected) {
+                var target = document.getElementById(elementId);
+                target.className = isConnected ? "ui mini green label" : "ui mini orange label";
+                target.textContent = state;
+            }
+
+            function getSafeJson(raw) {
+                try { return JSON.stringify(raw); } catch (e) { return String(raw); }
+            }
+
+            function appendEvent(channel, eventName, subscription, payload) {
+                if (paused) return;
+                var tableBody = document.getElementById("liveSignalRRows");
+                var emptyRow = document.getElementById("liveSignalREmptyRow");
+                if (emptyRow) emptyRow.remove();
+
+                var row = document.createElement("tr");
+                var eventTime = new Date().toISOString().replace("T", " ").replace("Z", "");
+                row.innerHTML = "<td>" + eventTime + "</td>"
+                    + "<td>" + channel + "</td>"
+                    + "<td>" + eventName + "</td>"
+                    + "<td>" + (subscription || "-") + "</td>"
+                    + "<td><code style='white-space: pre-wrap; word-break: break-word;'>" + getSafeJson(payload) + "</code></td>";
+                tableBody.prepend(row);
+
+                while (tableBody.rows.length > maxRows) {
+                    tableBody.deleteRow(tableBody.rows.length - 1);
+                }
+            }
+
+            async function joinBackupRecordGroup(backupRecordId) {
+                if (!recordConnection || !backupRecordId) return;
+                var key = String(backupRecordId);
+                if (subscribedBackupRecordGroups[key] === true) return;
+                try {
+                    await recordConnection.invoke("JoinGroup", key);
+                    subscribedBackupRecordGroups[key] = true;
+                    appendEvent("Record Hub", "JoinGroup", key, { joined: true });
+                } catch (error) {
+                    appendEvent("Record Hub", "JoinGroupError", key, { error: String(error) });
+                }
+            }
+
+            async function joinRecordHubBaseGroups() {
+                for (var i = 0; i < databaseSubscriptions.length; i++) {
+                    var db = databaseSubscriptions[i];
+                    if (!db || !db.databaseId) continue;
+                    try {
+                        await recordConnection.invoke("JoinGroup", db.databaseId);
+                        appendEvent("Record Hub", "JoinGroup", db.databaseId, { databaseName: db.databaseName });
+                    } catch (error) {
+                        appendEvent("Record Hub", "JoinGroupError", db.databaseId, { error: String(error), databaseName: db.databaseName });
+                    }
+                }
+                try {
+                    await recordConnection.invoke("JoinGroup", "__all_signalr_updates__");
+                    appendEvent("Record Hub", "JoinGroup", "__all_signalr_updates__", { global: true });
+                } catch (error) {
+                    appendEvent("Record Hub", "JoinGroupError", "__all_signalr_updates__", { error: String(error), global: true });
+                }
+            }
+
+            async function joinDashboardGroup() {
+                var request = { resourcegroup: resourceGroupId, group: selectedDashboardGroup };
+                try {
+                    await dashboardConnection.invoke("JoinGroup", request);
+                    appendEvent("Dashboard Hub", "JoinGroup", selectedDashboardGroup, request);
+                } catch (error) {
+                    appendEvent("Dashboard Hub", "JoinGroupError", selectedDashboardGroup, { error: String(error), request: request });
+                }
+            }
+
+            function wireRecordHubEvents(connection) {
+                connection.on("ReceiveNotification", function (data) {
+                    appendEvent("Record Hub", "ReceiveNotification", data ? data.subscription : "-", data);
+                    if (data && data.metric && data.metric.id) {
+                        joinBackupRecordGroup(data.metric.id);
+                    }
+                });
+                connection.on("ReceiveContentDeliveryNotification", function (data) {
+                    appendEvent("Record Hub", "ReceiveContentDeliveryNotification", data ? data.subscription : "-", data);
+                });
+                connection.onreconnecting(function () {
+                    setStatus("recordHubStatus", "Reconnecting", false);
+                    appendEvent("Record Hub", "Reconnecting", "-", {});
+                });
+                connection.onreconnected(function () {
+                    setStatus("recordHubStatus", "Connected", true);
+                    appendEvent("Record Hub", "Reconnected", "-", {});
+                    joinRecordHubBaseGroups();
+                });
+                connection.onclose(function (error) {
+                    setStatus("recordHubStatus", "Disconnected", false);
+                    appendEvent("Record Hub", "Closed", "-", { error: String(error || "") });
+                });
+            }
+
+            function wireDashboardHubEvents(connection) {
+                connection.on("ReceiveMetrics", function (data) {
+                    appendEvent("Dashboard Hub", "ReceiveMetrics", selectedDashboardGroup, data);
+                });
+                connection.onreconnecting(function () {
+                    setStatus("dashboardHubStatus", "Reconnecting", false);
+                    appendEvent("Dashboard Hub", "Reconnecting", "-", {});
+                });
+                connection.onreconnected(function () {
+                    setStatus("dashboardHubStatus", "Connected", true);
+                    appendEvent("Dashboard Hub", "Reconnected", "-", {});
+                    joinDashboardGroup();
+                });
+                connection.onclose(function (error) {
+                    setStatus("dashboardHubStatus", "Disconnected", false);
+                    appendEvent("Dashboard Hub", "Closed", "-", { error: String(error || "") });
+                });
+            }
+
+            async function connectAll() {
+                if (!recordConnection) {
+                    recordConnection = new signalR.HubConnectionBuilder()
+                        .withUrl("/BackupRecordsNotify")
+                        .withAutomaticReconnect([0, 2000, 3000, 5000])
+                        .build();
+                    wireRecordHubEvents(recordConnection);
+                }
+                if (!dashboardConnection) {
+                    dashboardConnection = new signalR.HubConnectionBuilder()
+                        .withUrl("/DasbhoardStatistics")
+                        .withAutomaticReconnect([0, 2000, 3000, 5000])
+                        .build();
+                    wireDashboardHubEvents(dashboardConnection);
+                }
+
+                try {
+                    if (recordConnection.state !== signalR.HubConnectionState.Connected) {
+                        await recordConnection.start();
+                        setStatus("recordHubStatus", "Connected", true);
+                        appendEvent("Record Hub", "Connected", "-", {});
+                        await joinRecordHubBaseGroups();
+                    }
+                } catch (error) {
+                    appendEvent("Record Hub", "ConnectError", "-", { error: String(error) });
+                }
+
+                try {
+                    if (dashboardConnection.state !== signalR.HubConnectionState.Connected) {
+                        await dashboardConnection.start();
+                        setStatus("dashboardHubStatus", "Connected", true);
+                        appendEvent("Dashboard Hub", "Connected", "-", {});
+                        await joinDashboardGroup();
+                    }
+                } catch (error) {
+                    appendEvent("Dashboard Hub", "ConnectError", "-", { error: String(error) });
+                }
+            }
+
+            async function disconnectAll() {
+                try {
+                    if (recordConnection && recordConnection.state === signalR.HubConnectionState.Connected) {
+                        await recordConnection.stop();
+                    }
+                } catch (error) {
+                    appendEvent("Record Hub", "DisconnectError", "-", { error: String(error) });
+                } finally {
+                    setStatus("recordHubStatus", "Disconnected", false);
+                }
+
+                try {
+                    if (dashboardConnection && dashboardConnection.state === signalR.HubConnectionState.Connected) {
+                        await dashboardConnection.stop();
+                    }
+                } catch (error) {
+                    appendEvent("Dashboard Hub", "DisconnectError", "-", { error: String(error) });
+                } finally {
+                    setStatus("dashboardHubStatus", "Disconnected", false);
+                }
+            }
+
+            document.getElementById("btnConnectLive").addEventListener("click", function () { connectAll(); });
+            document.getElementById("btnDisconnectLive").addEventListener("click", function () { disconnectAll(); });
+            document.getElementById("btnClearLive").addEventListener("click", function () {
+                var tableBody = document.getElementById("liveSignalRRows");
+                tableBody.innerHTML = "<tr id='liveSignalREmptyRow'><td colspan='5' class='center aligned'>No events yet. Click Connect to start streaming.</td></tr>";
+            });
+            document.getElementById("btnPauseLive").addEventListener("click", function () {
+                paused = !paused;
+                this.textContent = paused ? "Resume" : "Pause";
+                this.className = paused ? "ui red button" : "ui red basic button";
+                this.setAttribute("data-paused", paused ? "true" : "false");
+            });
+
+            connectAll();
+        })();
+    </script>
+}
