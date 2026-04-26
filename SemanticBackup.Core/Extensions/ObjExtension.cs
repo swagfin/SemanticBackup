@@ -21,7 +21,16 @@ namespace SemanticBackup.Core
         public static string GetDbConnectionString(this ResourceGroup resourceGroup, string databaseName = null)
         {
             if (!string.IsNullOrWhiteSpace(resourceGroup.ConnectionString))
-                return resourceGroup.ConnectionString.Trim();
+            {
+                string configuredConnectionString = resourceGroup.ConnectionString.Trim();
+                if (string.IsNullOrWhiteSpace(databaseName))
+                    return configuredConnectionString;
+                if (!string.IsNullOrEmpty(resourceGroup.DbType) && (resourceGroup.DbType.Contains("MYSQL") || resourceGroup.DbType.Contains("MARIADB")))
+                    return UpsertConnectionStringValue(configuredConnectionString, "database", databaseName);
+                if (!string.IsNullOrEmpty(resourceGroup.DbType) && resourceGroup.DbType.Contains("SQLSERVER"))
+                    return UpsertConnectionStringValue(configuredConnectionString, "Initial Catalog", databaseName);
+                return configuredConnectionString;
+            }
             if (!string.IsNullOrEmpty(resourceGroup.DbType) && resourceGroup.DbType.Contains("SQLSERVER"))
             {
                 return string.Format("{0}{1}", $"Data Source={resourceGroup.DbServer},{resourceGroup.DbPort};Persist Security Info=True;User ID={resourceGroup.DbUsername};Password={resourceGroup.DbPassword};", string.IsNullOrWhiteSpace(databaseName) ? string.Empty : $"Initial Catalog={databaseName};");
@@ -52,6 +61,34 @@ namespace SemanticBackup.Core
             if (smtpDeliveryConfig == null || string.IsNullOrEmpty(smtpDeliveryConfig.SMTPDestinations))
                 return allEmails;
             return smtpDeliveryConfig.SMTPDestinations.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Replace(" ", string.Empty).Trim()).ToList();
+        }
+
+        private static string UpsertConnectionStringValue(string connectionString, string keyName, string value)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                return connectionString;
+            if (string.IsNullOrWhiteSpace(keyName))
+                return connectionString;
+
+            List<string> parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            bool updated = false;
+            for (int i = 0; i < parts.Count; i++)
+            {
+                string currentPart = parts[i];
+                int separatorIndex = currentPart.IndexOf('=');
+                if (separatorIndex <= 0)
+                    continue;
+                string currentKey = currentPart.Substring(0, separatorIndex).Trim();
+                if (!currentKey.Equals(keyName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                parts[i] = $"{currentKey}={value}";
+                updated = true;
+                break;
+            }
+
+            if (!updated)
+                parts.Add($"{keyName}={value}");
+            return $"{string.Join(';', parts)};";
         }
     }
 }
