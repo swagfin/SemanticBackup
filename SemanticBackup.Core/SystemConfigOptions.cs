@@ -6,6 +6,7 @@
         public string BackupFileSaveFormat { get; set; } = "{{database}}\\{{database}}-{{datetime}}.{{databasetype}}.bak";
         public int MaxWorkers { get; set; } = 2;
         public bool AutoCompressToZip { get; set; } = true;
+        public int BackupExpiryAgeInDays { get; set; } = 7;
         public int ExecutionTimeoutInMinutes { get; set; } = 10;
         public bool InDepthBackupRecordDeleteEnabled { get; set; } = true;
 

@@ -71,6 +71,7 @@ Core runtime options:
 - `BackupFileSaveFormat`
 - `MaxWorkers`
 - `AutoCompressToZip`
+- `BackupExpiryAgeInDays`
 - `ExecutionTimeoutInMinutes`
 - `InDepthBackupRecordDeleteEnabled`
 - SMTP system mail options used by notification service
@@ -133,6 +134,7 @@ Core runtime options:
     "BackupFileSaveFormat": "{{database}}\\{{database}}-{{datetime}}.{{databasetype}}.bak",
     "MaxWorkers": 2,
     "AutoCompressToZip": true,
+    "BackupExpiryAgeInDays": 7,
     "ExecutionTimeoutInMinutes": 10,
     "InDepthBackupRecordDeleteEnabled": true
   }
