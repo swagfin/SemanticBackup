@@ -77,6 +77,7 @@ namespace SemanticBackup.Infrastructure.Implementations
                     ConnectionString = resourceConfig.ConnectionString?.Trim(),
                     MaximumRunningBots = systemConfigOptions.MaxWorkers < 1 ? 1 : systemConfigOptions.MaxWorkers,
                     CompressBackupFiles = systemConfigOptions.AutoCompressToZip,
+                    BackupExpiryAgeInDays = systemConfigOptions.BackupExpiryAgeInDays < 1 ? 1 : systemConfigOptions.BackupExpiryAgeInDays,
                     BackupDeliveryConfig = BuildDeliveryConfiguration(resourceConfig.UploadTo, uploadConfigurations),
                     NotifyOnErrorBackups = effectiveNotifications.NotifyOnBackupFailure,
                     NotifyOnErrorBackupDelivery = effectiveNotifications.NotifyOnUploadFailure,
