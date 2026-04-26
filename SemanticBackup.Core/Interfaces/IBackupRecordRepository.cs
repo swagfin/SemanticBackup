@@ -16,6 +16,7 @@ namespace SemanticBackup.Core.Interfaces
         Task<bool> UpdateRestoreStatusFeedAsync(long id, string status, string message = null, string confirmationToken = null);
         Task<List<BackupRecord>> GetAllByStatusAsync(string status);
         Task<List<BackupRecord>> GetAllByDatabaseIdAsync(string databaseId);
+        Task<BackupRecord> GetLatestByDatabaseIdAsync(string databaseId);
         Task<List<BackupRecord>> GetAllByRegisteredDateByStatusAsync(string resourceGroupId, DateTime fromDate, string status = "*");
         Task<List<BackupRecord>> GetAllByStatusUpdateDateByStatusAsync(string resourceGroupId, DateTime fromDate, string status = "*");
         Task<List<BackupRecord>> GetAllExpiredAsync();

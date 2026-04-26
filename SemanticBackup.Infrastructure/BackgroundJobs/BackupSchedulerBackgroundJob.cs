@@ -92,6 +92,28 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                 }
                                 else
                                 {
+                                    BackupRecord latestRecord = await _backupRecordRepository.GetLatestByDatabaseIdAsync(schedule.BackupDatabaseInfoId);
+                                    if (latestRecord != null)
+                                    {
+                                        int everyHours = schedule.EveryHours < 1 ? 1 : schedule.EveryHours;
+                                        DateTime nextRunFromLatestRecordUtc = latestRecord.RegisteredDateUTC.AddHours(everyHours);
+                                        if (nextRunFromLatestRecordUtc > currentTimeUTC)
+                                        {
+                                            _ = await _backupScheduleRepository.UpdateLastRunAsync(schedule.Id, latestRecord.RegisteredDateUTC);
+                                            continue;
+                                        }
+                                    }
+
+                                    bool hasQueued = ((await _backupRecordRepository.GetAllByDatabaseIdByStatusAsync(schedule.BackupDatabaseInfoId, BackupRecordStatus.QUEUED.ToString())) ?? []).Count > 0;
+                                    bool hasExecuting = ((await _backupRecordRepository.GetAllByDatabaseIdByStatusAsync(schedule.BackupDatabaseInfoId, BackupRecordStatus.EXECUTING.ToString())) ?? []).Count > 0;
+                                    bool hasCompressing = ((await _backupRecordRepository.GetAllByDatabaseIdByStatusAsync(schedule.BackupDatabaseInfoId, BackupRecordStatus.COMPRESSING.ToString())) ?? []).Count > 0;
+                                    bool hasPendingOrRunningRecord = hasQueued || hasExecuting || hasCompressing;
+                                    if (hasPendingOrRunningRecord)
+                                    {
+                                        _logger.LogInformation("Skipping schedule for Database Id: {BackupDatabaseInfoId} because there is already a queued/running backup record.", schedule.BackupDatabaseInfoId);
+                                        continue;
+                                    }
+
                                     //has valid Resource Group Proceed
                                     DateTime RecordExpiryUTC = currentTimeUTC.AddDays(resourceGroup.BackupExpiryAgeInDays);
                                     BackupRecord newRecord = new BackupRecord
@@ -99,7 +121,7 @@ namespace SemanticBackup.Infrastructure.BackgroundJobs
                                         BackupDatabaseInfoId = schedule.BackupDatabaseInfoId,
                                         BackupStatus = BackupRecordStatus.QUEUED.ToString(),
                                         ExpiryDateUTC = RecordExpiryUTC,
-                                        Name = $"{backupDatabaseInfo.DatabaseName} on {resourceGroup.DbServer}",
+                                        Name = backupDatabaseInfo.DatabaseName,
                                         Path = Path.Combine(_persistanceOptions.DefaultBackupDirectory, resourceGroup.GetSavingPathFromFormat(backupDatabaseInfo.DatabaseName, _persistanceOptions.BackupFileSaveFormat, currentTimeUTC)),
                                         StatusUpdateDateUTC = currentTimeUTC,
                                         RegisteredDateUTC = currentTimeUTC,
