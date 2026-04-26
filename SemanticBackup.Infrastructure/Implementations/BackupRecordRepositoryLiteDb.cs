@@ -85,6 +85,10 @@ namespace SemanticBackup.Infrastructure.Implementations
         {
             return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == id).OrderByDescending(x => x.Id).ToListAsync();
         }
+        public async Task<BackupRecord> GetLatestByDatabaseIdAsync(string databaseId)
+        {
+            return await _db.GetCollection<BackupRecord>().Query().Where(x => x.BackupDatabaseInfoId == databaseId).OrderByDescending(x => x.RegisteredDateUTC).FirstOrDefaultAsync();
+        }
         public async Task<List<long>> GetAllNoneResponsiveIdsAsync(List<string> statusChecks, int minuteDifference)
         {
             if (statusChecks == null || statusChecks.Count == 0)
