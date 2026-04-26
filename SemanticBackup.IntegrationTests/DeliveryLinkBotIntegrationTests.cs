@@ -1,8 +1,5 @@
 using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SemanticBackup.IntegrationTests
 {

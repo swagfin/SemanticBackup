@@ -1,8 +1,6 @@
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using System;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 
 namespace SemanticBackup.IntegrationTests.Helpers
 {

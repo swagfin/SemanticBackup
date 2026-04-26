@@ -20,9 +20,8 @@ namespace SemanticBackup.Pages.Account
         private readonly IUserAccountRepository _userAccountRepository;
         public readonly List<TimeZoneInfo> _systemTimeZones;
         private readonly ILogger<IndexModel> _logger;
-        [BindProperty]
         public UserAccountRequest UserAccountRequest { get; set; }
-        public string Status { get; set; }
+
         public IndexModel(IUserAccountRepository userAccountRepository, ILogger<IndexModel> logger)
         {
             this._logger = logger;
@@ -50,12 +49,6 @@ namespace SemanticBackup.Pages.Account
                 _logger.LogError(ex.Message);
                 return Redirect($"/account/login?redirect={"/account".UrlEncoded()}");
             }
-        }
-        public async Task<IActionResult> OnPostAsync()
-        {
-            await Task.CompletedTask;
-            Status = "Account settings are managed through appsettings AdminUsers and cannot be changed from UI.";
-            return Page();
         }
     }
 

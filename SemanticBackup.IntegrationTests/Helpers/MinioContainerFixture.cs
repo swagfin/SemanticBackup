@@ -2,10 +2,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Minio;
 using Minio.DataModel.Args;
-using System;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SemanticBackup.IntegrationTests.Helpers
 {

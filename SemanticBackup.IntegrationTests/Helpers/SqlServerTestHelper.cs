@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Data.SqlClient;
 
 namespace SemanticBackup.IntegrationTests.Helpers

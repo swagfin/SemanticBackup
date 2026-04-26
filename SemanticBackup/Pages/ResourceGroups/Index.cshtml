@@ -16,13 +16,12 @@
                     <div class="ui message icon">
                         <i class="clone outline icon"></i>
                         <div class="content">
-                            No resource groups were found in appsettings. Add entries under <b>BackupConfigurations</b> to start.
+                            No resource groups were found. Add entries under <b>BackupConfigurations</b> to start.
                         </div>
                     </div>
                 }
                 else
                 {
-                    <div class="ui info small message">Resource groups are read from <b>Configs/appsettings*.json</b> and cannot be created/edited from the UI.</div>
                     <section class="ui stackable cards">
 
                         @foreach (var resourceGrp in Model.ResourceGroups)

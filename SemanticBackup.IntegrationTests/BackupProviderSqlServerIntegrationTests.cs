@@ -1,8 +1,6 @@
 using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.Implementations;
 using SemanticBackup.IntegrationTests.Helpers;
-using System;
-using System.Threading.Tasks;
 
 namespace SemanticBackup.IntegrationTests
 {

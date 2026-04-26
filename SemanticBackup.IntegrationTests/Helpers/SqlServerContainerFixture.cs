@@ -1,7 +1,5 @@
-using System.Threading;
-using System.Threading.Tasks;
-using System.Data.SqlClient;
 using DotNet.Testcontainers.Builders;
+using System.Data.SqlClient;
 using Testcontainers.MsSql;
 
 namespace SemanticBackup.IntegrationTests.Helpers
@@ -40,9 +38,9 @@ namespace SemanticBackup.IntegrationTests.Helpers
                 throw new InvalidOperationException("SQL test container is not initialized.");
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(_container.GetConnectionString())
             {
-                    InitialCatalog = databaseName,
-                    Encrypt = false,
-                    TrustServerCertificate = true
+                InitialCatalog = databaseName,
+                Encrypt = false,
+                TrustServerCertificate = true
             };
             return builder.ConnectionString;
         }

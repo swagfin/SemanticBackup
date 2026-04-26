@@ -9,69 +9,30 @@
         <h4 class="ui primary header">My Account</h4>
         <div class="ui divider"></div>
 
-
-        <form method="post" class="ui segment attached form">
-            <section>
-
-                @{
-                    if (Model.Status == "Failed")
-                    {
-                        <div class="ui warning tiny message">Unable to update account details</div>
-                    }
-                    else if (Model.Status == "Success")
-                    {
-                        <div class="ui green tiny message"> Account details updated Successfully!</div>
-                    }
-                    else if (!string.IsNullOrEmpty(Model.Status))
-                    {
-                        <div class="ui red tiny message">@Model.Status</div>
-                    }
-                }
-                <div class="ui info tiny message">This account is configured from <b>Configs/appsettings*.json</b> under <b>AdminUsers</b>. UI updates are disabled.</div>
-                <div class="field">
-                    <label>Full Name</label>
-                    <input asp-for="UserAccountRequest.FullName" placeholder="My Full Name..." readonly />
+        <div class="ui raised segment">
+            <div class="ui relaxed divided list">
+                <div class="item">
+                    <i class="user outline blue icon"></i>
+                    <div class="content">
+                        <div class="header">Full Name</div>
+                        <div>@Model.UserAccountRequest?.FullName</div>
+                    </div>
                 </div>
-
-                <div class="field">
-                    <label>Email Address</label>
-                    <input asp-for="UserAccountRequest.EmailAddress" placeholder="My Email Address..." readonly>
+                <div class="item">
+                    <i class="mail blue icon"></i>
+                    <div class="content">
+                        <div class="header">Email Address</div>
+                        <div>@Model.UserAccountRequest?.EmailAddress</div>
+                    </div>
                 </div>
-
-
-                <div class="field">
-                    <label>Timezone Preference</label>
-                    <select asp-for="UserAccountRequest.TimezoneId" class="ui fluid search small dropdown timezone-dropdown-search" required disabled>
-                        @{
-                            if (Model._systemTimeZones != null && Model._systemTimeZones.Count > 0)
-                            {
-                                foreach (var timezone in Model._systemTimeZones)
-                                {
-                                    if (Model.UserAccountRequest.TimezoneId == timezone.Id)
-                                    {
-                                        <option selected value="@(timezone.Id)">@timezone.ToTimezoneWithOffsetString()</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@(timezone.Id)">@timezone.ToTimezoneWithOffsetString()</option>
-                                    }
-                                }
-                            }
-                        }
-                    </select>
+                <div class="item">
+                    <i class="clock outline blue icon"></i>
+                    <div class="content">
+                        <div class="header">Timezone</div>
+                        <div>@(Model._systemTimeZones?.FirstOrDefault(x => x.Id == Model.UserAccountRequest?.TimezoneId)?.ToTimezoneWithOffsetString() ?? Model.UserAccountRequest?.TimezoneId)</div>
+                    </div>
                 </div>
-
-                <div></div>
-                <button type="submit" class="btn btn-secondary">Refresh Notice</button>
-            </section>
-        </form>
-
-
-
+            </div>
+        </div>
     </div>
 </div>
-@section Scripts{
-    <script type="text/javascript">
-        $(".dropdown").dropdown({ allowAdditions: false });
-    </script>
-}

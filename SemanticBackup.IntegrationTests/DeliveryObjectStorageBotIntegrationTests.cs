@@ -3,10 +3,6 @@ using Minio.DataModel.Args;
 using SemanticBackup.Core.Models;
 using SemanticBackup.Infrastructure.BackgroundJobs.Bots;
 using SemanticBackup.IntegrationTests.Helpers;
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SemanticBackup.IntegrationTests
 {
